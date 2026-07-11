@@ -126,16 +126,16 @@ Overall Progress:
 
 ### CI
 
-- [ ] Install dependencies
-- [ ] Type checking
-- [ ] Lint
-- [ ] Build
-- [ ] Cache dependencies
+- [x] Install dependencies
+- [x] Type checking
+- [x] Lint
+- [x] Build
+- [x] Cache dependencies
 
 ### CD
 
-- [ ] Configure Vercel deployment
-- [ ] Deploy on merge to master
+- [x] Configure Vercel deployment
+- [x] Deploy on merge to master
 - [ ] Verify deployment status
 
 ---
