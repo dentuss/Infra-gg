@@ -69,7 +69,7 @@ Overall Progress:
 
 - [x] Install Lucide
 - [x] Install Framer Motion
-- [ ] Install shadcn/ui
+- [x] Install shadcn/ui
 
 ### Editor
 
