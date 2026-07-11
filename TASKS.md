@@ -1,0 +1,490 @@
+# TASKS.md
+
+# Rainbow Six Siege Team Platform
+
+This document defines the development roadmap.
+
+Claude should always work from the highest priority incomplete task.
+
+---
+
+# Project Status
+
+Current Phase:
+
+🟡 Project Initialization
+
+Overall Progress:
+
+0%
+
+---
+
+# Legend
+
+🔴 Not Started
+
+🟡 In Progress
+
+🟢 Complete
+
+⏸ Blocked
+
+---
+
+# PHASE 0 — Project Infrastructure
+
+## Repository
+
+- [ ] Initialize Git repository
+- [ ] Configure .gitignore
+- [ ] Configure .editorconfig
+- [ ] Create README.md
+- [ ] Create LICENSE (MIT)
+
+---
+
+## Next.js
+
+- [ ] Create Next.js project
+- [ ] Enable App Router
+- [ ] Enable TypeScript
+- [ ] Configure Tailwind
+- [ ] Configure path aliases
+- [ ] Configure Turbopack
+
+---
+
+## Dependencies
+
+### Core
+
+- [ ] Install Supabase
+- [ ] Install React Query
+- [ ] Install Zustand
+- [ ] Install React Hook Form
+- [ ] Install Zod
+
+### UI
+
+- [ ] Install Lucide
+- [ ] Install Framer Motion
+- [ ] Install shadcn/ui
+
+### Editor
+
+- [ ] Install Tiptap
+
+### Strategy Board
+
+- [ ] Install React Konva
+- [ ] Install Konva
+
+### Calendar
+
+- [ ] Install FullCalendar
+
+---
+
+## Code Quality
+
+- [ ] Configure ESLint
+- [ ] Configure Prettier
+- [ ] Configure Husky
+- [ ] Configure lint-staged
+- [ ] Configure strict TypeScript
+- [ ] Configure import sorting
+
+---
+
+## Environment
+
+- [ ] Create .env.example
+- [ ] Configure .env.local
+- [ ] Configure environment validation
+
+---
+
+## Docker
+
+- [ ] Create Dockerfile
+- [ ] Create docker-compose.yml
+- [ ] Configure development container
+
+---
+
+## GitHub
+
+- [ ] Push repository
+- [ ] Protect main branch
+- [ ] Configure Issue Templates
+- [ ] Configure Pull Request Template
+
+---
+
+## GitHub Actions
+
+### CI
+
+- [ ] Install dependencies
+- [ ] Type checking
+- [ ] Lint
+- [ ] Build
+- [ ] Cache dependencies
+
+### CD
+
+- [ ] Configure Vercel deployment
+- [ ] Deploy on merge to main
+- [ ] Verify deployment status
+
+---
+
+## Supabase
+
+- [ ] Create project
+- [ ] Connect application
+- [ ] Configure authentication
+- [ ] Configure storage
+- [ ] Enable Realtime
+- [ ] Configure RLS
+- [ ] Create initial migrations
+
+---
+
+# PHASE 1 — Authentication
+
+Status
+
+🔴
+
+---
+
+## Authentication
+
+- [ ] Discord OAuth
+- [ ] Email login
+- [ ] Invite-only registration
+- [ ] Session persistence
+- [ ] Route protection
+- [ ] Logout
+
+---
+
+## User Profile
+
+- [ ] Avatar
+- [ ] Username
+- [ ] Team
+- [ ] Role
+
+---
+
+# PHASE 2 — Dashboard
+
+Status
+
+🔴
+
+---
+
+- [ ] Dashboard layout
+- [ ] Sidebar
+- [ ] Navigation
+- [ ] Quick actions
+- [ ] Upcoming practices
+- [ ] Upcoming matches
+- [ ] Notifications
+
+---
+
+# PHASE 3 — Calendar
+
+Status
+
+🔴
+
+---
+
+- [ ] Month view
+- [ ] Week view
+- [ ] Day view
+- [ ] Practice events
+- [ ] Match events
+- [ ] Reminders
+- [ ] Recurring events
+- [ ] Drag and drop
+- [ ] Event editing
+
+---
+
+# PHASE 4 — Team Management
+
+Status
+
+🔴
+
+---
+
+## Players
+
+- [ ] Player list
+- [ ] Roles
+- [ ] Statistics
+- [ ] Activity
+
+---
+
+## Teams
+
+- [ ] Team settings
+- [ ] Invite players
+- [ ] Remove players
+
+---
+
+# PHASE 5 — Documents
+
+Status
+
+🔴
+
+---
+
+- [ ] Rich text editor
+- [ ] Markdown support
+- [ ] Tables
+- [ ] Images
+- [ ] Checklists
+- [ ] Mentions
+- [ ] Search
+- [ ] Folder structure
+
+---
+
+# PHASE 6 — Strategy Board
+
+Status
+
+🔴
+
+---
+
+## Canvas
+
+- [ ] Infinite canvas
+- [ ] Zoom
+- [ ] Pan
+- [ ] Grid
+
+---
+
+## Operators
+
+- [ ] Attackers
+- [ ] Defenders
+- [ ] Drag
+- [ ] Rotate
+- [ ] Duplicate
+
+---
+
+## Drawing
+
+- [ ] Arrow
+- [ ] Line
+- [ ] Circle
+- [ ] Rectangle
+- [ ] Text
+- [ ] Icons
+
+---
+
+## Layers
+
+- [ ] Layer list
+- [ ] Lock
+- [ ] Hide
+- [ ] Reorder
+
+---
+
+## Editing
+
+- [ ] Undo
+- [ ] Redo
+- [ ] Copy
+- [ ] Paste
+- [ ] Delete
+- [ ] Multi-select
+
+---
+
+## Saving
+
+- [ ] Autosave
+- [ ] Manual save
+- [ ] JSON export
+- [ ] PNG export
+- [ ] PDF export
+
+---
+
+## Version History
+
+- [ ] Save versions
+- [ ] Restore versions
+- [ ] Compare versions
+
+---
+
+# PHASE 7 — Realtime Collaboration
+
+Status
+
+🔴
+
+---
+
+- [ ] Live cursors
+- [ ] Live editing
+- [ ] Presence
+- [ ] Conflict resolution
+
+---
+
+# PHASE 8 — VOD Review
+
+Status
+
+🔴
+
+---
+
+- [ ] Upload screenshots
+- [ ] Timeline
+- [ ] Comments
+- [ ] Drawing tools
+- [ ] Assign mistakes
+
+---
+
+# PHASE 9 — Statistics
+
+Status
+
+🔴
+
+---
+
+- [ ] Match history
+- [ ] Win rate
+- [ ] Operator picks
+- [ ] Site statistics
+- [ ] Map statistics
+- [ ] Performance charts
+
+---
+
+# PHASE 10 — Notifications
+
+Status
+
+🔴
+
+---
+
+- [ ] Discord webhook
+- [ ] Email
+- [ ] In-app notifications
+
+---
+
+# PHASE 11 — Polish
+
+Status
+
+🔴
+
+---
+
+## UI
+
+- [ ] Animations
+- [ ] Loading skeletons
+- [ ] Empty states
+- [ ] Error pages
+
+---
+
+## Performance
+
+- [ ] Image optimization
+- [ ] Bundle optimization
+- [ ] Lazy loading
+
+---
+
+## Accessibility
+
+- [ ] Keyboard navigation
+- [ ] Screen reader support
+
+---
+
+## Testing
+
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] End-to-end tests
+
+---
+
+## Documentation
+
+- [ ] Update README
+- [ ] Deployment guide
+- [ ] Environment guide
+- [ ] Developer guide
+
+---
+
+# Future Features
+
+These should NOT be started until every previous phase is complete.
+
+- [ ] AI strategy suggestions
+- [ ] AI VOD analysis
+- [ ] Replay parser
+- [ ] Match timeline
+- [ ] Mobile support
+- [ ] Progressive Web App
+- [ ] Desktop application (Tauri)
+- [ ] Offline mode
+- [ ] Public strategy sharing
+- [ ] Tournament management
+- [ ] Scrim finder
+- [ ] Analytics dashboard
+
+---
+
+# Rules for Claude
+
+When completing tasks:
+
+1. Complete one task at a time.
+2. Do not skip phases.
+3. Keep commits atomic.
+4. Update this file after every completed task.
+5. Mark completed tasks with `[x]`.
+6. Never begin the next phase until the current one is complete unless explicitly instructed.
+7. If a better architecture is identified, explain it before implementing it.
+8. Keep documentation synchronized with implementation.
+9. Ensure all CI checks pass before considering a task complete.
+10. Never sacrifice maintainability for speed.
+
+---
+
+# Current Objective
+
+🎯 Complete **Phase 0 — Project Infrastructure** before writing any application features.
