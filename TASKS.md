@@ -107,9 +107,9 @@ Overall Progress:
 
 ## Docker
 
-- [ ] Create Dockerfile
-- [ ] Create docker-compose.yml
-- [ ] Configure development container
+- [x] Create Dockerfile
+- [x] Create docker-compose.yml
+- [x] Configure development container
 
 ---
 
