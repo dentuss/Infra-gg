@@ -38,9 +38,9 @@ Overall Progress:
 
 - [x] Initialize Git repository
 - [x] Configure .gitignore
-- [ ] Configure .editorconfig
+- [x] Configure .editorconfig
 - [ ] Create README.md
-- [ ] Create LICENSE (MIT)
+- [x] Create LICENSE (MIT)
 
 ---
 
