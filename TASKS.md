@@ -99,9 +99,9 @@ Overall Progress:
 
 ## Environment
 
-- [ ] Create .env.example
-- [ ] Configure .env.local
-- [ ] Configure environment validation
+- [x] Create .env.example
+- [x] Configure .env.local
+- [x] Configure environment validation
 
 ---
 
