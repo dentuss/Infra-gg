@@ -89,11 +89,11 @@ Overall Progress:
 ## Code Quality
 
 - [ ] Configure ESLint
-- [ ] Configure Prettier
+- [x] Configure Prettier
 - [ ] Configure Husky
 - [ ] Configure lint-staged
 - [x] Configure strict TypeScript
-- [ ] Configure import sorting
+- [x] Configure import sorting
 
 ---
 
