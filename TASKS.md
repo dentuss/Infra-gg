@@ -60,29 +60,29 @@ Overall Progress:
 ### Core
 
 - [x] Install Supabase
-- [ ] Install React Query
-- [ ] Install Zustand
-- [ ] Install React Hook Form
-- [ ] Install Zod
+- [x] Install React Query
+- [x] Install Zustand
+- [x] Install React Hook Form
+- [x] Install Zod
 
 ### UI
 
-- [ ] Install Lucide
-- [ ] Install Framer Motion
+- [x] Install Lucide
+- [x] Install Framer Motion
 - [ ] Install shadcn/ui
 
 ### Editor
 
-- [ ] Install Tiptap
+- [x] Install Tiptap
 
 ### Strategy Board
 
-- [ ] Install React Konva
-- [ ] Install Konva
+- [x] Install React Konva
+- [x] Install Konva
 
 ### Calendar
 
-- [ ] Install FullCalendar
+- [x] Install FullCalendar
 
 ---
 
