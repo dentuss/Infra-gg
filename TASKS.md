@@ -143,7 +143,7 @@ Overall Progress:
 ## Supabase
 
 - [x] Create project
-- [ ] Connect application
+- [x] Connect application
 - [ ] Configure authentication
 - [ ] Configure storage
 - [ ] Enable Realtime
