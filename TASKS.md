@@ -16,7 +16,8 @@ Current Phase:
 
 Overall Progress:
 
-0%
+7% — Phase 0 nearly complete (remaining: branch protection, Vercel
+secrets, Supabase auth/storage/realtime configuration)
 
 ---
 
@@ -39,7 +40,7 @@ Overall Progress:
 - [x] Initialize Git repository
 - [x] Configure .gitignore
 - [x] Configure .editorconfig
-- [ ] Create README.md
+- [x] Create README.md
 - [x] Create LICENSE (MIT)
 
 ---
