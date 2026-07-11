@@ -88,7 +88,7 @@ Overall Progress:
 
 ## Code Quality
 
-- [ ] Configure ESLint
+- [x] Configure ESLint
 - [x] Configure Prettier
 - [ ] Configure Husky
 - [ ] Configure lint-staged
