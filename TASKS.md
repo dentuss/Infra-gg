@@ -90,8 +90,8 @@ Overall Progress:
 
 - [x] Configure ESLint
 - [x] Configure Prettier
-- [ ] Configure Husky
-- [ ] Configure lint-staged
+- [x] Configure Husky
+- [x] Configure lint-staged
 - [x] Configure strict TypeScript
 - [x] Configure import sorting
 
