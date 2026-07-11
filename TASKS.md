@@ -36,8 +36,8 @@ Overall Progress:
 
 ## Repository
 
-- [ ] Initialize Git repository
-- [ ] Configure .gitignore
+- [x] Initialize Git repository
+- [x] Configure .gitignore
 - [ ] Configure .editorconfig
 - [ ] Create README.md
 - [ ] Create LICENSE (MIT)
@@ -46,12 +46,12 @@ Overall Progress:
 
 ## Next.js
 
-- [ ] Create Next.js project
-- [ ] Enable App Router
-- [ ] Enable TypeScript
-- [ ] Configure Tailwind
+- [x] Create Next.js project
+- [x] Enable App Router
+- [x] Enable TypeScript
+- [x] Configure Tailwind
 - [ ] Configure path aliases
-- [ ] Configure Turbopack
+- [x] Configure Turbopack (default bundler in Next.js 16)
 
 ---
 
@@ -59,7 +59,7 @@ Overall Progress:
 
 ### Core
 
-- [ ] Install Supabase
+- [x] Install Supabase
 - [ ] Install React Query
 - [ ] Install Zustand
 - [ ] Install React Hook Form
@@ -115,8 +115,8 @@ Overall Progress:
 
 ## GitHub
 
-- [ ] Push repository
-- [ ] Protect main branch
+- [x] Push repository
+- [ ] Protect master branch
 - [ ] Configure Issue Templates
 - [ ] Configure Pull Request Template
 
@@ -135,14 +135,14 @@ Overall Progress:
 ### CD
 
 - [ ] Configure Vercel deployment
-- [ ] Deploy on merge to main
+- [ ] Deploy on merge to master
 - [ ] Verify deployment status
 
 ---
 
 ## Supabase
 
-- [ ] Create project
+- [x] Create project
 - [ ] Connect application
 - [ ] Configure authentication
 - [ ] Configure storage
