@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Infragg — Rainbow Six Siege Team Platform
 
-## Getting Started
+Private, invite-only workspace for a competitive Rainbow Six Siege team.
+One app instead of Discord scheduling, Google Slides strategy boards,
+Google Docs, shared folders, and manual VOD notes.
 
-First, run the development server:
+See [PRODUCT.md](PRODUCT.md) for the product vision, [TASKS.md](TASKS.md)
+for the roadmap, and [CLAUDE.md](CLAUDE.md) for engineering rules.
+
+## Stack
+
+- [Next.js 16](https://nextjs.org) (App Router, Turbopack) + TypeScript
+- [TailwindCSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com)
+- [Supabase](https://supabase.com) — Postgres, Auth, Realtime, Storage
+- [React Query](https://tanstack.com/query) (server state) + [Zustand](https://zustand.docs.pmnd.rs) (client state)
+- [React Konva](https://konvajs.org/docs/react/) (strategy board), [Tiptap](https://tiptap.dev) (documents), [FullCalendar](https://fullcalendar.io) (calendar)
+- Deployed on [Vercel](https://vercel.com)
+
+## Getting started
+
+Requirements: Node.js ≥ 20.9 and npm.
 
 ```bash
+git clone https://github.com/dentuss/Infra-gg.git
+cd Infra-gg
+npm install
+cp .env.example .env.local   # then fill in the Supabase values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The Supabase URL and publishable key live in the Supabase dashboard under
+Project Settings → API Keys. The publishable key is safe for the browser;
+the secret (service role) key must never appear in the repo or in a
+`NEXT_PUBLIC_` variable.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Docker (development only)
 
-## Learn More
+```bash
+docker compose up
+```
 
-To learn more about Next.js, take a look at the following resources:
+Production runs on Vercel — the Docker setup exists purely for a
+reproducible local dev environment.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Script                 | What it does                          |
+| ---------------------- | ------------------------------------- |
+| `npm run dev`          | Dev server (Turbopack)                |
+| `npm run build`        | Production build                      |
+| `npm run start`        | Serve the production build            |
+| `npm run typecheck`    | TypeScript, no emit                   |
+| `npm run lint`         | ESLint                                |
+| `npm run lint:fix`     | ESLint with autofix                   |
+| `npm run format`       | Prettier write                        |
+| `npm run format:check` | Prettier check (CI uses this)         |
 
-## Deploy on Vercel
+A Husky pre-commit hook runs lint-staged (ESLint + Prettier on staged
+files).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/          # App Router routes and layouts
+  components/   # Reusable UI components (components/ui = shadcn/ui)
+  lib/          # Clients and shared utilities (supabase, env)
+supabase/
+  migrations/   # SQL migration history (see supabase/README.md)
+```
+
+Business logic belongs in services, hooks, and server actions — not in
+components.
+
+## CI / CD
+
+Every push and pull request runs GitHub Actions
+([ci.yml](.github/workflows/ci.yml)): install → typecheck → lint →
+format check → build, with npm and Next.js build caching.
+
+Merging into `master` deploys to Vercel automatically **once** these
+repository secrets are configured (Settings → Secrets and variables →
+Actions):
+
+- `VERCEL_TOKEN` — from <https://vercel.com/account/tokens>
+- `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` — from the Vercel project
+  settings (or `.vercel/project.json` after running `vercel link`)
+
+Until the secrets exist, the deploy job is skipped and CI alone gates
+merges.
+
+## Conventions
+
+- Conventional Commits (`feat:`, `fix:`, `chore:`, …)
+- Feature branches only — never commit directly to `master`
+- All schema changes via migrations in `supabase/migrations/`
+- Row Level Security enabled on every table

@@ -16,7 +16,8 @@ Current Phase:
 
 Overall Progress:
 
-0%
+7% — Phase 0 nearly complete (remaining: branch protection, Vercel
+secrets, Supabase auth/storage/realtime configuration)
 
 ---
 
@@ -36,22 +37,22 @@ Overall Progress:
 
 ## Repository
 
-- [ ] Initialize Git repository
-- [ ] Configure .gitignore
-- [ ] Configure .editorconfig
-- [ ] Create README.md
-- [ ] Create LICENSE (MIT)
+- [x] Initialize Git repository
+- [x] Configure .gitignore
+- [x] Configure .editorconfig
+- [x] Create README.md
+- [x] Create LICENSE (MIT)
 
 ---
 
 ## Next.js
 
-- [ ] Create Next.js project
-- [ ] Enable App Router
-- [ ] Enable TypeScript
-- [ ] Configure Tailwind
-- [ ] Configure path aliases
-- [ ] Configure Turbopack
+- [x] Create Next.js project
+- [x] Enable App Router
+- [x] Enable TypeScript
+- [x] Configure Tailwind
+- [x] Configure path aliases
+- [x] Configure Turbopack (default bundler in Next.js 16)
 
 ---
 
@@ -59,66 +60,66 @@ Overall Progress:
 
 ### Core
 
-- [ ] Install Supabase
-- [ ] Install React Query
-- [ ] Install Zustand
-- [ ] Install React Hook Form
-- [ ] Install Zod
+- [x] Install Supabase
+- [x] Install React Query
+- [x] Install Zustand
+- [x] Install React Hook Form
+- [x] Install Zod
 
 ### UI
 
-- [ ] Install Lucide
-- [ ] Install Framer Motion
-- [ ] Install shadcn/ui
+- [x] Install Lucide
+- [x] Install Framer Motion
+- [x] Install shadcn/ui
 
 ### Editor
 
-- [ ] Install Tiptap
+- [x] Install Tiptap
 
 ### Strategy Board
 
-- [ ] Install React Konva
-- [ ] Install Konva
+- [x] Install React Konva
+- [x] Install Konva
 
 ### Calendar
 
-- [ ] Install FullCalendar
+- [x] Install FullCalendar
 
 ---
 
 ## Code Quality
 
-- [ ] Configure ESLint
-- [ ] Configure Prettier
-- [ ] Configure Husky
-- [ ] Configure lint-staged
-- [ ] Configure strict TypeScript
-- [ ] Configure import sorting
+- [x] Configure ESLint
+- [x] Configure Prettier
+- [x] Configure Husky
+- [x] Configure lint-staged
+- [x] Configure strict TypeScript
+- [x] Configure import sorting
 
 ---
 
 ## Environment
 
-- [ ] Create .env.example
-- [ ] Configure .env.local
-- [ ] Configure environment validation
+- [x] Create .env.example
+- [x] Configure .env.local
+- [x] Configure environment validation
 
 ---
 
 ## Docker
 
-- [ ] Create Dockerfile
-- [ ] Create docker-compose.yml
-- [ ] Configure development container
+- [x] Create Dockerfile
+- [x] Create docker-compose.yml
+- [x] Configure development container
 
 ---
 
 ## GitHub
 
-- [ ] Push repository
-- [ ] Protect main branch
-- [ ] Configure Issue Templates
-- [ ] Configure Pull Request Template
+- [x] Push repository
+- [ ] Protect master branch
+- [x] Configure Issue Templates
+- [x] Configure Pull Request Template
 
 ---
 
@@ -126,24 +127,24 @@ Overall Progress:
 
 ### CI
 
-- [ ] Install dependencies
-- [ ] Type checking
-- [ ] Lint
-- [ ] Build
-- [ ] Cache dependencies
+- [x] Install dependencies
+- [x] Type checking
+- [x] Lint
+- [x] Build
+- [x] Cache dependencies
 
 ### CD
 
-- [ ] Configure Vercel deployment
-- [ ] Deploy on merge to main
+- [x] Configure Vercel deployment
+- [x] Deploy on merge to master
 - [ ] Verify deployment status
 
 ---
 
 ## Supabase
 
-- [ ] Create project
-- [ ] Connect application
+- [x] Create project
+- [x] Connect application
 - [ ] Configure authentication
 - [ ] Configure storage
 - [ ] Enable Realtime

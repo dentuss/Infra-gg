@@ -421,7 +421,7 @@ chore:
 
 Use feature branches.
 
-Never commit directly to main.
+Never commit directly to master.
 
 Example
 
@@ -448,7 +448,7 @@ The PR should fail if any step fails.
 
 # CD Pipeline
 
-Deploy automatically to Vercel after merging into main.
+Deploy automatically to Vercel after merging into master.
 
 Deployment should only happen if CI succeeds.
 

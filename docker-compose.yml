@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - .:/app
+      # Keep container-installed dependencies and build output off the host
+      # bind mount.
+      - /app/node_modules
+      - /app/.next
