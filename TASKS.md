@@ -92,7 +92,7 @@ Overall Progress:
 - [ ] Configure Prettier
 - [ ] Configure Husky
 - [ ] Configure lint-staged
-- [ ] Configure strict TypeScript
+- [x] Configure strict TypeScript
 - [ ] Configure import sorting
 
 ---
