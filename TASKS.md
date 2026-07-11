@@ -117,8 +117,8 @@ Overall Progress:
 
 - [x] Push repository
 - [ ] Protect master branch
-- [ ] Configure Issue Templates
-- [ ] Configure Pull Request Template
+- [x] Configure Issue Templates
+- [x] Configure Pull Request Template
 
 ---
 
