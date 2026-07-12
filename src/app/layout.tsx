@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Chakra_Petch, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const chakraPetch = Chakra_Petch({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${chakraPetch.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
