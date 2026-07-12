@@ -2,7 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { combineDateAndTimes, type EventRow } from "@/lib/events";
+import {
+  combineDateAndTimes,
+  type ClearPlan,
+  type EventRow,
+} from "@/lib/events";
 import { createClient } from "@/lib/supabase/client";
 import type { EventFormValues } from "@/lib/validations/event";
 import type { TablesUpdate } from "@/types/database";
@@ -102,14 +106,44 @@ export function useDeleteEvent() {
   });
 }
 
-export function useDeleteEvents() {
+/** Remove a single occurrence from a weekly series. */
+export function useExcludeOccurrence() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      if (ids.length === 0) return;
+    mutationFn: async (input: { event: EventRow; date: string }) => {
       const supabase = createClient();
-      const { error } = await supabase.from("events").delete().in("id", ids);
+      const { error } = await supabase
+        .from("events")
+        .update({
+          excluded_dates: [...input.event.excluded_dates, input.date],
+        })
+        .eq("id", input.event.id);
       if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),
+  });
+}
+
+/** Apply a Clear plan: delete one-offs, exclude recurring occurrences. */
+export function useClearRange() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (plan: ClearPlan) => {
+      const supabase = createClient();
+      if (plan.deleteIds.length > 0) {
+        const { error } = await supabase
+          .from("events")
+          .delete()
+          .in("id", plan.deleteIds);
+        if (error) throw new Error(error.message);
+      }
+      for (const { event, dates } of plan.exclusions) {
+        const { error } = await supabase
+          .from("events")
+          .update({ excluded_dates: [...event.excluded_dates, ...dates] })
+          .eq("id", event.id);
+        if (error) throw new Error(error.message);
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),
   });
