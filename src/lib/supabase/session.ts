@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import type { Database } from "@/types/database";
 
-const PUBLIC_PATH_PREFIXES = ["/login", "/register", "/auth"];
+const PUBLIC_PATH_PREFIXES = ["/login", "/auth"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATH_PREFIXES.some(
@@ -61,7 +61,7 @@ export async function updateSession(request: NextRequest) {
     return redirectWithCookies(request, supabaseResponse, "/login");
   }
 
-  if (claims && (pathname === "/login" || pathname === "/register")) {
+  if (claims && pathname === "/login") {
     return redirectWithCookies(request, supabaseResponse, "/dashboard");
   }
 

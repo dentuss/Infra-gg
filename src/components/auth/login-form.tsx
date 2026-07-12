@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -65,10 +64,7 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          No account yet?{" "}
-          <Link href="/register" className="text-foreground underline">
-            Create one
-          </Link>
+          Accounts are created by your coach — ask the team for access.
         </p>
       </CardContent>
     </Card>
