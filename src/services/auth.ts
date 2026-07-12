@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  createInviteCodeSchema,
   createLoginSchema,
   createRegisterSchema,
 } from "@/lib/validations/auth";
+import { redeemPendingInvite } from "@/services/invites";
 
 export type AuthFormState = {
   error: string | null;
@@ -32,6 +32,9 @@ export async function signInWithPassword(
   if (error) {
     return { error: t("errorInvalidCredentials") };
   }
+
+  // Landing here via an invite link redeems it now that we know the user.
+  await redeemPendingInvite(supabase);
 
   redirect("/dashboard");
 }
@@ -68,31 +71,4 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
-}
-
-export async function redeemInvite(
-  _previous: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
-  const t = await getTranslations("auth.join");
-
-  const parsed = createInviteCodeSchema(t).safeParse(
-    String(formData.get("code") ?? "").trim(),
-  );
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? t("errorInvalidCode") };
-  }
-
-  const supabase = await createClient();
-  const { data: redeemed, error } = await supabase.rpc("redeem_invite", {
-    invite_code: parsed.data,
-  });
-  if (error) {
-    return { error: t("errorFailed") };
-  }
-  if (!redeemed) {
-    return { error: t("errorUsed") };
-  }
-
-  redirect("/dashboard");
 }

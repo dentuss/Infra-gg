@@ -29,7 +29,9 @@ export function InvitesPanel() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copy = async (invite: InviteRow) => {
-    await navigator.clipboard.writeText(invite.code);
+    await navigator.clipboard.writeText(
+      `${window.location.origin}/invite/${invite.code}`,
+    );
     setCopiedId(invite.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -70,7 +72,7 @@ export function InvitesPanel() {
                 className="flex flex-wrap items-center gap-3 border border-border p-3"
               >
                 <code className="min-w-0 flex-1 truncate font-mono text-xs">
-                  {invite.code}
+                  /invite/{invite.code}
                 </code>
 
                 {status === "active" ? (

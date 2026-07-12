@@ -240,7 +240,7 @@ Status
 ## Teams
 
 - [x] Team settings (workspace name, shown in the sidebar)
-- [x] Invite players (create, copy, revoke single-use codes)
+- [x] Invite players (create, copy, revoke single-use invite links)
 - [x] Remove players (revokes membership; the account itself stays)
 
 ---

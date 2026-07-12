@@ -21,7 +21,3 @@ export function createRegisterSchema(t: Translate) {
       path: ["confirmPassword"],
     });
 }
-
-export function createInviteCodeSchema(t: Translate) {
-  return z.uuid(t("errorInvalidCode"));
-}
