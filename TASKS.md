@@ -12,12 +12,12 @@ Claude should always work from the highest priority incomplete task.
 
 Current Phase:
 
-🟡 Project Initialization
+🟡 Phase 1 — Authentication
 
 Overall Progress:
 
-7% — Phase 0 nearly complete (remaining: branch protection, Vercel
-secrets, Supabase auth/storage/realtime configuration)
+12% — Phase 0 done except externally blocked items; Phase 1 code
+complete, pending Discord provider configuration
 
 ---
 
@@ -117,7 +117,7 @@ secrets, Supabase auth/storage/realtime configuration)
 ## GitHub
 
 - [x] Push repository
-- [ ] Protect master branch
+- [ ] Protect master branch ⏸ (requires GitHub Pro for private repositories)
 - [x] Configure Issue Templates
 - [x] Configure Pull Request Template
 
@@ -145,11 +145,11 @@ secrets, Supabase auth/storage/realtime configuration)
 
 - [x] Create project
 - [x] Connect application
-- [ ] Configure authentication
+- [ ] Configure authentication ⏸ (email works; Discord provider needs dashboard setup)
 - [ ] Configure storage
 - [ ] Enable Realtime
-- [ ] Configure RLS
-- [ ] Create initial migrations
+- [x] Configure RLS
+- [x] Create initial migrations
 
 ---
 
@@ -157,27 +157,27 @@ secrets, Supabase auth/storage/realtime configuration)
 
 Status
 
-🔴
+🟡
 
 ---
 
 ## Authentication
 
-- [ ] Discord OAuth
-- [ ] Email login
-- [ ] Invite-only registration
-- [ ] Session persistence
-- [ ] Route protection
-- [ ] Logout
+- [ ] Discord OAuth ⏸ (code complete — enable the provider in the Supabase and Discord dashboards)
+- [x] Email login
+- [x] Invite-only registration
+- [x] Session persistence
+- [x] Route protection
+- [x] Logout
 
 ---
 
 ## User Profile
 
 - [ ] Avatar
-- [ ] Username
+- [x] Username
 - [ ] Team
-- [ ] Role
+- [x] Role
 
 ---
 

@@ -41,6 +41,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Publishable values — safe to commit; Row Level Security guards the data.
+          NEXT_PUBLIC_SUPABASE_URL: https://mlpvwaxedcjqvjxtzfss.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JopNs71pTrFjZu_89h9_Qg_8bYzBcY4
 
   # The secrets context is unavailable in job-level `if`, so a tiny job
   # exposes whether Vercel is configured; the deploy job keys off it.
