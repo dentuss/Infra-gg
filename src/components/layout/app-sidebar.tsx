@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { NavMain } from "@/components/layout/nav-main";
@@ -38,17 +39,22 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
           <LocaleSwitcher />
         </div>
         <div className="flex items-center gap-2 px-2 py-1">
-          <UserAvatar
-            username={profile.username}
-            avatarUrl={profile.avatar_url}
-            className="size-8"
-          />
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-sm font-medium">{profile.username}</p>
-            <p className="text-xs text-muted-foreground">
-              {t(`roles.${profile.role}`)}
-            </p>
-          </div>
+          <Link
+            href="/profile"
+            className="flex min-w-0 flex-1 items-center gap-2 hover:opacity-80"
+          >
+            <UserAvatar
+              username={profile.username}
+              avatarUrl={profile.avatar_url}
+              className="size-8"
+            />
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-sm font-medium">{profile.username}</p>
+              <p className="text-xs text-muted-foreground">
+                {t(`roles.${profile.role}`)}
+              </p>
+            </div>
+          </Link>
           <form action={signOut}>
             <Button
               type="submit"
