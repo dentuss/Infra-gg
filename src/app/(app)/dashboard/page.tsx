@@ -1,9 +1,11 @@
 import { Bell, CalendarDays, Crosshair, FileText, Trophy } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { UpcomingList } from "@/components/dashboard/upcoming-list";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getUpcomingEvents } from "@/services/events";
 import { getCurrentProfile } from "@/services/profile";
 import { getTeamRoster } from "@/services/team";
 
@@ -28,10 +31,18 @@ function EmptyState({ icon: Icon, text }: { icon: typeof Bell; text: string }) {
 }
 
 export default async function DashboardPage() {
-  const [profile, roster] = await Promise.all([
+  const [profile, roster, upcoming] = await Promise.all([
     getCurrentProfile(),
     getTeamRoster(),
+    getUpcomingEvents(),
   ]);
+
+  const practices = upcoming
+    .filter(({ event }) => event.type === "practice")
+    .slice(0, 3);
+  const matches = upcoming
+    .filter(({ event }) => event.type === "scrim" || event.type === "match")
+    .slice(0, 3);
 
   return (
     <main className="flex flex-col gap-6 p-6">
@@ -48,9 +59,9 @@ export default async function DashboardPage() {
         aria-label="Quick actions"
         className="flex flex-wrap items-center gap-2"
       >
-        <Button disabled title="Available with the Calendar phase">
+        <Link href="/calendar" className={buttonVariants()}>
           <CalendarDays /> Schedule practice
-        </Button>
+        </Link>
         <Button
           disabled
           variant="secondary"
@@ -74,10 +85,14 @@ export default async function DashboardPage() {
             <CardDescription>From the team calendar</CardDescription>
           </CardHeader>
           <CardContent>
-            <EmptyState
-              icon={CalendarDays}
-              text="No practices yet — the calendar arrives in Phase 3."
-            />
+            {practices.length ? (
+              <UpcomingList occurrences={practices} />
+            ) : (
+              <EmptyState
+                icon={CalendarDays}
+                text="No practices scheduled — add one in the calendar."
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -87,10 +102,14 @@ export default async function DashboardPage() {
             <CardDescription>Scrims and officials</CardDescription>
           </CardHeader>
           <CardContent>
-            <EmptyState
-              icon={Trophy}
-              text="No matches yet — the calendar arrives in Phase 3."
-            />
+            {matches.length ? (
+              <UpcomingList occurrences={matches} />
+            ) : (
+              <EmptyState
+                icon={Trophy}
+                text="No scrims or matches scheduled yet."
+              />
+            )}
           </CardContent>
         </Card>
 
