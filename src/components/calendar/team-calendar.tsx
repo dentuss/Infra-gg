@@ -37,15 +37,20 @@ import {
   useChillDays,
   useRemoveChillDay,
 } from "@/hooks/use-chill-days";
-import { useDeleteEvents, useEvents, useUpdateEvent } from "@/hooks/use-events";
+import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
 import {
+  buildClearPlan,
   dateToKey,
   dayAfter,
-  eventsInRange,
-  toCalendarEvent,
+  expandEventsForRange,
 } from "@/lib/events";
 
-const CLOSED: EventDialogState = { open: false, event: null, range: null };
+const CLOSED: EventDialogState = {
+  open: false,
+  event: null,
+  occurrenceDate: null,
+  range: null,
+};
 
 function renderEventContent(arg: EventContentArg) {
   const description = arg.event.extendedProps.description as string | null;
@@ -69,7 +74,7 @@ function renderEventContent(arg: EventContentArg) {
 export function TeamCalendar() {
   const { data: events, isPending, error } = useEvents();
   const updateEvent = useUpdateEvent();
-  const deleteEvents = useDeleteEvents();
+  const clearRange = useClearRange();
   const [dialog, setDialog] = useState<EventDialogState>(CLOSED);
   const [clearOpen, setClearOpen] = useState(false);
   const [viewRange, setViewRange] = useState<{
@@ -91,22 +96,33 @@ export function TeamCalendar() {
 
   const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
 
+  // The chill wash covers the day's own visible column (10:00 → 03:00)
+  // rather than the clock's 00:00–03:00, which would paint the bottom of
+  // the previous day's column.
   const chillBackgroundEvents: EventInput[] = (chillDays ?? []).map((date) => ({
     id: `chill-${date}`,
-    start: `${date}T00:00:00`,
-    end: `${dayAfter(date)}T00:00:00`,
+    start: `${date}T10:00:00`,
+    end: `${dayAfter(date)}T03:00:00`,
     display: "background",
     classNames: ["chill-bg"],
   }));
 
-  const affectedByClear = useMemo(
+  const clearPlan = useMemo(
     () =>
       events && viewRange
-        ? eventsInRange(events, viewRange.start, viewRange.end)
-        : [],
+        ? buildClearPlan(events, viewRange.start, viewRange.end)
+        : { deleteIds: [], exclusions: [], totalCount: 0 },
     [events, viewRange],
   );
   const rangeNoun = viewRange?.type === "dayGridMonth" ? "month" : "week";
+
+  const calendarInputs = useMemo(
+    () =>
+      events && viewRange
+        ? expandEventsForRange(events, viewRange.start, viewRange.end)
+        : [],
+    [events, viewRange],
+  );
 
   // FullCalendar only re-measures on window resize, so collapsing or
   // expanding the sidebar (an animated width change of the content area)
@@ -123,15 +139,22 @@ export function TeamCalendar() {
   }, []);
 
   const openCreate = (range: EventDialogState["range"]) =>
-    setDialog({ open: true, event: null, range });
+    setDialog({ open: true, event: null, occurrenceDate: null, range });
 
   const onSelect = (info: DateSelectArg) =>
     openCreate({ start: info.start, end: info.end });
 
   const onEventClick = (info: EventClickArg) => {
-    const row = events?.find((event) => event.id === info.event.id);
+    // Recurring occurrences carry ids of the form `<eventId>::<date>`.
+    const [eventId, occurrenceDate] = info.event.id.split("::");
+    const row = events?.find((event) => event.id === eventId);
     if (row) {
-      setDialog({ open: true, event: row, range: null });
+      setDialog({
+        open: true,
+        event: row,
+        occurrenceDate: occurrenceDate ?? null,
+        range: null,
+      });
     }
   };
 
@@ -171,7 +194,7 @@ export function TeamCalendar() {
         <div className="flex items-center gap-2">
           <Button
             variant="destructive"
-            disabled={affectedByClear.length === 0}
+            disabled={clearPlan.totalCount === 0}
             onClick={() => setClearOpen(true)}
           >
             <Trash2 /> Clear {rangeNoun}
@@ -195,10 +218,8 @@ export function TeamCalendar() {
         views={{
           timeGridWeek: { dayHeaderFormat: { weekday: "long" } },
         }}
-        events={[
-          ...(events?.map(toCalendarEvent) ?? []),
-          ...chillBackgroundEvents,
-        ]}
+        events={[...calendarInputs, ...chillBackgroundEvents]}
+        nextDayThreshold="10:00:00"
         datesSet={(arg: DatesSetArg) =>
           setViewRange({
             type: arg.view.type,
@@ -289,6 +310,7 @@ export function TeamCalendar() {
                   ? removeChillDay
                   : addChillDay;
                 toggle.mutate(chillPrompt.day);
+                setChillPrompt(null);
               }}
             >
               {chillPrompt?.isChill ? "Yes, remove" : "Hell Yeah"}
@@ -302,22 +324,23 @@ export function TeamCalendar() {
           <AlertDialogHeader>
             <AlertDialogTitle>Clear this {rangeNoun}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes {affectedByClear.length} event
-              {affectedByClear.length === 1 ? "" : "s"} in the visible{" "}
-              {rangeNoun}. Recurring series that touch this {rangeNoun} are
-              deleted entirely. This cannot be undone.
+              This permanently removes {clearPlan.totalCount} event
+              {clearPlan.totalCount === 1 ? "" : "s"} from the visible{" "}
+              {rangeNoun}. Recurring events only lose this {rangeNoun}&apos;s
+              occurrences — future weeks stay scheduled. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={deleteEvents.isPending}
-              onClick={() =>
-                deleteEvents.mutate(affectedByClear.map((event) => event.id))
-              }
+              disabled={clearRange.isPending}
+              onClick={() => {
+                clearRange.mutate(clearPlan);
+                setClearOpen(false);
+              }}
             >
-              Delete {affectedByClear.length} event
-              {affectedByClear.length === 1 ? "" : "s"}
+              Delete {clearPlan.totalCount} event
+              {clearPlan.totalCount === 1 ? "" : "s"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -49,6 +49,7 @@ export type Database = {
           created_by: string;
           description: string | null;
           ends_at: string;
+          excluded_dates: string[];
           id: string;
           recur_until: string | null;
           recurs_weekly: boolean;
@@ -63,6 +64,7 @@ export type Database = {
           created_by: string;
           description?: string | null;
           ends_at: string;
+          excluded_dates?: string[];
           id?: string;
           recur_until?: string | null;
           recurs_weekly?: boolean;
@@ -77,6 +79,7 @@ export type Database = {
           created_by?: string;
           description?: string | null;
           ends_at?: string;
+          excluded_dates?: string[];
           id?: string;
           recur_until?: string | null;
           recurs_weekly?: boolean;

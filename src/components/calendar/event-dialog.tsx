@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useCreateEvent,
   useDeleteEvent,
+  useExcludeOccurrence,
   useUpdateEventForm,
 } from "@/hooks/use-events";
 import { isoToDateValue, isoToTimeValue, type EventRow } from "@/lib/events";
@@ -44,6 +45,8 @@ const EVENT_TYPE_LABELS: Record<EventFormValues["type"], string> = {
 export type EventDialogState = {
   open: boolean;
   event: EventRow | null;
+  /** Set when the dialog was opened from a recurring occurrence. */
+  occurrenceDate: string | null;
   range: { start: Date; end: Date } | null;
 };
 
@@ -108,6 +111,7 @@ export function EventDialog({
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEventForm();
   const deleteEvent = useDeleteEvent();
+  const excludeOccurrence = useExcludeOccurrence();
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -127,9 +131,15 @@ export function EventDialog({
     name: "recursWeekly",
   });
   const pending =
-    createEvent.isPending || updateEvent.isPending || deleteEvent.isPending;
+    createEvent.isPending ||
+    updateEvent.isPending ||
+    deleteEvent.isPending ||
+    excludeOccurrence.isPending;
   const mutationError =
-    createEvent.error ?? updateEvent.error ?? deleteEvent.error;
+    createEvent.error ??
+    updateEvent.error ??
+    deleteEvent.error ??
+    excludeOccurrence.error;
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (state.event) {
@@ -140,9 +150,18 @@ export function EventDialog({
     onClose();
   });
 
-  const onDelete = async () => {
+  const onDeleteSeries = async () => {
     if (!state.event) return;
     await deleteEvent.mutateAsync(state.event.id);
+    onClose();
+  };
+
+  const onDeleteOccurrence = async () => {
+    if (!state.event || !state.occurrenceDate) return;
+    await excludeOccurrence.mutateAsync({
+      event: state.event,
+      date: state.occurrenceDate,
+    });
     onClose();
   };
 
@@ -302,12 +321,34 @@ export function EventDialog({
           ) : null}
 
           <DialogFooter className="gap-2">
-            {state.event ? (
+            {state.event &&
+            state.event.recurs_weekly &&
+            state.occurrenceDate ? (
+              <div className="mr-auto flex gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={pending}
+                  onClick={onDeleteOccurrence}
+                >
+                  Delete this day
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={onDeleteSeries}
+                  className="text-destructive"
+                >
+                  Delete series
+                </Button>
+              </div>
+            ) : state.event ? (
               <Button
                 type="button"
                 variant="destructive"
                 disabled={pending}
-                onClick={onDelete}
+                onClick={onDeleteSeries}
                 className="mr-auto"
               >
                 Delete

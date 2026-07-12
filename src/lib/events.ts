@@ -10,6 +10,14 @@ export type EventOccurrence = {
   end: Date;
 };
 
+export type ClearPlan = {
+  /** One-off events deleted outright. */
+  deleteIds: string[];
+  /** Recurring events with the listed occurrence dates excluded. */
+  exclusions: { event: EventRow; dates: string[] }[];
+  totalCount: number;
+};
+
 function pad(value: number) {
   return String(value).padStart(2, "0");
 }
@@ -48,66 +56,120 @@ export function combineDateAndTimes(
   return { start, end };
 }
 
-function localTimeOfDay(iso: string): string {
-  const date = new Date(iso);
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
-}
-
-/** recur_until is inclusive; FullCalendar's endRecur is exclusive. */
 export function dayAfter(dateOnly: string): string {
   const date = new Date(`${dateOnly}T00:00:00`);
   date.setDate(date.getDate() + 1);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return dateToKey(date);
 }
 
-export function toCalendarEvent(event: EventRow): EventInput {
-  const base: EventInput = {
-    id: event.id,
-    title: event.title,
-    allDay: event.all_day,
-    classNames: [`event-${event.type}`],
-    extendedProps: { description: event.description },
-  };
-
-  if (event.recurs_weekly) {
-    return {
-      ...base,
-      daysOfWeek: [new Date(event.starts_at).getDay()],
-      startTime: localTimeOfDay(event.starts_at),
-      endTime: localTimeOfDay(event.ends_at),
-      startRecur: event.starts_at,
-      endRecur: event.recur_until ? dayAfter(event.recur_until) : undefined,
-      // Recurring events are edited through the dialog; dragging a
-      // single instance of a series is ambiguous.
-      editable: false,
-    };
-  }
-
-  return { ...base, start: event.starts_at, end: event.ends_at };
+function eventDurationMs(event: EventRow): number {
+  return (
+    new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime()
+  );
 }
 
 /**
- * Events with at least one occurrence overlapping [start, end).
- * Recurring series count as overlapping when they are active anywhere in
- * the range — callers that delete them remove the whole series.
+ * Concrete occurrence start times of an event inside [rangeStart,
+ * rangeEnd), honoring excluded dates. Weekly stepping uses calendar
+ * days so wall-clock times survive DST changes.
  */
-export function eventsInRange(
+export function occurrenceStartsInRange(
+  event: EventRow,
+  rangeStart: Date,
+  rangeEnd: Date,
+): Date[] {
+  if (!event.recurs_weekly) {
+    const start = new Date(event.starts_at);
+    const end = new Date(event.ends_at);
+    return start < rangeEnd && end > rangeStart ? [start] : [];
+  }
+
+  const until = event.recur_until
+    ? new Date(`${event.recur_until}T23:59:59`)
+    : null;
+  const starts: Date[] = [];
+  const cursor = new Date(event.starts_at);
+  while (cursor < rangeStart) {
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  while ((until === null || cursor <= until) && cursor < rangeEnd) {
+    if (!event.excluded_dates.includes(dateToKey(cursor))) {
+      starts.push(new Date(cursor));
+    }
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return starts;
+}
+
+/**
+ * FullCalendar inputs for the visible range. Recurring events are
+ * expanded into individual occurrences (id `<eventId>::<date>`) so a
+ * single occurrence can be deleted without touching the series.
+ */
+export function expandEventsForRange(
   events: EventRow[],
-  start: Date,
-  end: Date,
-): EventRow[] {
-  return events.filter((event) => {
+  rangeStart: Date,
+  rangeEnd: Date,
+): EventInput[] {
+  return events.flatMap((event): EventInput[] => {
+    const base: EventInput = {
+      title: event.title,
+      classNames: [`event-${event.type}`],
+      extendedProps: { description: event.description },
+    };
+
     if (!event.recurs_weekly) {
-      return new Date(event.starts_at) < end && new Date(event.ends_at) > start;
+      return [
+        { ...base, id: event.id, start: event.starts_at, end: event.ends_at },
+      ];
     }
-    if (new Date(event.starts_at) >= end) {
-      return false;
-    }
-    if (!event.recur_until) {
-      return true;
-    }
-    return new Date(`${event.recur_until}T23:59:59`) >= start;
+
+    const durationMs = eventDurationMs(event);
+    return occurrenceStartsInRange(event, rangeStart, rangeEnd).map(
+      (start) => ({
+        ...base,
+        id: `${event.id}::${dateToKey(start)}`,
+        start,
+        end: new Date(start.getTime() + durationMs),
+        // Series timing is edited through the dialog; dragging a single
+        // instance of a series is ambiguous.
+        editable: false,
+      }),
+    );
   });
+}
+
+/**
+ * What "Clear" does to the visible range: one-off events are deleted,
+ * recurring events only lose the occurrences inside the range.
+ */
+export function buildClearPlan(
+  events: EventRow[],
+  rangeStart: Date,
+  rangeEnd: Date,
+): ClearPlan {
+  const deleteIds: string[] = [];
+  const exclusions: ClearPlan["exclusions"] = [];
+  let totalCount = 0;
+
+  for (const event of events) {
+    const occurrenceStarts = occurrenceStartsInRange(
+      event,
+      rangeStart,
+      rangeEnd,
+    );
+    if (occurrenceStarts.length === 0) {
+      continue;
+    }
+    if (event.recurs_weekly) {
+      exclusions.push({ event, dates: occurrenceStarts.map(dateToKey) });
+    } else {
+      deleteIds.push(event.id);
+    }
+    totalCount += occurrenceStarts.length;
+  }
+
+  return { deleteIds, exclusions, totalCount };
 }
 
 /**
@@ -127,37 +189,19 @@ export function upcomingOccurrences(
   const occurrences: EventOccurrence[] = [];
 
   for (const event of events) {
-    const start = new Date(event.starts_at);
-    const end = new Date(event.ends_at);
-
-    if (!event.recurs_weekly) {
-      if (end >= from) {
-        occurrences.push({ event, start, end });
-      }
+    if (!event.recurs_weekly && new Date(event.ends_at) < from) {
       continue;
     }
-
-    const durationMs = end.getTime() - start.getTime();
-    const until = event.recur_until
-      ? new Date(`${event.recur_until}T23:59:59`)
-      : horizon;
-
-    // Step in calendar weeks (not fixed milliseconds) so wall-clock
-    // times survive DST changes.
-    const cursor = new Date(start);
-    while (cursor < from) {
-      cursor.setDate(cursor.getDate() + 7);
-    }
-
-    let produced = 0;
-    while (cursor <= until && cursor <= horizon && produced < limit) {
+    const durationMs = eventDurationMs(event);
+    for (const start of occurrenceStartsInRange(event, from, horizon).slice(
+      0,
+      limit,
+    )) {
       occurrences.push({
         event,
-        start: new Date(cursor),
-        end: new Date(cursor.getTime() + durationMs),
+        start,
+        end: new Date(start.getTime() + durationMs),
       });
-      cursor.setDate(cursor.getDate() + 7);
-      produced += 1;
     }
   }
 
