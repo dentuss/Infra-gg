@@ -31,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "calendar", icon: CalendarDays, href: "/calendar" },
   { key: "team", icon: Users, href: "/team" },
   { key: "documents", icon: FileText },
-  { key: "strategies", icon: Crosshair },
+  { key: "strategies", icon: Crosshair, href: "/strategies" },
 ];
 
 export function NavMain() {
