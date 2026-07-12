@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { LoginForm } from "@/components/auth/login-form";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-};
-
-const CALLBACK_ERRORS: Record<string, string> = {
-  auth: "Sign-in failed. Please try again.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.login");
+  return { title: t("metaTitle") };
+}
 
 export default async function LoginPage({
   searchParams,
@@ -16,8 +14,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  const t = await getTranslations("auth.login");
 
-  return (
-    <LoginForm callbackError={error ? CALLBACK_ERRORS[error] : undefined} />
-  );
+  return <LoginForm callbackError={error ? t("errorCallback") : undefined} />;
 }

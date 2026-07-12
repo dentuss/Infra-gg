@@ -8,6 +8,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,43 +20,44 @@ import {
 } from "@/components/ui/sidebar";
 
 type NavItem = {
-  title: string;
+  key: "dashboard" | "calendar" | "team" | "documents" | "strategies";
   icon: LucideIcon;
   href?: string;
 };
 
 // Items without an href are modules from later phases.
 const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { title: "Calendar", icon: CalendarDays, href: "/calendar" },
-  { title: "Team", icon: Users },
-  { title: "Documents", icon: FileText },
-  { title: "Strategies", icon: Crosshair },
+  { key: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { key: "calendar", icon: CalendarDays, href: "/calendar" },
+  { key: "team", icon: Users },
+  { key: "documents", icon: FileText },
+  { key: "strategies", icon: Crosshair },
 ];
 
 export function NavMain() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
 
   return (
     <SidebarMenu>
       {NAV_ITEMS.map((item) =>
         item.href ? (
-          <SidebarMenuItem key={item.title}>
+          <SidebarMenuItem key={item.key}>
             <SidebarMenuButton
               render={<Link href={item.href} />}
               isActive={pathname.startsWith(item.href)}
             >
               <item.icon />
-              <span>{item.title}</span>
+              <span>{t(item.key)}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ) : (
-          <SidebarMenuItem key={item.title}>
+          <SidebarMenuItem key={item.key}>
             <SidebarMenuButton disabled>
               <item.icon />
-              <span>{item.title}</span>
+              <span>{t(item.key)}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge>Soon</SidebarMenuBadge>
+            <SidebarMenuBadge>{t("soon")}</SidebarMenuBadge>
           </SidebarMenuItem>
         ),
       )}

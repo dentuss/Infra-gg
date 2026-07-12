@@ -1,9 +1,13 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { inviteCodeSchema, loginSchema } from "@/lib/validations/auth";
+import {
+  createInviteCodeSchema,
+  createLoginSchema,
+} from "@/lib/validations/auth";
 
 export type AuthFormState = {
   error: string | null;
@@ -14,15 +18,17 @@ export async function signInWithPassword(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = loginSchema.safeParse(Object.fromEntries(formData));
+  const t = await getTranslations("auth.login");
+
+  const parsed = createLoginSchema(t).safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: parsed.error.issues[0]?.message ?? t("errorCallback") };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    return { error: "Invalid email or password." };
+    return { error: t("errorInvalidCredentials") };
   }
 
   redirect("/dashboard");
@@ -38,11 +44,13 @@ export async function redeemInvite(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = inviteCodeSchema.safeParse(
+  const t = await getTranslations("auth.join");
+
+  const parsed = createInviteCodeSchema(t).safeParse(
     String(formData.get("code") ?? "").trim(),
   );
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid invite code." };
+    return { error: parsed.error.issues[0]?.message ?? t("errorInvalidCode") };
   }
 
   const supabase = await createClient();
@@ -50,10 +58,10 @@ export async function redeemInvite(
     invite_code: parsed.data,
   });
   if (error) {
-    return { error: "Could not redeem the invite. Please try again." };
+    return { error: t("errorFailed") };
   }
   if (!redeemed) {
-    return { error: "This invite code is invalid, already used, or expired." };
+    return { error: t("errorUsed") };
   }
 
   redirect("/dashboard");

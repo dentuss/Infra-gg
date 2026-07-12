@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { JoinForm } from "@/components/auth/join-form";
 import { getCurrentProfile } from "@/services/profile";
 
-export const metadata: Metadata = {
-  title: "Join workspace",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.join");
+  return { title: t("metaTitle") };
+}
 
 export default async function JoinPage() {
   const profile = await getCurrentProfile();

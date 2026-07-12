@@ -85,9 +85,18 @@ Deployment is handled by the **Vercel Git integration**: every push to
 <https://infra-gg.vercel.app>. Since `master` only moves through
 CI-green pull requests, deploys are effectively gated on CI.
 
+## Internationalization
+
+The app is bilingual (English/Russian) via
+[next-intl](https://next-intl.dev). The locale is stored in a `locale`
+cookie — no URL prefixes — and can be switched from the sidebar or the
+login screen. Messages live in `messages/en.json` and
+`messages/ru.json`; every user-facing string must exist in both.
+
 ## Conventions
 
 - Conventional Commits (`feat:`, `fix:`, `chore:`, …)
 - Feature branches only — never commit directly to `master`
 - All schema changes via migrations in `supabase/migrations/`
 - Row Level Security enabled on every table
+- All UI text goes through next-intl (see Internationalization)

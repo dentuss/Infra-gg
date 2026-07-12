@@ -1,5 +1,6 @@
 import { Bell, CalendarDays, Crosshair, FileText, Trophy } from "lucide-react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
@@ -17,9 +18,10 @@ import { getUpcomingEvents } from "@/services/events";
 import { getCurrentProfile } from "@/services/profile";
 import { getTeamRoster } from "@/services/team";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("dashboard");
+  return { title: t("metaTitle") };
+}
 
 function EmptyState({ icon: Icon, text }: { icon: typeof Bell; text: string }) {
   return (
@@ -31,10 +33,12 @@ function EmptyState({ icon: Icon, text }: { icon: typeof Bell; text: string }) {
 }
 
 export default async function DashboardPage() {
-  const [profile, roster, upcoming] = await Promise.all([
+  const [profile, roster, upcoming, t, tRoles] = await Promise.all([
     getCurrentProfile(),
     getTeamRoster(),
     getUpcomingEvents(),
+    getTranslations("dashboard"),
+    getTranslations("roles"),
   ]);
 
   const theorySessions = upcoming
@@ -48,86 +52,70 @@ export default async function DashboardPage() {
     <main className="flex flex-col gap-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold">
-          Welcome back, {profile?.username}
+          {t("welcome", { username: profile?.username ?? "" })}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Everything your team is working on, in one place.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("tagline")}</p>
       </div>
 
       <section
-        aria-label="Quick actions"
+        aria-label={t("quickActions")}
         className="flex flex-wrap items-center gap-2"
       >
         <Link href="/calendar" className={buttonVariants()}>
-          <CalendarDays /> Schedule session
+          <CalendarDays /> {t("scheduleSession")}
         </Link>
-        <Button
-          disabled
-          variant="secondary"
-          title="Available with the Strategy Board phase"
-        >
-          <Crosshair /> New strategy
+        <Button disabled variant="secondary" title={t("availableLater")}>
+          <Crosshair /> {t("newStrategy")}
         </Button>
-        <Button
-          disabled
-          variant="secondary"
-          title="Available with the Documents phase"
-        >
-          <FileText /> New document
+        <Button disabled variant="secondary" title={t("availableLater")}>
+          <FileText /> {t("newDocument")}
         </Button>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Theory sessions</CardTitle>
-            <CardDescription>From the team calendar</CardDescription>
+            <CardTitle>{t("theoryTitle")}</CardTitle>
+            <CardDescription>{t("theorySubtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             {theorySessions.length ? (
               <UpcomingList occurrences={theorySessions} />
             ) : (
-              <EmptyState
-                icon={CalendarDays}
-                text="No theory sessions scheduled — add one in the calendar."
-              />
+              <EmptyState icon={CalendarDays} text={t("theoryEmpty")} />
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming matches</CardTitle>
-            <CardDescription>Scrims and officials</CardDescription>
+            <CardTitle>{t("matchesTitle")}</CardTitle>
+            <CardDescription>{t("matchesSubtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             {matches.length ? (
               <UpcomingList occurrences={matches} />
             ) : (
-              <EmptyState
-                icon={Trophy}
-                text="No scrims or matches scheduled yet."
-              />
+              <EmptyState icon={Trophy} text={t("matchesEmpty")} />
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Team activity</CardDescription>
+            <CardTitle>{t("notificationsTitle")}</CardTitle>
+            <CardDescription>{t("notificationsSubtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <EmptyState icon={Bell} text="Nothing new yet." />
+            <EmptyState icon={Bell} text={t("notificationsEmpty")} />
           </CardContent>
         </Card>
 
         <Card className="md:col-span-2 xl:col-span-3">
           <CardHeader>
-            <CardTitle>Roster</CardTitle>
+            <CardTitle>{t("rosterTitle")}</CardTitle>
             <CardDescription>
-              {roster.length} member{roster.length === 1 ? "" : "s"}
+              {t("membersCount", { count: roster.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -146,11 +134,13 @@ export default async function DashboardPage() {
                     <p className="truncate text-sm font-medium">
                       {member.username}
                     </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {member.role}
+                    <p className="text-xs text-muted-foreground">
+                      {tRoles(member.role)}
                     </p>
                   </div>
-                  {member.role === "coach" ? <Badge>Coach</Badge> : null}
+                  {member.role === "coach" ? (
+                    <Badge>{tRoles("coach")}</Badge>
+                  ) : null}
                 </li>
               ))}
             </ul>

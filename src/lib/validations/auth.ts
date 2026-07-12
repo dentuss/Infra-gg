@@ -1,10 +1,14 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
-  email: z.email("Enter a valid email address."),
-  password: z.string().min(1, "Enter your password."),
-});
+type Translate = (key: string) => string;
 
-export const inviteCodeSchema = z.uuid(
-  "That does not look like an invite code.",
-);
+export function createLoginSchema(t: Translate) {
+  return z.object({
+    email: z.email(t("errorEmail")),
+    password: z.string().min(1, t("errorPasswordRequired")),
+  });
+}
+
+export function createInviteCodeSchema(t: Translate) {
+  return z.uuid(t("errorInvalidCode"));
+}

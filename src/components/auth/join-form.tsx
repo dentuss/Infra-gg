@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { redeemInvite, signOut, type AuthFormState } from "@/services/auth";
 const initialState: AuthFormState = { error: null };
 
 export function JoinForm({ username }: { username: string }) {
+  const t = useTranslations("auth.join");
   const [state, formAction, pending] = useActionState(
     redeemInvite,
     initialState,
@@ -25,16 +27,13 @@ export function JoinForm({ username }: { username: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Almost there, {username}</CardTitle>
-        <CardDescription>
-          This workspace is invite-only. Enter the invite code you received from
-          your coach or manager.
-        </CardDescription>
+        <CardTitle>{t("title", { username })}</CardTitle>
+        <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="code">Invite code</Label>
+            <Label htmlFor="code">{t("codeLabel")}</Label>
             <Input
               id="code"
               name="code"
@@ -51,13 +50,13 @@ export function JoinForm({ username }: { username: string }) {
           ) : null}
 
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Checking…" : "Join workspace"}
+            {pending ? t("submitting") : t("submit")}
           </Button>
         </form>
 
         <form action={signOut}>
           <Button type="submit" variant="ghost" className="w-full">
-            Sign out
+            {t("signOut")}
           </Button>
         </form>
       </CardContent>
