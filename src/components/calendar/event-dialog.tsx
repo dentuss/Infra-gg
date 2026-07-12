@@ -29,7 +29,7 @@ import {
   useDeleteEvent,
   useUpdateEventForm,
 } from "@/hooks/use-events";
-import { toDatetimeLocal, type EventRow } from "@/lib/events";
+import { isoToDateValue, isoToTimeValue, type EventRow } from "@/lib/events";
 import { eventSchema, type EventFormValues } from "@/lib/validations/event";
 import { Constants } from "@/types/database";
 
@@ -47,13 +47,28 @@ export type EventDialogState = {
   range: { start: Date; end: Date } | null;
 };
 
+// Half-hour steps across the day, 24-hour labels.
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hours = String(Math.floor(i / 2)).padStart(2, "0");
+  const minutes = i % 2 === 0 ? "00" : "30";
+  return `${hours}:${minutes}`;
+});
+
+function timeOptionsFor(value: string) {
+  // Keep odd values (from drag-created events) selectable.
+  return value && !TIME_OPTIONS.includes(value)
+    ? [value, ...TIME_OPTIONS]
+    : TIME_OPTIONS;
+}
+
 function initialValues(state: EventDialogState): EventFormValues {
   if (state.event) {
     return {
       title: state.event.title,
       type: state.event.type,
-      startsAt: toDatetimeLocal(state.event.starts_at),
-      endsAt: toDatetimeLocal(state.event.ends_at),
+      date: isoToDateValue(state.event.starts_at),
+      startTime: isoToTimeValue(state.event.starts_at),
+      endTime: isoToTimeValue(state.event.ends_at),
       description: state.event.description ?? "",
       recursWeekly: state.event.recurs_weekly,
       recurUntil: state.event.recur_until ?? "",
@@ -62,11 +77,21 @@ function initialValues(state: EventDialogState): EventFormValues {
 
   const start = state.range?.start ?? new Date();
   const end = state.range?.end ?? new Date(start.getTime() + 60 * 60 * 1000);
+  let startTime = isoToTimeValue(start.toISOString());
+  let endTime = isoToTimeValue(end.toISOString());
+  // A month-view selection carries no meaningful times (00:00 to 00:00);
+  // fall back to a typical evening session.
+  if (startTime === endTime) {
+    startTime = "19:00";
+    endTime = "21:00";
+  }
+
   return {
     title: "",
     type: "theory",
-    startsAt: toDatetimeLocal(start.toISOString()),
-    endsAt: toDatetimeLocal(end.toISOString()),
+    date: isoToDateValue(start.toISOString()),
+    startTime,
+    endTime,
     description: "",
     recursWeekly: false,
     recurUntil: "",
@@ -166,29 +191,73 @@ export function EventDialog({
             />
           </div>
 
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="event-date">Date</Label>
+            <Input
+              id="event-date"
+              type="date"
+              lang="en-GB"
+              {...form.register("date")}
+            />
+            {errors.date ? (
+              <p className="text-sm text-destructive">{errors.date.message}</p>
+            ) : null}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="event-start">Starts</Label>
-              <Input
-                id="event-start"
-                type="datetime-local"
-                {...form.register("startsAt")}
+              <Controller
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="event-start" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeOptionsFor(field.value).map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="event-end">Ends</Label>
-              <Input
-                id="event-end"
-                type="datetime-local"
-                {...form.register("endsAt")}
+              <Controller
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="event-end" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeOptionsFor(field.value).map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
-              {errors.endsAt ? (
+              {errors.endTime ? (
                 <p className="text-sm text-destructive">
-                  {errors.endsAt.message}
+                  {errors.endTime.message}
                 </p>
               ) : null}
             </div>
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            An end time earlier than the start means the event runs past
+            midnight.
+          </p>
 
           <div className="flex items-center gap-6">
             <Controller
