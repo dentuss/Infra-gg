@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import type { Database } from "@/types/database";
 
-const PUBLIC_PATH_PREFIXES = ["/login", "/register", "/auth"];
+const PUBLIC_PATH_PREFIXES = ["/login", "/register", "/auth", "/invite"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATH_PREFIXES.some(

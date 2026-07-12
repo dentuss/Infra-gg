@@ -20,7 +20,7 @@ export default async function AppLayout({
     redirect("/login");
   }
   if (!profile.is_member) {
-    redirect("/join");
+    redirect("/welcome");
   }
 
   return (

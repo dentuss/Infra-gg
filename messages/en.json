@@ -15,18 +15,6 @@
       "noAccount": "No account yet?",
       "createOne": "Create one"
     },
-    "join": {
-      "metaTitle": "Join workspace",
-      "title": "Almost there, {username}",
-      "subtitle": "This workspace is invite-only. Enter the invite code you received from the team staff (coach, manager, or IGL).",
-      "codeLabel": "Invite code",
-      "submit": "Join workspace",
-      "submitting": "Checking…",
-      "signOut": "Sign out",
-      "errorInvalidCode": "That does not look like an invite code.",
-      "errorFailed": "Could not redeem the invite. Please try again.",
-      "errorUsed": "This invite code is invalid, already used, or expired."
-    },
     "register": {
       "metaTitle": "Create account",
       "title": "Create account",
@@ -124,10 +112,10 @@
     "removeConfirm": "Yes, remove",
     "cancel": "Cancel",
     "invitesTitle": "Invites",
-    "invitesSubtitle": "Single-use codes, valid for 7 days",
+    "invitesSubtitle": "Single-use links, valid for 7 days",
     "createInvite": "New invite",
-    "copy": "Copy code",
-    "revoke": "Revoke invite",
+    "copy": "Copy link",
+    "revoke": "Revoke link",
     "expires": "Expires {date}",
     "usedBy": "Used by {username}",
     "expired": "Expired",
@@ -200,5 +188,12 @@
     "save": "Save",
     "saving": "Saving…",
     "saved": "Saved."
+  },
+  "welcome": {
+    "metaTitle": "Coming soon",
+    "title": "Landing coming soon",
+    "subtitle": "You're signed in but not on the team yet. Ask the staff for an invite link.",
+    "invalidInvite": "That invite link is invalid, already used, or expired.",
+    "signOut": "Sign out"
   }
 }
