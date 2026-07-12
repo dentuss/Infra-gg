@@ -12,13 +12,12 @@ Claude should always work from the highest priority incomplete task.
 
 Current Phase:
 
-🟡 Phase 3 — Calendar (up next)
+🟡 Phase 4 — Team Management (up next)
 
 Overall Progress:
 
-22% — Phases 0–2 complete (Discord auth and public registration
-deferred by decision; dashboard widgets fill with real data as later
-phases land)
+30% — Phases 0–3 complete (Discord auth and public registration
+deferred by decision)
 
 ---
 
@@ -194,8 +193,8 @@ Status
 - [x] Sidebar
 - [x] Navigation
 - [x] Quick actions (enabled as their modules arrive)
-- [x] Upcoming practices (data arrives with Phase 3)
-- [x] Upcoming matches (data arrives with Phase 3)
+- [x] Upcoming practices (live from the calendar)
+- [x] Upcoming matches (live from the calendar)
 - [x] Notifications (data arrives with Phase 10)
 
 ---
@@ -204,19 +203,19 @@ Status
 
 Status
 
-🔴
+🟢
 
 ---
 
-- [ ] Month view
-- [ ] Week view
-- [ ] Day view
-- [ ] Practice events
-- [ ] Match events
-- [ ] Reminders
-- [ ] Recurring events
-- [ ] Drag and drop
-- [ ] Event editing
+- [x] Month view
+- [x] Week view
+- [x] Day view
+- [x] Practice events
+- [x] Match events (scrims and officials)
+- [x] Reminders
+- [x] Recurring events (weekly, optional end date)
+- [x] Drag and drop (single events; recurring series are edited via the dialog)
+- [x] Event editing
 
 ---
 
