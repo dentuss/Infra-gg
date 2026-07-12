@@ -12,13 +12,12 @@ Claude should always work from the highest priority incomplete task.
 
 Current Phase:
 
-🟡 Phase 5 — Documents (up next)
+🟡 Phase 6 — Strategy Board (swapped before Documents by decision)
 
 Overall Progress:
 
-42% — Phases 0–4 complete (Discord auth and public registration
-deferred by decision; player statistics and activity feed arrive with
-Phases 9 and 10)
+48% — Phases 0–4 complete; Strategy Board v1 shipped, refinement
+rounds ongoing; Documents follows afterwards
 
 ---
 
@@ -249,7 +248,7 @@ Status
 
 Status
 
-🔴
+🔴 (swapped — comes after the Strategy Board)
 
 ---
 
@@ -268,14 +267,14 @@ Status
 
 Status
 
-🔴
+🟡 (v1 shipped; fix rounds ongoing)
 
 ---
 
 ## Canvas
 
-- [ ] Infinite canvas
-- [ ] Zoom
+- [x] Fixed 16:9 slides-style board (infinite canvas dropped by design)
+- [x] Zoom (toolbar + ctrl-wheel)
 - [ ] Pan
 - [ ] Grid
 
@@ -283,22 +282,21 @@ Status
 
 ## Operators
 
-- [ ] Attackers
-- [ ] Defenders
-- [ ] Drag
-- [ ] Rotate
+- [x] Icon library from storage (operators, gadgets — uploaded to strategy/icons)
+- [x] Drag
+- [x] Rotate
 - [ ] Duplicate
 
 ---
 
 ## Drawing
 
-- [ ] Arrow
-- [ ] Line
-- [ ] Circle
-- [ ] Rectangle
-- [ ] Text
-- [ ] Icons
+- [x] Arrow
+- [x] Line
+- [x] Circle (ellipse)
+- [x] Rectangle
+- [x] Text
+- [x] Icons
 
 ---
 
@@ -313,21 +311,21 @@ Status
 
 ## Editing
 
-- [ ] Undo
-- [ ] Redo
+- [x] Undo
+- [x] Redo
 - [ ] Copy
 - [ ] Paste
-- [ ] Delete
+- [x] Delete
 - [ ] Multi-select
 
 ---
 
 ## Saving
 
-- [ ] Autosave
+- [x] Autosave (debounced, stored as JSON)
 - [ ] Manual save
 - [ ] JSON export
-- [ ] PNG export
+- [x] PNG export
 - [ ] PDF export
 
 ---

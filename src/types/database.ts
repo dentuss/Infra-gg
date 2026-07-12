@@ -179,6 +179,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      strategies: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          data: Json;
+          id: string;
+          map: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          data?: Json;
+          id?: string;
+          map: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          data?: Json;
+          id?: string;
+          map?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "strategies_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       team_settings: {
         Row: {
           id: boolean;

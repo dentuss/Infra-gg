@@ -60,9 +60,12 @@ export default async function DashboardPage() {
         <Link href="/calendar" className={buttonVariants()}>
           <CalendarDays /> {t("scheduleSession")}
         </Link>
-        <Button disabled variant="secondary" title={t("availableLater")}>
+        <Link
+          href="/strategies"
+          className={buttonVariants({ variant: "secondary" })}
+        >
           <Crosshair /> {t("newStrategy")}
-        </Button>
+        </Link>
         <Button disabled variant="secondary" title={t("availableLater")}>
           <FileText /> {t("newDocument")}
         </Button>
