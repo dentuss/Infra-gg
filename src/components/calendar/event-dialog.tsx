@@ -100,9 +100,11 @@ function initialValues(state: EventDialogState): EventFormValues {
 
 export function EventDialog({
   state,
+  readOnly = false,
   onClose,
 }: {
   state: EventDialogState;
+  readOnly?: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("eventDialog");
@@ -173,144 +175,161 @@ export function EventDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {state.event ? t("editTitle") : t("newTitle")}
+            {readOnly
+              ? t("viewTitle")
+              : state.event
+                ? t("editTitle")
+                : t("newTitle")}
           </DialogTitle>
           <DialogDescription>
-            {state.event ? t("editDescription") : t("newDescription")}
+            {readOnly
+              ? t("viewDescription")
+              : state.event
+                ? t("editDescription")
+                : t("newDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="event-title">{t("titleLabel")}</Label>
-            <Input id="event-title" {...form.register("title")} />
-            {errors.title ? (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="event-type">{t("typeLabel")}</Label>
-            <Controller
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="event-type" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Constants.public.Enums.event_type.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {t(`types.${type}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="event-date">{t("dateLabel")}</Label>
-            <Input
-              id="event-date"
-              type="date"
-              lang={formattingLocale(locale)}
-              {...form.register("date")}
-            />
-            {errors.date ? (
-              <p className="text-sm text-destructive">{errors.date.message}</p>
-            ) : null}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+          <fieldset
+            disabled={readOnly || pending}
+            className="flex flex-col gap-4"
+          >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="event-start">{t("startsLabel")}</Label>
-              <Controller
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="event-start" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptionsFor(field.value).map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="event-end">{t("endsLabel")}</Label>
-              <Controller
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="event-end" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptionsFor(field.value).map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.endTime ? (
+              <Label htmlFor="event-title">{t("titleLabel")}</Label>
+              <Input id="event-title" {...form.register("title")} />
+              {errors.title ? (
                 <p className="text-sm text-destructive">
-                  {errors.endTime.message}
+                  {errors.title.message}
                 </p>
               ) : null}
             </div>
-          </div>
 
-          <p className="text-xs text-muted-foreground">{t("midnightHint")}</p>
-
-          <div className="flex items-center gap-6">
-            <Controller
-              control={form.control}
-              name="recursWeekly"
-              render={({ field }) => (
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  {t("repeatsWeekly")}
-                </label>
-              )}
-            />
-          </div>
-
-          {recursWeekly ? (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="event-until">{t("repeatsUntil")}</Label>
-              <Input
-                id="event-until"
-                type="date"
-                {...form.register("recurUntil")}
+              <Label htmlFor="event-type">{t("typeLabel")}</Label>
+              <Controller
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="event-type" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Constants.public.Enums.event_type.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(`types.${type}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
             </div>
-          ) : null}
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="event-description">{t("descriptionLabel")}</Label>
-            <Textarea
-              id="event-description"
-              rows={3}
-              {...form.register("description")}
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="event-date">{t("dateLabel")}</Label>
+              <Input
+                id="event-date"
+                type="date"
+                lang={formattingLocale(locale)}
+                {...form.register("date")}
+              />
+              {errors.date ? (
+                <p className="text-sm text-destructive">
+                  {errors.date.message}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="event-start">{t("startsLabel")}</Label>
+                <Controller
+                  control={form.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="event-start" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeOptionsFor(field.value).map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="event-end">{t("endsLabel")}</Label>
+                <Controller
+                  control={form.control}
+                  name="endTime"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="event-end" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeOptionsFor(field.value).map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.endTime ? (
+                  <p className="text-sm text-destructive">
+                    {errors.endTime.message}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">{t("midnightHint")}</p>
+
+            <div className="flex items-center gap-6">
+              <Controller
+                control={form.control}
+                name="recursWeekly"
+                render={({ field }) => (
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    {t("repeatsWeekly")}
+                  </label>
+                )}
+              />
+            </div>
+
+            {recursWeekly ? (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="event-until">{t("repeatsUntil")}</Label>
+                <Input
+                  id="event-until"
+                  type="date"
+                  {...form.register("recurUntil")}
+                />
+              </div>
+            ) : null}
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="event-description">{t("descriptionLabel")}</Label>
+              <Textarea
+                id="event-description"
+                rows={3}
+                {...form.register("description")}
+              />
+            </div>
+          </fieldset>
 
           {mutationError ? (
             <p role="alert" className="text-sm text-destructive">
@@ -319,7 +338,8 @@ export function EventDialog({
           ) : null}
 
           <DialogFooter className="gap-2">
-            {state.event &&
+            {!readOnly &&
+            state.event &&
             state.event.recurs_weekly &&
             state.occurrenceDate ? (
               <div className="mr-auto flex gap-2">
@@ -341,7 +361,7 @@ export function EventDialog({
                   {t("deleteSeries")}
                 </Button>
               </div>
-            ) : state.event ? (
+            ) : !readOnly && state.event ? (
               <Button
                 type="button"
                 variant="destructive"
@@ -353,11 +373,13 @@ export function EventDialog({
               </Button>
             ) : null}
             <Button type="button" variant="ghost" onClick={onClose}>
-              {t("cancel")}
+              {readOnly ? t("close") : t("cancel")}
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? t("saving") : state.event ? t("save") : t("create")}
-            </Button>
+            {!readOnly ? (
+              <Button type="submit" disabled={pending}>
+                {pending ? t("saving") : state.event ? t("save") : t("create")}
+              </Button>
+            ) : null}
           </DialogFooter>
         </form>
       </DialogContent>

@@ -8,7 +8,7 @@
       "password": "Password",
       "submit": "Sign in",
       "submitting": "Signing in…",
-      "accountsNote": "Accounts are created by your coach — ask the team for access.",
+      "accountsNote": "Accounts are created by the team staff — ask your coach, manager, or IGL for access.",
       "errorInvalidCredentials": "Invalid email or password.",
       "errorCallback": "Sign-in failed. Please try again.",
       "errorEmail": "Enter a valid email address.",
@@ -17,7 +17,7 @@
     "join": {
       "metaTitle": "Join workspace",
       "title": "Almost there, {username}",
-      "subtitle": "This workspace is invite-only. Enter the invite code you received from your coach or manager.",
+      "subtitle": "This workspace is invite-only. Enter the invite code you received from the team staff (coach, manager, or IGL).",
       "codeLabel": "Invite code",
       "submit": "Join workspace",
       "submitting": "Checking…",
@@ -41,7 +41,9 @@
     "igl": "IGL",
     "analyst": "Analyst",
     "player": "Player",
-    "manager": "Manager"
+    "manager": "Manager",
+    "substitute": "Substitute",
+    "trial": "Trial"
   },
   "dashboard": {
     "metaTitle": "Dashboard",
@@ -85,7 +87,8 @@
     "chillRemoveDescription": "Back to the grind — the green goes away.",
     "chillNo": "No",
     "chillYes": "Hell Yeah",
-    "chillRemoveConfirm": "Yes, remove"
+    "chillRemoveConfirm": "Yes, remove",
+    "hintReadOnly": "Click an event to view its details. The schedule is managed by staff."
   },
   "team": {
     "metaTitle": "Team",
@@ -151,6 +154,9 @@
       "startRequired": "Pick a start time.",
       "endRequired": "Pick an end time.",
       "sameTime": "Start and end cannot be the same time."
-    }
+    },
+    "viewTitle": "Event details",
+    "viewDescription": "Viewing only — the schedule is managed by staff.",
+    "close": "Close"
   }
 }

@@ -78,7 +78,7 @@ function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function TeamCalendar() {
+export function TeamCalendar({ canManage }: { canManage: boolean }) {
   const t = useTranslations("calendar");
   const locale = useLocale();
   const { data: events, isPending, error } = useEvents();
@@ -198,20 +198,22 @@ export function TeamCalendar() {
     <div ref={containerRef} className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {isPending ? t("loading") : t("hint")}
+          {isPending ? t("loading") : canManage ? t("hint") : t("hintReadOnly")}
         </p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="destructive"
-            disabled={clearPlan.totalCount === 0}
-            onClick={() => setClearOpen(true)}
-          >
-            <Trash2 /> {t("clearButton", { range: rangeNoun })}
-          </Button>
-          <Button onClick={() => openCreate(null)}>
-            <Plus /> {t("newEvent")}
-          </Button>
-        </div>
+        {canManage ? (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              disabled={clearPlan.totalCount === 0}
+              onClick={() => setClearOpen(true)}
+            >
+              <Trash2 /> {t("clearButton", { range: rangeNoun })}
+            </Button>
+            <Button onClick={() => openCreate(null)}>
+              <Plus /> {t("newEvent")}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <FullCalendar
@@ -228,6 +230,8 @@ export function TeamCalendar() {
           timeGridWeek: { dayHeaderFormat: { weekday: "long" } },
         }}
         events={[...calendarInputs, ...chillBackgroundEvents]}
+        selectable={canManage}
+        editable={canManage}
         nextDayThreshold="10:00:00"
         datesSet={(arg: DatesSetArg) =>
           setViewRange({
@@ -242,6 +246,16 @@ export function TeamCalendar() {
           }
           const day = dateToKey(arg.date);
           const isChill = chillSet.has(day);
+          if (!canManage) {
+            return (
+              <span className="inline-flex items-center gap-1.5">
+                {arg.text}
+                {isChill ? (
+                  <span className="chill-tag">{t("chillTag")}</span>
+                ) : null}
+              </span>
+            );
+          }
           return (
             <button
               type="button"
@@ -266,9 +280,7 @@ export function TeamCalendar() {
             </button>
           );
         }}
-        selectable
         selectMirror
-        editable
         nowIndicator
         allDaySlot={false}
         // The team is active from morning until well past midnight, so
@@ -294,7 +306,11 @@ export function TeamCalendar() {
         eventResize={onEventMoved}
       />
 
-      <EventDialog state={dialog} onClose={() => setDialog(CLOSED)} />
+      <EventDialog
+        state={dialog}
+        readOnly={!canManage}
+        onClose={() => setDialog(CLOSED)}
+      />
 
       <AlertDialog
         open={chillPrompt !== null}

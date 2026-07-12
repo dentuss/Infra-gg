@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
 import { UserAvatar } from "@/components/layout/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -138,9 +137,6 @@ export default async function DashboardPage() {
                       {tRoles(member.role)}
                     </p>
                   </div>
-                  {member.role === "coach" ? (
-                    <Badge>{tRoles("coach")}</Badge>
-                  ) : null}
                 </li>
               ))}
             </ul>
