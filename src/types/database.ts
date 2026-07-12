@@ -173,12 +173,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      team_settings: {
+        Row: {
+          id: boolean;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          name?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: boolean;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
       redeem_invite: { Args: { invite_code: string }; Returns: boolean };
+      remove_member: { Args: { member_id: string }; Returns: undefined };
+      set_member_role: {
+        Args: {
+          member_id: string;
+          new_role: Database["public"]["Enums"]["team_role"];
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       event_type: "theory" | "scrim" | "match" | "meeting" | "reminder";
