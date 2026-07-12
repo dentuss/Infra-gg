@@ -1,12 +1,14 @@
 "use server";
 
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
   createInviteCodeSchema,
   createLoginSchema,
+  createRegisterSchema,
 } from "@/lib/validations/auth";
 
 export type AuthFormState = {
@@ -32,6 +34,34 @@ export async function signInWithPassword(
   }
 
   redirect("/dashboard");
+}
+
+export async function signUpWithPassword(
+  _previous: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const t = await getTranslations("auth.register");
+
+  const parsed = createRegisterSchema(t).safeParse(
+    Object.fromEntries(formData),
+  );
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? t("errorFailed") };
+  }
+
+  const origin =
+    (await headers()).get("origin") ?? "https://infra-gg.vercel.app";
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: { emailRedirectTo: `${origin}/auth/callback` },
+  });
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null, message: t("success") };
 }
 
 export async function signOut() {

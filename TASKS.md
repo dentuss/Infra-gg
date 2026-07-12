@@ -147,7 +147,7 @@ Phases 9 and 10)
 - [x] Create project
 - [x] Connect application
 - [ ] Configure authentication ⏸ (set Site URL + redirect URLs to the production domain in the Supabase dashboard)
-- [ ] Configure storage
+- [x] Configure storage (avatars bucket)
 - [ ] Enable Realtime
 - [x] Configure RLS
 - [x] Create initial migrations
@@ -166,7 +166,7 @@ Status
 
 - [ ] Discord OAuth (deferred — dropped from scope for now)
 - [x] Email login
-- [x] Invite-only registration (public sign-up removed — accounts are created manually for now)
+- [x] Invite-only registration (public sign-up restored, simplified — team membership still requires an invite)
 - [x] Session persistence
 - [x] Route protection
 - [x] Logout
@@ -175,7 +175,7 @@ Status
 
 ## User Profile
 
-- [x] Avatar (Discord/initials, shown in sidebar and roster)
+- [x] Avatar (uploadable on the profile page; initials fallback)
 - [x] Username
 - [ ] Team
 - [x] Role
@@ -464,7 +464,7 @@ These should NOT be started until every previous phase is complete.
 - [ ] Desktop application (Tauri)
 - [ ] Offline mode
 - [ ] Public strategy sharing
-- [ ] Broad access — reopen self-registration with invites (accounts are created manually until then)
+- [x] Broad access — self-registration reopened (simplified email/password); membership still invite-gated
 - [ ] Tournament management
 - [ ] Scrim finder
 - [ ] Analytics dashboard

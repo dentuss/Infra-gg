@@ -8,11 +8,12 @@
       "password": "Пароль",
       "submit": "Войти",
       "submitting": "Входим…",
-      "accountsNote": "Аккаунты создаёт стафф команды — спросите доступ у тренера, менеджера или IGL.",
       "errorInvalidCredentials": "Неверная почта или пароль.",
       "errorCallback": "Не удалось войти. Попробуйте ещё раз.",
       "errorEmail": "Введите корректный адрес почты.",
-      "errorPasswordRequired": "Введите пароль."
+      "errorPasswordRequired": "Введите пароль.",
+      "noAccount": "Ещё нет аккаунта?",
+      "createOne": "Создать"
     },
     "join": {
       "metaTitle": "Вступление в команду",
@@ -25,6 +26,23 @@
       "errorInvalidCode": "Это не похоже на код приглашения.",
       "errorFailed": "Не удалось активировать приглашение. Попробуйте ещё раз.",
       "errorUsed": "Код недействителен, уже использован или истёк."
+    },
+    "register": {
+      "metaTitle": "Создание аккаунта",
+      "title": "Создание аккаунта",
+      "subtitle": "Зарегистрируйтесь по почте — для вступления в команду всё равно понадобится приглашение от стаффа.",
+      "email": "Почта",
+      "password": "Пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "submit": "Создать аккаунт",
+      "submitting": "Создаём аккаунт…",
+      "success": "Подтвердите почту по ссылке из письма, затем войдите.",
+      "haveAccount": "Уже есть аккаунт?",
+      "signIn": "Войти",
+      "errorEmail": "Введите корректный адрес почты.",
+      "errorPasswordShort": "Пароль должен быть не короче 8 символов.",
+      "errorMismatch": "Пароли не совпадают.",
+      "errorFailed": "Не удалось создать аккаунт. Попробуйте ещё раз."
     }
   },
   "nav": {
@@ -63,12 +81,11 @@
     "notificationsTitle": "Уведомления",
     "notificationsSubtitle": "Активность команды",
     "notificationsEmpty": "Пока ничего нового.",
-    "rosterTitle": "Состав",
-    "membersCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участника}}",
     "mainRosterTitle": "Основной состав",
     "statistics": "Статистика",
     "soonBadge": "Скоро",
-    "openSlot": "Свободный слот"
+    "openSlot": "Свободный слот",
+    "editCard": "Редактировать карточку игрока"
   },
   "calendar": {
     "metaTitle": "Календарь",
@@ -168,5 +185,20 @@
     "viewTitle": "Детали события",
     "viewDescription": "Только просмотр — расписание ведёт стафф.",
     "close": "Закрыть"
+  },
+  "profile": {
+    "metaTitle": "Профиль",
+    "title": "Ваш профиль",
+    "subtitle": "Так вас видят в составе и по всему приложению.",
+    "changeAvatar": "Сменить аватар",
+    "uploading": "Загружаем…",
+    "avatarHint": "PNG, JPEG или WebP, до 2 МБ.",
+    "nicknameLabel": "Никнейм",
+    "fullNameLabel": "Имя",
+    "ingameRoleLabel": "Игровая роль",
+    "ingameRolePlaceholder": "Энтри, саппорт, флекс…",
+    "save": "Сохранить",
+    "saving": "Сохраняем…",
+    "saved": "Сохранено."
   }
 }

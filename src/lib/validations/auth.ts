@@ -9,6 +9,19 @@ export function createLoginSchema(t: Translate) {
   });
 }
 
+export function createRegisterSchema(t: Translate) {
+  return z
+    .object({
+      email: z.email(t("errorEmail")),
+      password: z.string().min(8, t("errorPasswordShort")),
+      confirmPassword: z.string(),
+    })
+    .refine((values) => values.password === values.confirmPassword, {
+      message: t("errorMismatch"),
+      path: ["confirmPassword"],
+    });
+}
+
 export function createInviteCodeSchema(t: Translate) {
   return z.uuid(t("errorInvalidCode"));
 }
