@@ -16,11 +16,36 @@ export type Database = {
   };
   public: {
     Tables: {
+      chill_days: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          day: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          day: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          day?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "chill_days_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       events: {
         Row: {
           all_day: boolean;
           created_at: string;
-          is_chill: boolean;
           created_by: string;
           description: string | null;
           ends_at: string;
@@ -39,7 +64,6 @@ export type Database = {
           description?: string | null;
           ends_at: string;
           id?: string;
-          is_chill?: boolean;
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at: string;
@@ -54,7 +78,6 @@ export type Database = {
           description?: string | null;
           ends_at?: string;
           id?: string;
-          is_chill?: boolean;
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at?: string;

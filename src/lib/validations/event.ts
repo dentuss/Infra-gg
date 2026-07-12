@@ -12,7 +12,6 @@ export const eventSchema = z
     description: z.string().max(2000).optional(),
     recursWeekly: z.boolean(),
     recurUntil: z.string().optional(),
-    isChill: z.boolean(),
   })
   .refine((values) => values.startTime !== values.endTime, {
     message: "Start and end cannot be the same time.",

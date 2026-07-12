@@ -32,9 +32,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  useAddChillDay,
+  useChillDays,
+  useRemoveChillDay,
+} from "@/hooks/use-chill-days";
 import { useDeleteEvents, useEvents, useUpdateEvent } from "@/hooks/use-events";
 import {
-  chillDates,
   dateToKey,
   dayAfter,
   eventsInRange,
@@ -76,16 +80,18 @@ export function TeamCalendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const chillList = useMemo(
-    () =>
-      events && viewRange
-        ? chillDates(events, viewRange.start, viewRange.end)
-        : [],
-    [events, viewRange],
-  );
-  const chillSet = useMemo(() => new Set(chillList), [chillList]);
+  const { data: chillDays } = useChillDays();
+  const addChillDay = useAddChillDay();
+  const removeChillDay = useRemoveChillDay();
+  const [chillPrompt, setChillPrompt] = useState<{
+    day: string;
+    weekday: string;
+    isChill: boolean;
+  } | null>(null);
 
-  const chillBackgroundEvents: EventInput[] = chillList.map((date) => ({
+  const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
+
+  const chillBackgroundEvents: EventInput[] = (chillDays ?? []).map((date) => ({
     id: `chill-${date}`,
     start: `${date}T00:00:00`,
     end: `${dayAfter(date)}T00:00:00`,
@@ -201,17 +207,29 @@ export function TeamCalendar() {
           })
         }
         dayHeaderContent={(arg) => {
-          if (
-            arg.view.type !== "timeGridWeek" ||
-            !chillSet.has(dateToKey(arg.date))
-          ) {
+          if (arg.view.type !== "timeGridWeek") {
             return arg.text;
           }
+          const day = dateToKey(arg.date);
+          const isChill = chillSet.has(day);
           return (
-            <span className="flex items-center gap-1.5">
+            <button
+              type="button"
+              className="chill-header-button"
+              title={isChill ? "Remove chill day" : "Make this a chill day"}
+              onClick={() =>
+                setChillPrompt({
+                  day,
+                  weekday: arg.date.toLocaleDateString("en-GB", {
+                    weekday: "long",
+                  }),
+                  isChill,
+                })
+              }
+            >
               {arg.text}
-              <span className="chill-tag">chill day</span>
-            </span>
+              {isChill ? <span className="chill-tag">chill day</span> : null}
+            </button>
           );
         }}
         selectable
@@ -243,6 +261,41 @@ export function TeamCalendar() {
       />
 
       <EventDialog state={dialog} onClose={() => setDialog(CLOSED)} />
+
+      <AlertDialog
+        open={chillPrompt !== null}
+        onOpenChange={(open) => !open && setChillPrompt(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {chillPrompt?.isChill
+                ? `Remove chill from ${chillPrompt.weekday}?`
+                : `Make ${chillPrompt?.weekday} chill day?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {chillPrompt?.isChill
+                ? "Back to the grind — the green goes away."
+                : "The whole day turns green and the header gets a chill day tag."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={addChillDay.isPending || removeChillDay.isPending}
+              onClick={() => {
+                if (!chillPrompt) return;
+                const toggle = chillPrompt.isChill
+                  ? removeChillDay
+                  : addChillDay;
+                toggle.mutate(chillPrompt.day);
+              }}
+            >
+              {chillPrompt?.isChill ? "Yes, remove" : "Hell Yeah"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
         <AlertDialogContent>
