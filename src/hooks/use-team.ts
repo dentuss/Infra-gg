@@ -43,6 +43,28 @@ export function useSetMemberRole() {
   });
 }
 
+export function useUpdateMemberProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      patch: {
+        username: string;
+        full_name: string | null;
+        ingame_role: string | null;
+      };
+    }) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update(input.patch)
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMBERS_KEY }),
+  });
+}
+
 export function useRemoveMember() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
+import {
+  MAIN_ROSTER_SIZE,
+  MainRoster,
+} from "@/components/dashboard/main-roster";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -46,6 +50,14 @@ export default async function DashboardPage() {
   const matches = upcoming
     .filter(({ event }) => event.type === "scrim" || event.type === "match")
     .slice(0, 3);
+
+  // The starting five: the IGL plus up to four players get big cards.
+  const mainRoster = [
+    ...roster.filter((member) => member.role === "igl"),
+    ...roster.filter((member) => member.role === "player"),
+  ].slice(0, MAIN_ROSTER_SIZE);
+  const mainRosterIds = new Set(mainRoster.map((member) => member.id));
+  const otherMembers = roster.filter((member) => !mainRosterIds.has(member.id));
 
   return (
     <main className="flex flex-col gap-6 p-6">
@@ -109,17 +121,21 @@ export default async function DashboardPage() {
             <EmptyState icon={Bell} text={t("notificationsEmpty")} />
           </CardContent>
         </Card>
+      </section>
 
-        <Card className="md:col-span-2 xl:col-span-3">
+      <MainRoster members={mainRoster} />
+
+      {otherMembers.length ? (
+        <Card className="w-full xl:max-w-2xl">
           <CardHeader>
             <CardTitle>{t("rosterTitle")}</CardTitle>
             <CardDescription>
-              {t("membersCount", { count: roster.length })}
+              {t("membersCount", { count: otherMembers.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {roster.map((member) => (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {otherMembers.map((member) => (
                 <li
                   key={member.id}
                   className="flex items-center gap-3 border border-border p-3"
@@ -142,7 +158,7 @@ export default async function DashboardPage() {
             </ul>
           </CardContent>
         </Card>
-      </section>
+      ) : null}
     </main>
   );
 }

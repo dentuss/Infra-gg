@@ -64,7 +64,11 @@
     "notificationsSubtitle": "Активность команды",
     "notificationsEmpty": "Пока ничего нового.",
     "rosterTitle": "Состав",
-    "membersCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участника}}"
+    "membersCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участника}}",
+    "mainRosterTitle": "Основной состав",
+    "statistics": "Статистика",
+    "soonBadge": "Скоро",
+    "openSlot": "Свободный слот"
   },
   "calendar": {
     "metaTitle": "Календарь",
@@ -118,7 +122,13 @@
     "saving": "Сохраняем…",
     "saved": "Сохранено.",
     "loading": "Загрузка…",
-    "loadError": "Не удалось загрузить данные: {message}"
+    "loadError": "Не удалось загрузить данные: {message}",
+    "editTitle": "Редактировать профиль",
+    "editSubtitle": "Никнейм, имя и игровая роль для карточек состава.",
+    "nicknameLabel": "Никнейм",
+    "fullNameLabel": "Имя",
+    "ingameRoleLabel": "Игровая роль",
+    "ingameRolePlaceholder": "Энтри, саппорт, флекс…"
   },
   "eventDialog": {
     "newTitle": "Новое событие",

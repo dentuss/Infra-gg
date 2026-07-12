@@ -147,7 +147,9 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           created_at: string;
+          full_name: string | null;
           id: string;
+          ingame_role: string | null;
           is_member: boolean;
           role: Database["public"]["Enums"]["team_role"];
           updated_at: string;
@@ -156,7 +158,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
+          full_name?: string | null;
           id: string;
+          ingame_role?: string | null;
           is_member?: boolean;
           role?: Database["public"]["Enums"]["team_role"];
           updated_at?: string;
@@ -165,7 +169,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null;
           created_at?: string;
+          full_name?: string | null;
           id?: string;
+          ingame_role?: string | null;
           is_member?: boolean;
           role?: Database["public"]["Enums"]["team_role"];
           updated_at?: string;
