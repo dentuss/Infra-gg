@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
 
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { getCurrentProfile } from "@/services/profile";
 
 export default async function AppLayout({
@@ -16,5 +22,15 @@ export default async function AppLayout({
     redirect("/join");
   }
 
-  return <>{children}</>;
+  return (
+    <SidebarProvider>
+      <AppSidebar profile={profile} />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+        </header>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }

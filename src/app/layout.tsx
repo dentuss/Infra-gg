@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Geist_Mono } from "next/font/google";
 
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 import "./globals.css";
 
 const chakraPetch = Chakra_Petch({
@@ -32,7 +34,9 @@ export default function RootLayout({
       lang="en"
       className={`${chakraPetch.variable} ${geistMono.variable} dark h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   );
 }
