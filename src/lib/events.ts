@@ -111,43 +111,6 @@ export function eventsInRange(
 }
 
 /**
- * Local dates (YYYY-MM-DD) inside [rangeStart, rangeEnd) that are marked
- * chill by an event, including weekly recurring chill events.
- */
-export function chillDates(
-  events: EventRow[],
-  rangeStart: Date,
-  rangeEnd: Date,
-): string[] {
-  const dates = new Set<string>();
-
-  for (const event of events) {
-    if (!event.is_chill) {
-      continue;
-    }
-
-    if (!event.recurs_weekly) {
-      dates.add(isoToDateValue(event.starts_at));
-      continue;
-    }
-
-    const until = event.recur_until
-      ? new Date(`${event.recur_until}T23:59:59`)
-      : rangeEnd;
-    const cursor = new Date(event.starts_at);
-    while (cursor < rangeStart && cursor <= until) {
-      cursor.setDate(cursor.getDate() + 7);
-    }
-    while (cursor <= until && cursor < rangeEnd) {
-      dates.add(dateToKey(cursor));
-      cursor.setDate(cursor.getDate() + 7);
-    }
-  }
-
-  return [...dates];
-}
-
-/**
  * Expand events (including weekly recurrences) into concrete occurrences
  * starting at `from`, sorted ascending. Recurrences without an end date
  * are expanded up to `horizonWeeks` ahead.
