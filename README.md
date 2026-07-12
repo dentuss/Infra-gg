@@ -80,16 +80,10 @@ Every push and pull request runs GitHub Actions
 ([ci.yml](.github/workflows/ci.yml)): install → typecheck → lint →
 format check → build, with npm and Next.js build caching.
 
-Merging into `master` deploys to Vercel automatically **once** these
-repository secrets are configured (Settings → Secrets and variables →
-Actions):
-
-- `VERCEL_TOKEN` — from <https://vercel.com/account/tokens>
-- `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` — from the Vercel project
-  settings (or `.vercel/project.json` after running `vercel link`)
-
-Until the secrets exist, the deploy job is skipped and CI alone gates
-merges.
+Deployment is handled by the **Vercel Git integration**: every push to
+`master` deploys to production at
+<https://infra-gg.vercel.app>. Since `master` only moves through
+CI-green pull requests, deploys are effectively gated on CI.
 
 ## Conventions
 
