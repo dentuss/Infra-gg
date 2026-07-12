@@ -8,11 +8,12 @@
       "password": "Password",
       "submit": "Sign in",
       "submitting": "Signing in…",
-      "accountsNote": "Accounts are created by the team staff — ask your coach, manager, or IGL for access.",
       "errorInvalidCredentials": "Invalid email or password.",
       "errorCallback": "Sign-in failed. Please try again.",
       "errorEmail": "Enter a valid email address.",
-      "errorPasswordRequired": "Enter your password."
+      "errorPasswordRequired": "Enter your password.",
+      "noAccount": "No account yet?",
+      "createOne": "Create one"
     },
     "join": {
       "metaTitle": "Join workspace",
@@ -25,6 +26,23 @@
       "errorInvalidCode": "That does not look like an invite code.",
       "errorFailed": "Could not redeem the invite. Please try again.",
       "errorUsed": "This invite code is invalid, already used, or expired."
+    },
+    "register": {
+      "metaTitle": "Create account",
+      "title": "Create account",
+      "subtitle": "Sign up with your email — joining the team itself still takes an invite from the staff.",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "success": "Check your inbox to confirm your email, then sign in.",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorEmail": "Enter a valid email address.",
+      "errorPasswordShort": "Password must be at least 8 characters.",
+      "errorMismatch": "Passwords do not match.",
+      "errorFailed": "Could not create the account. Please try again."
     }
   },
   "nav": {
@@ -63,12 +81,11 @@
     "notificationsTitle": "Notifications",
     "notificationsSubtitle": "Team activity",
     "notificationsEmpty": "Nothing new yet.",
-    "rosterTitle": "Roster",
-    "membersCount": "{count, plural, one {# member} other {# members}}",
     "mainRosterTitle": "Main roster",
     "statistics": "Statistics",
     "soonBadge": "Soon",
-    "openSlot": "Open slot"
+    "openSlot": "Open slot",
+    "editCard": "Edit player card"
   },
   "calendar": {
     "metaTitle": "Calendar",
@@ -168,5 +185,20 @@
     "viewTitle": "Event details",
     "viewDescription": "Viewing only — the schedule is managed by staff.",
     "close": "Close"
+  },
+  "profile": {
+    "metaTitle": "Profile",
+    "title": "Your profile",
+    "subtitle": "How you appear on the roster and around the app.",
+    "changeAvatar": "Change avatar",
+    "uploading": "Uploading…",
+    "avatarHint": "PNG, JPEG, or WebP, up to 2 MB.",
+    "nicknameLabel": "Nickname",
+    "fullNameLabel": "Name",
+    "ingameRoleLabel": "In-game role",
+    "ingameRolePlaceholder": "Entry, support, flex…",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved."
   }
 }

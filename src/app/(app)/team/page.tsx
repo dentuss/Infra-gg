@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { InvitesPanel } from "@/components/team/invites-panel";
 import { MembersList } from "@/components/team/members-list";
+import { RosterCards } from "@/components/team/roster-cards";
 import { TeamSettingsForm } from "@/components/team/team-settings-form";
 import {
   Card,
@@ -37,6 +38,8 @@ export default async function TeamPage() {
   return (
     <main className="flex flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
+
+      <RosterCards canManage={canManage} />
 
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>

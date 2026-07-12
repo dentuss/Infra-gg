@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,10 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          {t("accountsNote")}
+          {t("noAccount")}{" "}
+          <Link href="/register" className="text-foreground underline">
+            {t("createOne")}
+          </Link>
         </p>
       </CardContent>
     </Card>

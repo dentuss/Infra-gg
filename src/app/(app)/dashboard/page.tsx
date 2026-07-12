@@ -3,12 +3,8 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-import {
-  MAIN_ROSTER_SIZE,
-  MainRoster,
-} from "@/components/dashboard/main-roster";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
-import { UserAvatar } from "@/components/layout/user-avatar";
+import { RosterCards } from "@/components/team/roster-cards";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { getUpcomingEvents } from "@/services/events";
 import { getCurrentProfile } from "@/services/profile";
-import { getTeamRoster } from "@/services/team";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("dashboard");
@@ -36,12 +31,10 @@ function EmptyState({ icon: Icon, text }: { icon: typeof Bell; text: string }) {
 }
 
 export default async function DashboardPage() {
-  const [profile, roster, upcoming, t, tRoles] = await Promise.all([
+  const [profile, upcoming, t] = await Promise.all([
     getCurrentProfile(),
-    getTeamRoster(),
     getUpcomingEvents(),
     getTranslations("dashboard"),
-    getTranslations("roles"),
   ]);
 
   const theorySessions = upcoming
@@ -50,14 +43,6 @@ export default async function DashboardPage() {
   const matches = upcoming
     .filter(({ event }) => event.type === "scrim" || event.type === "match")
     .slice(0, 3);
-
-  // The starting five: the IGL plus up to four players get big cards.
-  const mainRoster = [
-    ...roster.filter((member) => member.role === "igl"),
-    ...roster.filter((member) => member.role === "player"),
-  ].slice(0, MAIN_ROSTER_SIZE);
-  const mainRosterIds = new Set(mainRoster.map((member) => member.id));
-  const otherMembers = roster.filter((member) => !mainRosterIds.has(member.id));
 
   return (
     <main className="flex flex-col gap-6 p-6">
@@ -123,42 +108,7 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <MainRoster members={mainRoster} />
-
-      {otherMembers.length ? (
-        <Card className="w-full xl:max-w-2xl">
-          <CardHeader>
-            <CardTitle>{t("rosterTitle")}</CardTitle>
-            <CardDescription>
-              {t("membersCount", { count: otherMembers.length })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {otherMembers.map((member) => (
-                <li
-                  key={member.id}
-                  className="flex items-center gap-3 border border-border p-3"
-                >
-                  <UserAvatar
-                    username={member.username}
-                    avatarUrl={member.avatar_url}
-                    className="size-9"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {member.username}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {tRoles(member.role)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      ) : null}
+      <RosterCards />
     </main>
   );
 }
