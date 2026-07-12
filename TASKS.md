@@ -210,7 +210,7 @@ Status
 - [x] Month view
 - [x] Week view
 - [x] Day view
-- [x] Practice events
+- [x] Theory events (renamed from practice)
 - [x] Match events (scrims and officials)
 - [x] Reminders
 - [x] Recurring events (weekly, optional end date)

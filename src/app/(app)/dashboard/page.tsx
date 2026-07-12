@@ -37,8 +37,8 @@ export default async function DashboardPage() {
     getUpcomingEvents(),
   ]);
 
-  const practices = upcoming
-    .filter(({ event }) => event.type === "practice")
+  const theorySessions = upcoming
+    .filter(({ event }) => event.type === "theory")
     .slice(0, 3);
   const matches = upcoming
     .filter(({ event }) => event.type === "scrim" || event.type === "match")
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
         className="flex flex-wrap items-center gap-2"
       >
         <Link href="/calendar" className={buttonVariants()}>
-          <CalendarDays /> Schedule practice
+          <CalendarDays /> Schedule session
         </Link>
         <Button
           disabled
@@ -81,16 +81,16 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming practices</CardTitle>
+            <CardTitle>Theory sessions</CardTitle>
             <CardDescription>From the team calendar</CardDescription>
           </CardHeader>
           <CardContent>
-            {practices.length ? (
-              <UpcomingList occurrences={practices} />
+            {theorySessions.length ? (
+              <UpcomingList occurrences={theorySessions} />
             ) : (
               <EmptyState
                 icon={CalendarDays}
-                text="No practices scheduled — add one in the calendar."
+                text="No theory sessions scheduled — add one in the calendar."
               />
             )}
           </CardContent>

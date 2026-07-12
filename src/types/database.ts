@@ -152,7 +152,7 @@ export type Database = {
       redeem_invite: { Args: { invite_code: string }; Returns: boolean };
     };
     Enums: {
-      event_type: "practice" | "scrim" | "match" | "meeting" | "reminder";
+      event_type: "theory" | "scrim" | "match" | "meeting" | "reminder";
       team_role: "coach" | "igl" | "analyst" | "player" | "manager";
     };
     CompositeTypes: {
@@ -281,7 +281,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      event_type: ["practice", "scrim", "match", "meeting", "reminder"],
+      event_type: ["theory", "scrim", "match", "meeting", "reminder"],
       team_role: ["coach", "igl", "analyst", "player", "manager"],
     },
   },

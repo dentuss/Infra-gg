@@ -8,7 +8,6 @@ export const eventSchema = z
     type: z.enum(Constants.public.Enums.event_type),
     startsAt: z.string().min(1, "Set a start time."),
     endsAt: z.string().min(1, "Set an end time."),
-    allDay: z.boolean(),
     description: z.string().max(2000).optional(),
     recursWeekly: z.boolean(),
     recurUntil: z.string().optional(),

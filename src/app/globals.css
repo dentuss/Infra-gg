@@ -161,7 +161,7 @@
 }
 
 /* Muted per-type event colors on the dark theme */
-.fc-event.event-practice {
+.fc-event.event-theory {
   background-color: oklch(0.42 0.08 155);
 }
 .fc-event.event-scrim {
