@@ -29,7 +29,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { key: "calendar", icon: CalendarDays, href: "/calendar" },
-  { key: "team", icon: Users },
+  { key: "team", icon: Users, href: "/team" },
   { key: "documents", icon: FileText },
   { key: "strategies", icon: Crosshair },
 ];

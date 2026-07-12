@@ -1,9 +1,9 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Tables } from "@/types/database";
+import type { Profile } from "@/lib/team";
 
-export type Profile = Tables<"profiles">;
+export type { Profile } from "@/lib/team";
 
 // cache() dedupes the lookup across layout and page within one request.
 export const getCurrentProfile = cache(async (): Promise<Profile | null> => {

@@ -14,15 +14,16 @@ import {
 } from "@/components/ui/sidebar";
 import { signOut } from "@/services/auth";
 import type { Profile } from "@/services/profile";
+import { getTeamName } from "@/services/team";
 
 export async function AppSidebar({ profile }: { profile: Profile }) {
-  const t = await getTranslations();
+  const [t, teamName] = await Promise.all([getTranslations(), getTeamName()]);
 
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-3">
-        <span className="text-lg font-bold tracking-widest uppercase">
-          Infragg
+        <span className="truncate text-lg font-bold tracking-widest uppercase">
+          {teamName}
         </span>
       </SidebarHeader>
 
