@@ -1,15 +1,7 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/services/profile";
-
-const ROLE_ORDER: Record<Profile["role"], number> = {
-  coach: 0,
-  manager: 1,
-  igl: 2,
-  analyst: 3,
-  player: 4,
-};
+import { sortByRole, type Profile } from "@/lib/team";
 
 export const getTeamRoster = cache(async (): Promise<Profile[]> => {
   const supabase = await createClient();
@@ -25,5 +17,16 @@ export const getTeamRoster = cache(async (): Promise<Profile[]> => {
     return [];
   }
 
-  return data.sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
+  return sortByRole(data);
+});
+
+export const getTeamName = cache(async (): Promise<string> => {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("team_settings")
+    .select("name")
+    .maybeSingle();
+
+  return data?.name ?? "Infragg";
 });

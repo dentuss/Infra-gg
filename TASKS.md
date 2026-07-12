@@ -12,12 +12,13 @@ Claude should always work from the highest priority incomplete task.
 
 Current Phase:
 
-🟡 Phase 4 — Team Management (up next)
+🟡 Phase 5 — Documents (up next)
 
 Overall Progress:
 
-30% — Phases 0–3 complete (Discord auth and public registration
-deferred by decision)
+42% — Phases 0–4 complete (Discord auth and public registration
+deferred by decision; player statistics and activity feed arrive with
+Phases 9 and 10)
 
 ---
 
@@ -223,24 +224,24 @@ Status
 
 Status
 
-🔴
+🟢 (statistics and activity deferred to Phases 9 and 10)
 
 ---
 
 ## Players
 
-- [ ] Player list
-- [ ] Roles
-- [ ] Statistics
-- [ ] Activity
+- [x] Player list
+- [x] Roles (staff can change them; last-coach guard)
+- [ ] Statistics (deferred to Phase 9 — no stats data exists yet)
+- [ ] Activity (deferred to Phase 10 — needs the activity/notifications feed)
 
 ---
 
 ## Teams
 
-- [ ] Team settings
-- [ ] Invite players
-- [ ] Remove players
+- [x] Team settings (workspace name, shown in the sidebar)
+- [x] Invite players (create, copy, revoke single-use codes)
+- [x] Remove players (revokes membership; the account itself stays)
 
 ---
 
