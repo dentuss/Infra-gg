@@ -16,6 +16,59 @@ export type Database = {
   };
   public: {
     Tables: {
+      events: {
+        Row: {
+          all_day: boolean;
+          created_at: string;
+          created_by: string;
+          description: string | null;
+          ends_at: string;
+          id: string;
+          recur_until: string | null;
+          recurs_weekly: boolean;
+          starts_at: string;
+          title: string;
+          type: Database["public"]["Enums"]["event_type"];
+          updated_at: string;
+        };
+        Insert: {
+          all_day?: boolean;
+          created_at?: string;
+          created_by: string;
+          description?: string | null;
+          ends_at: string;
+          id?: string;
+          recur_until?: string | null;
+          recurs_weekly?: boolean;
+          starts_at: string;
+          title: string;
+          type?: Database["public"]["Enums"]["event_type"];
+          updated_at?: string;
+        };
+        Update: {
+          all_day?: boolean;
+          created_at?: string;
+          created_by?: string;
+          description?: string | null;
+          ends_at?: string;
+          id?: string;
+          recur_until?: string | null;
+          recurs_weekly?: boolean;
+          starts_at?: string;
+          title?: string;
+          type?: Database["public"]["Enums"]["event_type"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invites: {
         Row: {
           code: string;
@@ -99,6 +152,7 @@ export type Database = {
       redeem_invite: { Args: { invite_code: string }; Returns: boolean };
     };
     Enums: {
+      event_type: "practice" | "scrim" | "match" | "meeting" | "reminder";
       team_role: "coach" | "igl" | "analyst" | "player" | "manager";
     };
     CompositeTypes: {
@@ -227,6 +281,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      event_type: ["practice", "scrim", "match", "meeting", "reminder"],
       team_role: ["coach", "igl", "analyst", "player", "manager"],
     },
   },
