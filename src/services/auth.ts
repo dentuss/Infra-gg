@@ -1,23 +1,14 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import {
-  inviteCodeSchema,
-  loginSchema,
-  registerSchema,
-} from "@/lib/validations/auth";
+import { inviteCodeSchema, loginSchema } from "@/lib/validations/auth";
 
 export type AuthFormState = {
   error: string | null;
   message?: string | null;
 };
-
-async function requestOrigin() {
-  return (await headers()).get("origin") ?? "http://localhost:3000";
-}
 
 export async function signInWithPassword(
   _previous: AuthFormState,
@@ -35,30 +26,6 @@ export async function signInWithPassword(
   }
 
   redirect("/dashboard");
-}
-
-export async function signUpWithPassword(
-  _previous: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
-  const parsed = registerSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    ...parsed.data,
-    options: { emailRedirectTo: `${await requestOrigin()}/auth/callback` },
-  });
-  if (error) {
-    return { error: error.message };
-  }
-
-  return {
-    error: null,
-    message: "Check your inbox to confirm your email, then sign in.",
-  };
 }
 
 export async function signOut() {

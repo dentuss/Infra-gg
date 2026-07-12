@@ -12,12 +12,13 @@ Claude should always work from the highest priority incomplete task.
 
 Current Phase:
 
-🟡 Phase 1 — Authentication
+🟡 Phase 3 — Calendar (up next)
 
 Overall Progress:
 
-12% — Phase 0 done except externally blocked items; Phase 1 code
-complete, pending Discord provider configuration
+22% — Phases 0–2 complete (Discord auth and public registration
+deferred by decision; dashboard widgets fill with real data as later
+phases land)
 
 ---
 
@@ -157,7 +158,7 @@ complete, pending Discord provider configuration
 
 Status
 
-🟡
+🟢 (Discord OAuth and public registration deferred by decision)
 
 ---
 
@@ -165,7 +166,7 @@ Status
 
 - [ ] Discord OAuth (deferred — dropped from scope for now)
 - [x] Email login
-- [x] Invite-only registration
+- [x] Invite-only registration (public sign-up removed — accounts are created manually for now)
 - [x] Session persistence
 - [x] Route protection
 - [x] Logout
@@ -174,7 +175,7 @@ Status
 
 ## User Profile
 
-- [ ] Avatar
+- [x] Avatar (Discord/initials, shown in sidebar and roster)
 - [x] Username
 - [ ] Team
 - [x] Role
@@ -185,17 +186,17 @@ Status
 
 Status
 
-🔴
+🟢 (widgets show empty states until their source phases land)
 
 ---
 
-- [ ] Dashboard layout
-- [ ] Sidebar
-- [ ] Navigation
-- [ ] Quick actions
-- [ ] Upcoming practices
-- [ ] Upcoming matches
-- [ ] Notifications
+- [x] Dashboard layout
+- [x] Sidebar
+- [x] Navigation
+- [x] Quick actions (enabled as their modules arrive)
+- [x] Upcoming practices (data arrives with Phase 3)
+- [x] Upcoming matches (data arrives with Phase 3)
+- [x] Notifications (data arrives with Phase 10)
 
 ---
 
@@ -463,6 +464,7 @@ These should NOT be started until every previous phase is complete.
 - [ ] Desktop application (Tauri)
 - [ ] Offline mode
 - [ ] Public strategy sharing
+- [ ] Broad access — reopen self-registration with invites (accounts are created manually until then)
 - [ ] Tournament management
 - [ ] Scrim finder
 - [ ] Analytics dashboard
