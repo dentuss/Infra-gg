@@ -8,7 +8,6 @@ export const metadata: Metadata = {
 
 const CALLBACK_ERRORS: Record<string, string> = {
   auth: "Sign-in failed. Please try again.",
-  discord: "Discord sign-in is unavailable right now.",
 };
 
 export default async function LoginPage({
