@@ -2,9 +2,11 @@
 
 import type {
   DateSelectArg,
+  DatesSetArg,
   EventClickArg,
   EventContentArg,
   EventDropArg,
+  EventInput,
 } from "@fullcalendar/core";
 import enGbLocale from "@fullcalendar/core/locales/en-gb";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -12,16 +14,32 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   EventDialog,
   type EventDialogState,
 } from "@/components/calendar/event-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useEvents, useUpdateEvent } from "@/hooks/use-events";
-import { toCalendarEvent } from "@/lib/events";
+import { useDeleteEvents, useEvents, useUpdateEvent } from "@/hooks/use-events";
+import {
+  chillDates,
+  dateToKey,
+  dayAfter,
+  eventsInRange,
+  toCalendarEvent,
+} from "@/lib/events";
 
 const CLOSED: EventDialogState = { open: false, event: null, range: null };
 
@@ -47,9 +65,42 @@ function renderEventContent(arg: EventContentArg) {
 export function TeamCalendar() {
   const { data: events, isPending, error } = useEvents();
   const updateEvent = useUpdateEvent();
+  const deleteEvents = useDeleteEvents();
   const [dialog, setDialog] = useState<EventDialogState>(CLOSED);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [viewRange, setViewRange] = useState<{
+    type: string;
+    start: Date;
+    end: Date;
+  } | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const chillList = useMemo(
+    () =>
+      events && viewRange
+        ? chillDates(events, viewRange.start, viewRange.end)
+        : [],
+    [events, viewRange],
+  );
+  const chillSet = useMemo(() => new Set(chillList), [chillList]);
+
+  const chillBackgroundEvents: EventInput[] = chillList.map((date) => ({
+    id: `chill-${date}`,
+    start: `${date}T00:00:00`,
+    end: `${dayAfter(date)}T00:00:00`,
+    display: "background",
+    classNames: ["chill-bg"],
+  }));
+
+  const affectedByClear = useMemo(
+    () =>
+      events && viewRange
+        ? eventsInRange(events, viewRange.start, viewRange.end)
+        : [],
+    [events, viewRange],
+  );
+  const rangeNoun = viewRange?.type === "dayGridMonth" ? "month" : "week";
 
   // FullCalendar only re-measures on window resize, so collapsing or
   // expanding the sidebar (an animated width change of the content area)
@@ -111,9 +162,18 @@ export function TeamCalendar() {
         <p className="text-sm text-muted-foreground">
           {isPending ? "Loading events…" : "Drag to create, click to edit."}
         </p>
-        <Button onClick={() => openCreate(null)}>
-          <Plus /> New event
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="destructive"
+            disabled={affectedByClear.length === 0}
+            onClick={() => setClearOpen(true)}
+          >
+            <Trash2 /> Clear {rangeNoun}
+          </Button>
+          <Button onClick={() => openCreate(null)}>
+            <Plus /> New event
+          </Button>
+        </div>
       </div>
 
       <FullCalendar
@@ -129,7 +189,31 @@ export function TeamCalendar() {
         views={{
           timeGridWeek: { dayHeaderFormat: { weekday: "long" } },
         }}
-        events={events?.map(toCalendarEvent) ?? []}
+        events={[
+          ...(events?.map(toCalendarEvent) ?? []),
+          ...chillBackgroundEvents,
+        ]}
+        datesSet={(arg: DatesSetArg) =>
+          setViewRange({
+            type: arg.view.type,
+            start: arg.view.activeStart,
+            end: arg.view.activeEnd,
+          })
+        }
+        dayHeaderContent={(arg) => {
+          if (
+            arg.view.type !== "timeGridWeek" ||
+            !chillSet.has(dateToKey(arg.date))
+          ) {
+            return arg.text;
+          }
+          return (
+            <span className="flex items-center gap-1.5">
+              {arg.text}
+              <span className="chill-tag">chill day</span>
+            </span>
+          );
+        }}
         selectable
         selectMirror
         editable
@@ -159,6 +243,32 @@ export function TeamCalendar() {
       />
 
       <EventDialog state={dialog} onClose={() => setDialog(CLOSED)} />
+
+      <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear this {rangeNoun}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes {affectedByClear.length} event
+              {affectedByClear.length === 1 ? "" : "s"} in the visible{" "}
+              {rangeNoun}. Recurring series that touch this {rangeNoun} are
+              deleted entirely. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteEvents.isPending}
+              onClick={() =>
+                deleteEvents.mutate(affectedByClear.map((event) => event.id))
+              }
+            >
+              Delete {affectedByClear.length} event
+              {affectedByClear.length === 1 ? "" : "s"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

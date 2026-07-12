@@ -14,10 +14,14 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
+/** Local calendar date of a Date object (YYYY-MM-DD). */
+export function dateToKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 /** Local date of an ISO timestamp, formatted for a date input (YYYY-MM-DD). */
 export function isoToDateValue(iso: string): string {
-  const date = new Date(iso);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return dateToKey(new Date(iso));
 }
 
 /** Local wall-clock time of an ISO timestamp (HH:mm, 24h). */
@@ -50,7 +54,7 @@ function localTimeOfDay(iso: string): string {
 }
 
 /** recur_until is inclusive; FullCalendar's endRecur is exclusive. */
-function dayAfter(dateOnly: string): string {
+export function dayAfter(dateOnly: string): string {
   const date = new Date(`${dateOnly}T00:00:00`);
   date.setDate(date.getDate() + 1);
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -80,6 +84,67 @@ export function toCalendarEvent(event: EventRow): EventInput {
   }
 
   return { ...base, start: event.starts_at, end: event.ends_at };
+}
+
+/**
+ * Events with at least one occurrence overlapping [start, end).
+ * Recurring series count as overlapping when they are active anywhere in
+ * the range — callers that delete them remove the whole series.
+ */
+export function eventsInRange(
+  events: EventRow[],
+  start: Date,
+  end: Date,
+): EventRow[] {
+  return events.filter((event) => {
+    if (!event.recurs_weekly) {
+      return new Date(event.starts_at) < end && new Date(event.ends_at) > start;
+    }
+    if (new Date(event.starts_at) >= end) {
+      return false;
+    }
+    if (!event.recur_until) {
+      return true;
+    }
+    return new Date(`${event.recur_until}T23:59:59`) >= start;
+  });
+}
+
+/**
+ * Local dates (YYYY-MM-DD) inside [rangeStart, rangeEnd) that are marked
+ * chill by an event, including weekly recurring chill events.
+ */
+export function chillDates(
+  events: EventRow[],
+  rangeStart: Date,
+  rangeEnd: Date,
+): string[] {
+  const dates = new Set<string>();
+
+  for (const event of events) {
+    if (!event.is_chill) {
+      continue;
+    }
+
+    if (!event.recurs_weekly) {
+      dates.add(isoToDateValue(event.starts_at));
+      continue;
+    }
+
+    const until = event.recur_until
+      ? new Date(`${event.recur_until}T23:59:59`)
+      : rangeEnd;
+    const cursor = new Date(event.starts_at);
+    while (cursor < rangeStart && cursor <= until) {
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    while (cursor <= until && cursor < rangeEnd) {
+      dates.add(dateToKey(cursor));
+      cursor.setDate(cursor.getDate() + 7);
+    }
+  }
+
+  return [...dates];
 }
 
 /**
