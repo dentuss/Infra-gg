@@ -42,6 +42,7 @@ function toEventColumns(values: EventFormValues) {
     recurs_weekly: values.recursWeekly,
     recur_until:
       values.recursWeekly && values.recurUntil ? values.recurUntil : null,
+    is_chill: values.isChill,
   };
 }
 
@@ -96,6 +97,19 @@ export function useDeleteEvent() {
     mutationFn: async (id: string) => {
       const supabase = createClient();
       const { error } = await supabase.from("events").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),
+  });
+}
+
+export function useDeleteEvents() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const supabase = createClient();
+      const { error } = await supabase.from("events").delete().in("id", ids);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),

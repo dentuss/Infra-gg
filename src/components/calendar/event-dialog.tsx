@@ -72,6 +72,7 @@ function initialValues(state: EventDialogState): EventFormValues {
       description: state.event.description ?? "",
       recursWeekly: state.event.recurs_weekly,
       recurUntil: state.event.recur_until ?? "",
+      isChill: state.event.is_chill,
     };
   }
 
@@ -95,6 +96,7 @@ function initialValues(state: EventDialogState): EventFormValues {
     description: "",
     recursWeekly: false,
     recurUntil: "",
+    isChill: false,
   };
 }
 
@@ -270,6 +272,19 @@ export function EventDialog({
                     onCheckedChange={field.onChange}
                   />
                   Repeats weekly
+                </label>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="isChill"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  Chill (marks the day as a rest day)
                 </label>
               )}
             />

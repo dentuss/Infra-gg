@@ -20,6 +20,7 @@ export type Database = {
         Row: {
           all_day: boolean;
           created_at: string;
+          is_chill: boolean;
           created_by: string;
           description: string | null;
           ends_at: string;
@@ -38,6 +39,7 @@ export type Database = {
           description?: string | null;
           ends_at: string;
           id?: string;
+          is_chill?: boolean;
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at: string;
@@ -52,6 +54,7 @@ export type Database = {
           description?: string | null;
           ends_at?: string;
           id?: string;
+          is_chill?: boolean;
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at?: string;
