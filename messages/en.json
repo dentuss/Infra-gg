@@ -64,7 +64,11 @@
     "notificationsSubtitle": "Team activity",
     "notificationsEmpty": "Nothing new yet.",
     "rosterTitle": "Roster",
-    "membersCount": "{count, plural, one {# member} other {# members}}"
+    "membersCount": "{count, plural, one {# member} other {# members}}",
+    "mainRosterTitle": "Main roster",
+    "statistics": "Statistics",
+    "soonBadge": "Soon",
+    "openSlot": "Open slot"
   },
   "calendar": {
     "metaTitle": "Calendar",
@@ -118,7 +122,13 @@
     "saving": "Saving…",
     "saved": "Saved.",
     "loading": "Loading…",
-    "loadError": "Could not load data: {message}"
+    "loadError": "Could not load data: {message}",
+    "editTitle": "Edit profile",
+    "editSubtitle": "Nickname, name, and in-game role shown on the roster cards.",
+    "nicknameLabel": "Nickname",
+    "fullNameLabel": "Name",
+    "ingameRoleLabel": "In-game role",
+    "ingameRolePlaceholder": "Entry, support, flex…"
   },
   "eventDialog": {
     "newTitle": "New event",

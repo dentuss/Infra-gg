@@ -1,10 +1,11 @@
 "use client";
 
-import { UserX } from "lucide-react";
+import { Pencil, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { UserAvatar } from "@/components/layout/user-avatar";
+import { EditMemberDialog } from "@/components/team/edit-member-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,7 @@ export function MembersList({
   const setRole = useSetMemberRole();
   const removeMember = useRemoveMember();
   const [removeTarget, setRemoveTarget] = useState<Profile | null>(null);
+  const [editTarget, setEditTarget] = useState<Profile | null>(null);
 
   if (error) {
     return (
@@ -80,9 +82,15 @@ export function MembersList({
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{member.username}</p>
-              {member.id === currentUserId ? (
-                <p className="text-xs text-muted-foreground">{t("you")}</p>
-              ) : null}
+              <p className="truncate text-xs text-muted-foreground">
+                {[
+                  member.id === currentUserId ? t("you") : null,
+                  member.full_name,
+                  member.ingame_role,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             </div>
 
             {canManage ? (
@@ -114,6 +122,17 @@ export function MembersList({
               <Badge variant="secondary">{tRoles(member.role)}</Badge>
             )}
 
+            {canManage ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("editTitle")}
+                onClick={() => setEditTarget(member)}
+              >
+                <Pencil />
+              </Button>
+            ) : null}
+
             {canManage && member.id !== currentUserId ? (
               <Button
                 variant="ghost"
@@ -128,6 +147,11 @@ export function MembersList({
           </li>
         ))}
       </ul>
+
+      <EditMemberDialog
+        member={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
 
       <AlertDialog
         open={removeTarget !== null}
