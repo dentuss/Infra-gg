@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { EventRow } from "@/lib/events";
+import { combineDateAndTimes, type EventRow } from "@/lib/events";
 import { createClient } from "@/lib/supabase/client";
 import type { EventFormValues } from "@/lib/validations/event";
 import type { TablesUpdate } from "@/types/database";
@@ -26,12 +26,17 @@ export function useEvents() {
 }
 
 function toEventColumns(values: EventFormValues) {
+  const { start, end } = combineDateAndTimes(
+    values.date,
+    values.startTime,
+    values.endTime,
+  );
   return {
     title: values.title,
     type: values.type,
     description: values.description?.trim() ? values.description.trim() : null,
-    starts_at: new Date(values.startsAt).toISOString(),
-    ends_at: new Date(values.endsAt).toISOString(),
+    starts_at: start.toISOString(),
+    ends_at: end.toISOString(),
     // All-day events are not part of the team's workflow.
     all_day: false,
     recurs_weekly: values.recursWeekly,

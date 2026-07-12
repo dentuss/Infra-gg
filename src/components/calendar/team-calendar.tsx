@@ -3,6 +3,7 @@
 import type {
   DateSelectArg,
   EventClickArg,
+  EventContentArg,
   EventDropArg,
 } from "@fullcalendar/core";
 import enGbLocale from "@fullcalendar/core/locales/en-gb";
@@ -12,7 +13,7 @@ import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   EventDialog,
@@ -24,10 +25,45 @@ import { toCalendarEvent } from "@/lib/events";
 
 const CLOSED: EventDialogState = { open: false, event: null, range: null };
 
+function renderEventContent(arg: EventContentArg) {
+  const description = arg.event.extendedProps.description as string | null;
+  const showDescription = description && arg.view.type === "timeGridWeek";
+
+  return (
+    <div className="flex flex-col gap-0.5 overflow-hidden px-1 py-0.5">
+      <div className="truncate font-semibold">
+        {arg.timeText ? `${arg.timeText} ` : ""}
+        {arg.event.title}
+      </div>
+      {showDescription ? (
+        <div className="line-clamp-3 text-[0.75rem] leading-tight opacity-80">
+          {description}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function TeamCalendar() {
   const { data: events, isPending, error } = useEvents();
   const updateEvent = useUpdateEvent();
   const [dialog, setDialog] = useState<EventDialogState>(CLOSED);
+  const calendarRef = useRef<FullCalendar>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // FullCalendar only re-measures on window resize, so collapsing or
+  // expanding the sidebar (an animated width change of the content area)
+  // leaves the grid at a stale width — phantom columns or an overflowing
+  // Sunday. Track the container size directly.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(() => {
+      calendarRef.current?.getApi().updateSize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const openCreate = (range: EventDialogState["range"]) =>
     setDialog({ open: true, event: null, range });
@@ -70,7 +106,7 @@ export function TeamCalendar() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={containerRef} className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {isPending ? "Loading events…" : "Drag to create, click to edit."}
@@ -81,6 +117,7 @@ export function TeamCalendar() {
       </div>
 
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         locale={enGbLocale}
         initialView="timeGridWeek"
@@ -103,6 +140,17 @@ export function TeamCalendar() {
         // bottom of the previous day's column.
         slotMinTime="10:00:00"
         slotMaxTime="27:00:00"
+        slotLabelFormat={{
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }}
+        eventTimeFormat={{
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }}
+        eventContent={renderEventContent}
         height="auto"
         select={onSelect}
         eventClick={onEventClick}

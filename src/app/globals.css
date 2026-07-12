@@ -144,6 +144,11 @@
   --fc-button-hover-border-color: var(--border);
   --fc-button-active-bg-color: var(--accent);
   --fc-button-active-border-color: var(--ring);
+  --fc-small-font-size: 0.8125rem;
+}
+
+.fc .fc-timegrid-event .fc-event-main {
+  font-size: 0.875rem;
 }
 
 .fc .fc-button {

@@ -14,10 +14,34 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
-/** Format an ISO timestamp for a datetime-local input, in local time. */
-export function toDatetimeLocal(iso: string): string {
+/** Local date of an ISO timestamp, formatted for a date input (YYYY-MM-DD). */
+export function isoToDateValue(iso: string): string {
   const date = new Date(iso);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Local wall-clock time of an ISO timestamp (HH:mm, 24h). */
+export function isoToTimeValue(iso: string): string {
+  const date = new Date(iso);
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * Combine a date with start and end times into concrete timestamps.
+ * An end time at or before the start time means the event runs past
+ * midnight into the next day.
+ */
+export function combineDateAndTimes(
+  date: string,
+  startTime: string,
+  endTime: string,
+): { start: Date; end: Date } {
+  const start = new Date(`${date}T${startTime}`);
+  const end = new Date(`${date}T${endTime}`);
+  if (end <= start) {
+    end.setDate(end.getDate() + 1);
+  }
+  return { start, end };
 }
 
 function localTimeOfDay(iso: string): string {
@@ -38,6 +62,7 @@ export function toCalendarEvent(event: EventRow): EventInput {
     title: event.title,
     allDay: event.all_day,
     classNames: [`event-${event.type}`],
+    extendedProps: { description: event.description },
   };
 
   if (event.recurs_weekly) {
