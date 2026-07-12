@@ -34,7 +34,7 @@ import { eventSchema, type EventFormValues } from "@/lib/validations/event";
 import { Constants } from "@/types/database";
 
 const EVENT_TYPE_LABELS: Record<EventFormValues["type"], string> = {
-  practice: "Practice",
+  theory: "Theory",
   scrim: "Scrim",
   match: "Official match",
   meeting: "Meeting",
@@ -44,7 +44,7 @@ const EVENT_TYPE_LABELS: Record<EventFormValues["type"], string> = {
 export type EventDialogState = {
   open: boolean;
   event: EventRow | null;
-  range: { start: Date; end: Date; allDay: boolean } | null;
+  range: { start: Date; end: Date } | null;
 };
 
 function initialValues(state: EventDialogState): EventFormValues {
@@ -54,7 +54,6 @@ function initialValues(state: EventDialogState): EventFormValues {
       type: state.event.type,
       startsAt: toDatetimeLocal(state.event.starts_at),
       endsAt: toDatetimeLocal(state.event.ends_at),
-      allDay: state.event.all_day,
       description: state.event.description ?? "",
       recursWeekly: state.event.recurs_weekly,
       recurUntil: state.event.recur_until ?? "",
@@ -65,10 +64,9 @@ function initialValues(state: EventDialogState): EventFormValues {
   const end = state.range?.end ?? new Date(start.getTime() + 60 * 60 * 1000);
   return {
     title: "",
-    type: "practice",
+    type: "theory",
     startsAt: toDatetimeLocal(start.toISOString()),
     endsAt: toDatetimeLocal(end.toISOString()),
-    allDay: state.range?.allDay ?? false,
     description: "",
     recursWeekly: false,
     recurUntil: "",
@@ -193,19 +191,6 @@ export function EventDialog({
           </div>
 
           <div className="flex items-center gap-6">
-            <Controller
-              control={form.control}
-              name="allDay"
-              render={({ field }) => (
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  All day
-                </label>
-              )}
-            />
             <Controller
               control={form.control}
               name="recursWeekly"

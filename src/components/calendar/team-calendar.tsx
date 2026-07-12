@@ -5,6 +5,7 @@ import type {
   EventClickArg,
   EventDropArg,
 } from "@fullcalendar/core";
+import enGbLocale from "@fullcalendar/core/locales/en-gb";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
@@ -32,7 +33,7 @@ export function TeamCalendar() {
     setDialog({ open: true, event: null, range });
 
   const onSelect = (info: DateSelectArg) =>
-    openCreate({ start: info.start, end: info.end, allDay: info.allDay });
+    openCreate({ start: info.start, end: info.end });
 
   const onEventClick = (info: EventClickArg) => {
     const row = events?.find((event) => event.id === info.event.id);
@@ -81,18 +82,27 @@ export function TeamCalendar() {
 
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
+        locale={enGbLocale}
+        initialView="timeGridWeek"
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
+          right: "timeGridWeek,dayGridMonth",
+        }}
+        views={{
+          timeGridWeek: { dayHeaderFormat: { weekday: "long" } },
         }}
         events={events?.map(toCalendarEvent) ?? []}
         selectable
         selectMirror
         editable
-        firstDay={1}
         nowIndicator
+        allDaySlot={false}
+        // The team is active from morning until well past midnight, so
+        // the visible day runs 10:00 → 03:00 with the small hours at the
+        // bottom of the previous day's column.
+        slotMinTime="10:00:00"
+        slotMaxTime="27:00:00"
         height="auto"
         select={onSelect}
         eventClick={onEventClick}

@@ -32,7 +32,8 @@ function toEventColumns(values: EventFormValues) {
     description: values.description?.trim() ? values.description.trim() : null,
     starts_at: new Date(values.startsAt).toISOString(),
     ends_at: new Date(values.endsAt).toISOString(),
-    all_day: values.allDay,
+    // All-day events are not part of the team's workflow.
+    all_day: false,
     recurs_weekly: values.recursWeekly,
     recur_until:
       values.recursWeekly && values.recurUntil ? values.recurUntil : null,
