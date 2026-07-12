@@ -334,6 +334,25 @@ No bright colors.
 
 ---
 
+# Roles and Permissions
+
+Staff — coach, manager, IGL — have full control: team management,
+invites, settings, and the schedule (events and chill days).
+
+Player — reads everything; can create documents and strategies
+(Phases 5–6); cannot change the schedule.
+
+Substitute and Trial — read-only.
+
+Rules:
+
+- The first account bootstraps as manager.
+- The team must always keep at least one staff member.
+- Enforce permissions with RLS using private.is_staff — never only in
+  the UI.
+
+---
+
 # Internationalization
 
 The app is bilingual: English and Russian.

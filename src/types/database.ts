@@ -208,7 +208,14 @@ export type Database = {
     };
     Enums: {
       event_type: "theory" | "scrim" | "match" | "meeting" | "reminder";
-      team_role: "coach" | "igl" | "analyst" | "player" | "manager";
+      team_role:
+        | "coach"
+        | "igl"
+        | "analyst"
+        | "player"
+        | "manager"
+        | "substitute"
+        | "trial";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -337,7 +344,15 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["theory", "scrim", "match", "meeting", "reminder"],
-      team_role: ["coach", "igl", "analyst", "player", "manager"],
+      team_role: [
+        "coach",
+        "igl",
+        "analyst",
+        "player",
+        "manager",
+        "substitute",
+        "trial",
+      ],
     },
   },
 } as const;
