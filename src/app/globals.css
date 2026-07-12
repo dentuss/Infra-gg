@@ -128,3 +128,51 @@
     @apply font-sans;
   }
 }
+
+/* FullCalendar theme alignment */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklab, var(--primary) 8%, transparent);
+  --fc-highlight-color: color-mix(in oklab, var(--primary) 15%, transparent);
+  --fc-event-border-color: transparent;
+  --fc-button-bg-color: var(--secondary);
+  --fc-button-border-color: var(--border);
+  --fc-button-text-color: var(--secondary-foreground);
+  --fc-button-hover-bg-color: var(--accent);
+  --fc-button-hover-border-color: var(--border);
+  --fc-button-active-bg-color: var(--accent);
+  --fc-button-active-border-color: var(--ring);
+}
+
+.fc .fc-button {
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.fc-event {
+  cursor: pointer;
+}
+
+/* Muted per-type event colors on the dark theme */
+.fc-event.event-practice {
+  background-color: oklch(0.42 0.08 155);
+}
+.fc-event.event-scrim {
+  background-color: oklch(0.42 0.08 250);
+}
+.fc-event.event-match {
+  background-color: oklch(0.44 0.11 25);
+}
+.fc-event.event-meeting {
+  background-color: oklch(0.44 0.06 90);
+}
+.fc-event.event-reminder {
+  background-color: oklch(0.38 0.02 0);
+}

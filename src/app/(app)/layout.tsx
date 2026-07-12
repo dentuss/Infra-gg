@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { Providers } from "@/components/providers";
 import {
   SidebarInset,
   SidebarProvider,
@@ -23,14 +24,16 @@ export default async function AppLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar profile={profile} />
-      <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-        </header>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <Providers>
+      <SidebarProvider>
+        <AppSidebar profile={profile} />
+        <SidebarInset>
+          <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger />
+          </header>
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </Providers>
   );
 }

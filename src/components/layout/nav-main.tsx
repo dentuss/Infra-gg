@@ -27,7 +27,7 @@ type NavItem = {
 // Items without an href are modules from later phases.
 const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { title: "Calendar", icon: CalendarDays },
+  { title: "Calendar", icon: CalendarDays, href: "/calendar" },
   { title: "Team", icon: Users },
   { title: "Documents", icon: FileText },
   { title: "Strategies", icon: Crosshair },
