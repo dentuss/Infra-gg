@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -30,17 +31,13 @@ import {
   useExcludeOccurrence,
   useUpdateEventForm,
 } from "@/hooks/use-events";
+import { formattingLocale } from "@/i18n/config";
 import { isoToDateValue, isoToTimeValue, type EventRow } from "@/lib/events";
-import { eventSchema, type EventFormValues } from "@/lib/validations/event";
+import {
+  createEventSchema,
+  type EventFormValues,
+} from "@/lib/validations/event";
 import { Constants } from "@/types/database";
-
-const EVENT_TYPE_LABELS: Record<EventFormValues["type"], string> = {
-  theory: "Theory",
-  scrim: "Scrim",
-  match: "Official match",
-  meeting: "Meeting",
-  reminder: "Reminder",
-};
 
 export type EventDialogState = {
   open: boolean;
@@ -108,13 +105,17 @@ export function EventDialog({
   state: EventDialogState;
   onClose: () => void;
 }) {
+  const t = useTranslations("eventDialog");
+  const tValidation = useTranslations("eventDialog.validation");
+  const locale = useLocale();
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEventForm();
   const deleteEvent = useDeleteEvent();
   const excludeOccurrence = useExcludeOccurrence();
 
+  const schema = useMemo(() => createEventSchema(tValidation), [tValidation]);
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialValues(state),
   });
 
@@ -171,17 +172,17 @@ export function EventDialog({
     <Dialog open={state.open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{state.event ? "Edit event" : "New event"}</DialogTitle>
+          <DialogTitle>
+            {state.event ? t("editTitle") : t("newTitle")}
+          </DialogTitle>
           <DialogDescription>
-            {state.event
-              ? "Update, or delete, this calendar entry."
-              : "Add a practice, scrim, match, meeting, or reminder."}
+            {state.event ? t("editDescription") : t("newDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="event-title">Title</Label>
+            <Label htmlFor="event-title">{t("titleLabel")}</Label>
             <Input id="event-title" {...form.register("title")} />
             {errors.title ? (
               <p className="text-sm text-destructive">{errors.title.message}</p>
@@ -189,7 +190,7 @@ export function EventDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="event-type">Type</Label>
+            <Label htmlFor="event-type">{t("typeLabel")}</Label>
             <Controller
               control={form.control}
               name="type"
@@ -201,7 +202,7 @@ export function EventDialog({
                   <SelectContent>
                     {Constants.public.Enums.event_type.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {EVENT_TYPE_LABELS[type]}
+                        {t(`types.${type}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -211,11 +212,11 @@ export function EventDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="event-date">Date</Label>
+            <Label htmlFor="event-date">{t("dateLabel")}</Label>
             <Input
               id="event-date"
               type="date"
-              lang="en-GB"
+              lang={formattingLocale(locale)}
               {...form.register("date")}
             />
             {errors.date ? (
@@ -225,7 +226,7 @@ export function EventDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="event-start">Starts</Label>
+              <Label htmlFor="event-start">{t("startsLabel")}</Label>
               <Controller
                 control={form.control}
                 name="startTime"
@@ -246,7 +247,7 @@ export function EventDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="event-end">Ends</Label>
+              <Label htmlFor="event-end">{t("endsLabel")}</Label>
               <Controller
                 control={form.control}
                 name="endTime"
@@ -273,10 +274,7 @@ export function EventDialog({
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            An end time earlier than the start means the event runs past
-            midnight.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("midnightHint")}</p>
 
           <div className="flex items-center gap-6">
             <Controller
@@ -288,7 +286,7 @@ export function EventDialog({
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
-                  Repeats weekly
+                  {t("repeatsWeekly")}
                 </label>
               )}
             />
@@ -296,7 +294,7 @@ export function EventDialog({
 
           {recursWeekly ? (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="event-until">Repeats until (optional)</Label>
+              <Label htmlFor="event-until">{t("repeatsUntil")}</Label>
               <Input
                 id="event-until"
                 type="date"
@@ -306,7 +304,7 @@ export function EventDialog({
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="event-description">Description (optional)</Label>
+            <Label htmlFor="event-description">{t("descriptionLabel")}</Label>
             <Textarea
               id="event-description"
               rows={3}
@@ -331,7 +329,7 @@ export function EventDialog({
                   disabled={pending}
                   onClick={onDeleteOccurrence}
                 >
-                  Delete this day
+                  {t("deleteOccurrence")}
                 </Button>
                 <Button
                   type="button"
@@ -340,7 +338,7 @@ export function EventDialog({
                   onClick={onDeleteSeries}
                   className="text-destructive"
                 >
-                  Delete series
+                  {t("deleteSeries")}
                 </Button>
               </div>
             ) : state.event ? (
@@ -351,18 +349,14 @@ export function EventDialog({
                 onClick={onDeleteSeries}
                 className="mr-auto"
               >
-                Delete
+                {t("delete")}
               </Button>
             ) : null}
             <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending
-                ? "Saving…"
-                : state.event
-                  ? "Save changes"
-                  : "Create event"}
+              {pending ? t("saving") : state.event ? t("save") : t("create")}
             </Button>
           </DialogFooter>
         </form>

@@ -1,14 +1,25 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
+import { Chakra_Petch, Geist_Mono, Play } from "next/font/google";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { formattingLocale } from "@/i18n/config";
 
 import "./globals.css";
 
 const chakraPetch = Chakra_Petch({
-  variable: "--font-sans",
+  variable: "--font-chakra",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+});
+
+// Chakra Petch has no Cyrillic glyphs; Play is a matching squared face
+// that covers Russian and sits behind it in the font stack.
+const play = Play({
+  variable: "--font-play",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -24,18 +35,22 @@ export const metadata: Metadata = {
   description: "Team platform for competitive Rainbow Six Siege",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en-GB"
-      className={`${chakraPetch.variable} ${geistMono.variable} dark h-full antialiased`}
+      lang={formattingLocale(locale)}
+      className={`${chakraPetch.variable} ${play.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
+        <NextIntlClientProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

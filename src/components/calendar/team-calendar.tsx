@@ -9,12 +9,14 @@ import type {
   EventInput,
 } from "@fullcalendar/core";
 import enGbLocale from "@fullcalendar/core/locales/en-gb";
+import ruLocale from "@fullcalendar/core/locales/ru";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { Plus, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -38,6 +40,7 @@ import {
   useRemoveChillDay,
 } from "@/hooks/use-chill-days";
 import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
+import { formattingLocale } from "@/i18n/config";
 import {
   buildClearPlan,
   dateToKey,
@@ -71,7 +74,13 @@ function renderEventContent(arg: EventContentArg) {
   );
 }
 
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function TeamCalendar() {
+  const t = useTranslations("calendar");
+  const locale = useLocale();
   const { data: events, isPending, error } = useEvents();
   const updateEvent = useUpdateEvent();
   const clearRange = useClearRange();
@@ -180,7 +189,7 @@ export function TeamCalendar() {
   if (error) {
     return (
       <p role="alert" className="text-sm text-destructive">
-        Could not load the calendar: {error.message}
+        {t("loadError", { message: error.message })}
       </p>
     );
   }
@@ -189,7 +198,7 @@ export function TeamCalendar() {
     <div ref={containerRef} className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {isPending ? "Loading events…" : "Drag to create, click to edit."}
+          {isPending ? t("loading") : t("hint")}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -197,10 +206,10 @@ export function TeamCalendar() {
             disabled={clearPlan.totalCount === 0}
             onClick={() => setClearOpen(true)}
           >
-            <Trash2 /> Clear {rangeNoun}
+            <Trash2 /> {t("clearButton", { range: rangeNoun })}
           </Button>
           <Button onClick={() => openCreate(null)}>
-            <Plus /> New event
+            <Plus /> {t("newEvent")}
           </Button>
         </div>
       </div>
@@ -208,7 +217,7 @@ export function TeamCalendar() {
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        locale={enGbLocale}
+        locale={locale === "ru" ? ruLocale : enGbLocale}
         initialView="timeGridWeek"
         headerToolbar={{
           left: "prev,next today",
@@ -237,19 +246,23 @@ export function TeamCalendar() {
             <button
               type="button"
               className="chill-header-button"
-              title={isChill ? "Remove chill day" : "Make this a chill day"}
+              title={isChill ? t("chillHeaderRemove") : t("chillHeaderAdd")}
               onClick={() =>
                 setChillPrompt({
                   day,
-                  weekday: arg.date.toLocaleDateString("en-GB", {
-                    weekday: "long",
-                  }),
+                  weekday: capitalize(
+                    arg.date.toLocaleDateString(formattingLocale(locale), {
+                      weekday: "long",
+                    }),
+                  ),
                   isChill,
                 })
               }
             >
               {arg.text}
-              {isChill ? <span className="chill-tag">chill day</span> : null}
+              {isChill ? (
+                <span className="chill-tag">{t("chillTag")}</span>
+              ) : null}
             </button>
           );
         }}
@@ -291,17 +304,17 @@ export function TeamCalendar() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {chillPrompt?.isChill
-                ? `Remove chill from ${chillPrompt.weekday}?`
-                : `Make ${chillPrompt?.weekday} chill day?`}
+                ? t("chillRemoveTitle", { weekday: chillPrompt.weekday })
+                : t("chillMakeTitle", { weekday: chillPrompt?.weekday ?? "" })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {chillPrompt?.isChill
-                ? "Back to the grind — the green goes away."
-                : "The whole day turns green and the header gets a chill day tag."}
+                ? t("chillRemoveDescription")
+                : t("chillMakeDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogCancel>{t("chillNo")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={addChillDay.isPending || removeChillDay.isPending}
               onClick={() => {
@@ -313,7 +326,7 @@ export function TeamCalendar() {
                 setChillPrompt(null);
               }}
             >
-              {chillPrompt?.isChill ? "Yes, remove" : "Hell Yeah"}
+              {chillPrompt?.isChill ? t("chillRemoveConfirm") : t("chillYes")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -322,16 +335,15 @@ export function TeamCalendar() {
       <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Clear this {rangeNoun}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("clearTitle", { range: rangeNoun })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes {clearPlan.totalCount} event
-              {clearPlan.totalCount === 1 ? "" : "s"} from the visible{" "}
-              {rangeNoun}. Recurring events only lose this {rangeNoun}&apos;s
-              occurrences — future weeks stay scheduled. This cannot be undone.
+              {t("clearDescription", { count: clearPlan.totalCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={clearRange.isPending}
               onClick={() => {
@@ -339,8 +351,7 @@ export function TeamCalendar() {
                 setClearOpen(false);
               }}
             >
-              Delete {clearPlan.totalCount} event
-              {clearPlan.totalCount === 1 ? "" : "s"}
+              {t("clearConfirm", { count: clearPlan.totalCount })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

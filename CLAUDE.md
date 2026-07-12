@@ -334,6 +334,24 @@ No bright colors.
 
 ---
 
+# Internationalization
+
+The app is bilingual: English and Russian.
+
+Every user-facing string MUST go through next-intl.
+
+- Messages live in messages/en.json and messages/ru.json.
+- Every new string must be added to BOTH files.
+- The locale comes from the "locale" cookie (no URL prefixes).
+- Use useTranslations in Client Components, getTranslations in Server
+  Components and Server Actions.
+- Format dates and times with formattingLocale() from src/i18n/config.ts.
+- Use ICU plurals for counts (Russian has one/few/many forms).
+
+Never hardcode UI text in components.
+
+---
+
 # Performance
 
 Always optimize for:

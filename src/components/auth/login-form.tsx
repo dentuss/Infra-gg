@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { signInWithPassword, type AuthFormState } from "@/services/auth";
 const initialState: AuthFormState = { error: null };
 
 export function LoginForm({ callbackError }: { callbackError?: string }) {
+  const t = useTranslations("auth.login");
   const [state, formAction, pending] = useActionState(
     signInWithPassword,
     initialState,
@@ -26,13 +28,13 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
-        <CardDescription>Sign in to your team workspace</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               name="email"
@@ -42,7 +44,7 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               name="password"
@@ -59,12 +61,12 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
           ) : null}
 
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Signing in…" : "Sign in"}
+            {pending ? t("submitting") : t("submit")}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Accounts are created by your coach — ask the team for access.
+          {t("accountsNote")}
         </p>
       </CardContent>
     </Card>
