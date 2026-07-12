@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import { DiscordSignInButton } from "@/components/auth/discord-sign-in-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { signInWithPassword, type AuthFormState } from "@/services/auth";
 
 const initialState: AuthFormState = { error: null };
@@ -33,14 +31,6 @@ export function LoginForm({ callbackError }: { callbackError?: string }) {
         <CardDescription>Sign in to your team workspace</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <DiscordSignInButton />
-
-        <div className="flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <Separator className="flex-1" />
-        </div>
-
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>

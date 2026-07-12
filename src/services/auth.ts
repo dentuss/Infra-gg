@@ -61,20 +61,6 @@ export async function signUpWithPassword(
   };
 }
 
-export async function signInWithDiscord() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "discord",
-    options: { redirectTo: `${await requestOrigin()}/auth/callback` },
-  });
-
-  if (error || !data.url) {
-    redirect("/login?error=discord");
-  }
-
-  redirect(data.url);
-}
-
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

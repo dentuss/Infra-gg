@@ -46,47 +46,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://mlpvwaxedcjqvjxtzfss.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JopNs71pTrFjZu_89h9_Qg_8bYzBcY4
 
-  # The secrets context is unavailable in job-level `if`, so a tiny job
-  # exposes whether Vercel is configured; the deploy job keys off it.
-  vercel-check:
-    name: Check Vercel configuration
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      configured: ${{ steps.check.outputs.configured }}
-    steps:
-      - id: check
-        run: echo "configured=${{ secrets.VERCEL_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
-
-  deploy:
-    name: Deploy to Vercel
-    needs: [ci, vercel-check]
-    if: needs.vercel-check.outputs.configured == 'true'
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Pull Vercel environment
-        run: npx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build
-        run: npx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy
-        id: deploy
-        run: |
-          url=$(npx vercel@latest deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Deployed to $url"
-
-      - name: Verify deployment responds
-        run: curl -sSf -o /dev/null --retry 3 --retry-delay 5 "${{ steps.deploy.outputs.url }}"
+# Deployment is handled by the Vercel Git integration: every push to
+# master deploys to production, and master only moves via CI-green PRs.

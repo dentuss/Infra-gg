@@ -135,9 +135,9 @@ complete, pending Discord provider configuration
 
 ### CD
 
-- [x] Configure Vercel deployment
+- [x] Configure Vercel deployment (Git integration)
 - [x] Deploy on merge to master
-- [ ] Verify deployment status
+- [x] Verify deployment status (production live at infra-gg.vercel.app)
 
 ---
 
@@ -145,7 +145,7 @@ complete, pending Discord provider configuration
 
 - [x] Create project
 - [x] Connect application
-- [ ] Configure authentication ⏸ (email works; Discord provider needs dashboard setup)
+- [ ] Configure authentication ⏸ (set Site URL + redirect URLs to the production domain in the Supabase dashboard)
 - [ ] Configure storage
 - [ ] Enable Realtime
 - [x] Configure RLS
@@ -163,7 +163,7 @@ Status
 
 ## Authentication
 
-- [ ] Discord OAuth ⏸ (code complete — enable the provider in the Supabase and Discord dashboards)
+- [ ] Discord OAuth (deferred — dropped from scope for now)
 - [x] Email login
 - [x] Invite-only registration
 - [x] Session persistence
