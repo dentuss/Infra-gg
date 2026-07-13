@@ -5,6 +5,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import {
   Arrow,
   Ellipse,
+  Group,
   Image as KonvaImage,
   Line,
   Rect,
@@ -187,6 +188,7 @@ export function ElementNode({
         "triangle",
         "diamond",
         "star",
+        "hole",
       ];
       if (boxBased.includes(element.type)) {
         // Bake the scale into the box so strokes stay uniform.
@@ -272,6 +274,38 @@ export function ElementNode({
           hitStrokeWidth={14}
         />
       );
+    case "hole": {
+      const width = element.width ?? 1;
+      const height = element.height ?? 1;
+      return (
+        <Group {...common}>
+          <Ellipse
+            radiusX={width / 2}
+            radiusY={height / 2}
+            strokeScaleEnabled={false}
+            stroke={borderStroke}
+            fill={shapeFill}
+            strokeWidth={strokeWidth}
+            hitStrokeWidth={14}
+          />
+          {element.label ? (
+            <Text
+              x={-width / 2}
+              y={-height / 2}
+              width={width}
+              height={height}
+              align="center"
+              verticalAlign="middle"
+              text={element.label}
+              fontSize={height * 0.55}
+              fontStyle="bold"
+              fill="#09090b"
+              listening={false}
+            />
+          ) : null}
+        </Group>
+      );
+    }
     case "triangle":
     case "diamond":
     case "star": {

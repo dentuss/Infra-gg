@@ -19,6 +19,8 @@ import {
 } from "@/components/strategy/board-elements";
 import { BoardHintToast } from "@/components/strategy/board-hints";
 import { LineupStrip, NICKNAME_BOX } from "@/components/strategy/board-lineup";
+import { detectBlueprintFit } from "@/lib/blueprint-detect";
+import { buildHole, buildReinforcement } from "@/lib/board-markers";
 import { OPERATOR_SRC_PREFIX } from "@/lib/operator-icons";
 import {
   BOARD_HEIGHT,
@@ -276,6 +278,11 @@ export default function BoardCanvas({
         return;
       }
 
+      if (keyEvent.key === "Escape" && store.tool !== "select") {
+        store.setTool("select");
+        return;
+      }
+
       // Arrow nudge: direct moves that ignore alignment snapping.
       if (keyEvent.key.startsWith("Arrow")) {
         if (store.selectedIds.length === 0) return;
@@ -353,6 +360,30 @@ export default function BoardCanvas({
     return position ? { x: position.x, y: position.y } : null;
   };
 
+  // Blueprint pixels at board resolution, for wall/hatch detection.
+  const detectCacheRef = useRef<{ url: string; data: ImageData } | null>(null);
+  const blueprintPixels = (): ImageData | null => {
+    if (!background || !floorUrl) return null;
+    if (detectCacheRef.current?.url === floorUrl) {
+      return detectCacheRef.current.data;
+    }
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = BOARD_WIDTH;
+      canvas.height = BOARD_HEIGHT;
+      const context = canvas.getContext("2d");
+      if (!context) return null;
+      context.drawImage(background, 0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+      const data = context.getImageData(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+      detectCacheRef.current = { url: floorUrl, data };
+      return data;
+    } catch {
+      // Tainted canvas (blueprint served without CORS) — markers still
+      // place, just unfitted.
+      return null;
+    }
+  };
+
   const onMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
     if (konvaEvent.evt.button !== 0) return;
     const store = useBoardStore.getState();
@@ -370,6 +401,22 @@ export default function BoardCanvas({
 
     // The lineup strip is not a drawing surface.
     if (position.y > BOARD_HEIGHT) return;
+
+    if (tool === "reinforce" || tool === "hole") {
+      const markerColor =
+        activeSlot === null ? color : (LINEUP_COLORS[activeSlot] ?? color);
+      const fit = detectBlueprintFit(
+        blueprintPixels(),
+        Math.round(position.x),
+        Math.round(position.y),
+      );
+      store.placeMarker(
+        tool === "reinforce"
+          ? buildReinforcement(fit, position, markerColor)
+          : buildHole(fit, position, markerColor, store.holeLabel),
+      );
+      return;
+    }
 
     if (tool === "text") {
       // Without this the browser moves focus to the canvas after the

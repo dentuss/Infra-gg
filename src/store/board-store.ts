@@ -18,7 +18,7 @@ import {
 const HISTORY_LIMIT = 50;
 const PASTE_OFFSET = 24;
 
-export type BoardHintKey = "boardBasics" | "slotColor";
+export type BoardHintKey = "boardBasics" | "slotColor" | "wallTags";
 
 const hintStorageKey = (key: BoardHintKey) => `board-hint-dismissed:${key}`;
 
@@ -57,6 +57,8 @@ type BoardStore = {
   editingNickname: number | null;
   /** One-time UX hint shown at the top right of the board. */
   hint: BoardHintKey | null;
+  /** Number stamped on newly placed hole circles ("" = plain). */
+  holeLabel: string;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -84,6 +86,9 @@ type BoardStore = {
   setEditingNickname: (index: number | null) => void;
   showHint: (key: BoardHintKey) => void;
   closeHint: (dontShowAgain?: boolean) => void;
+  setHoleLabel: (label: string) => void;
+  /** Adds a fitted marker without leaving the tagging tool. */
+  placeMarker: (element: BoardElement) => void;
   addElement: (element: BoardElement) => void;
   insertIcon: (src: string, name: string, x: number, y: number) => void;
   updateElement: (
@@ -164,6 +169,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   activeSlot: null,
   editingNickname: null,
   hint: null,
+  holeLabel: "",
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -297,6 +303,17 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
     const state = get();
     const update = insertElements(state, [element]);
     if (update) set(update);
+  },
+
+  setHoleLabel: (holeLabel) => set({ holeLabel }),
+
+  placeMarker: (element) => {
+    const state = get();
+    const pages = clonePages(state.pages);
+    const page = pages[state.activePage];
+    if (!page) return;
+    page.elements.push(element);
+    set(commit(state, pages));
   },
 
   insertIcon: (src, name, x, y) => {
