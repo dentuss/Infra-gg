@@ -36,7 +36,10 @@ export function buildReinforcement(
     };
   }
 
-  const width = REINFORCEMENT_LENGTH;
+  // Short wall stubs get a shorter marker instead of overhanging.
+  const width = fit
+    ? Math.max(16, Math.min(REINFORCEMENT_LENGTH, fit.alongExtent + 4))
+    : REINFORCEMENT_LENGTH;
   const height = fit ? Math.min(fit.thickness, 28) + WALL_PADDING : 16;
   const angle = fit?.angle ?? 0;
   const cx = fit?.cx ?? click.x;
@@ -68,11 +71,11 @@ export function buildHole(
   if (fit?.kind === "hatch") {
     cx = fit.x + fit.width / 2;
     cy = fit.y + fit.height / 2;
-    diameter = Math.min(fit.width, fit.height) * 0.8;
+    diameter = Math.min(fit.width, fit.height) * 0.9;
   } else if (fit?.kind === "wall") {
     cx = fit.cx;
     cy = fit.cy;
-    diameter = Math.min(44, Math.max(22, fit.thickness * 2.4));
+    diameter = Math.min(34, Math.max(22, fit.thickness * 2.4));
   }
   return {
     ...base(color),
