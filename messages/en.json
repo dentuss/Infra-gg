@@ -253,9 +253,13 @@
     "fillFilled": "Filled",
     "fillHollow": "Outline only",
     "strokeWidth": "Border width",
-    "customColor": "Custom color",
     "duplicate": "Duplicate",
     "copy": "Copy",
-    "paste": "Paste"
+    "paste": "Paste",
+    "borderLabel": "Border",
+    "borderColor": "Border color",
+    "toggleBorder": "Border on/off",
+    "borderShort": "BRD",
+    "hexApply": "Set"
   }
 }

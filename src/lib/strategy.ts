@@ -28,10 +28,14 @@ export type BoardElement = {
   /** line / arrow, relative to x/y */
   points?: number[];
   color: string;
-  /** shapes / lines / arrows */
+  /** shapes / lines / arrows: line or border width */
   strokeWidth?: number;
   /** shapes only: solid fill instead of outline */
   filled?: boolean;
+  /** outline toggle — defaults on for shapes, off for icons */
+  borderEnabled?: boolean;
+  /** outline color; falls back to the element color */
+  borderColor?: string;
 };
 
 export const DEFAULT_STROKE_WIDTH = 3;

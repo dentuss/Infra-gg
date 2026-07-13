@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Image as KonvaImage,
   Layer,
+  Line,
   Rect,
   Stage,
   Transformer,
@@ -44,8 +45,17 @@ export default function BoardCanvas({
   const color = useBoardStore((state) => state.color);
   const strokeWidth = useBoardStore((state) => state.strokeWidth);
   const filled = useBoardStore((state) => state.filled);
+  const borderEnabled = useBoardStore((state) => state.borderEnabled);
+  const borderColor = useBoardStore((state) => state.borderColor);
   const zoom = useBoardStore((state) => state.zoom);
   const stage = useBoardStore((state) => state.stage);
+  const guides = useBoardStore((state) => state.guides);
+  const zoomAnchorRef = useRef<{
+    boardX: number;
+    boardY: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
 
   const page = pages[activePage];
   const background = useHtmlImage(floorUrl);
@@ -82,11 +92,69 @@ export default function BoardCanvas({
       if (!wheelEvent.ctrlKey) return;
       wheelEvent.preventDefault();
       const store = useBoardStore.getState();
+      const rect = container.getBoundingClientRect();
+      const offsetX = wheelEvent.clientX - rect.left;
+      const offsetY = wheelEvent.clientY - rect.top;
+      const currentScale = (container.clientWidth / BOARD_WIDTH) * store.zoom;
+      // Keep the board point under the cursor stationary through the zoom.
+      zoomAnchorRef.current = {
+        boardX: (container.scrollLeft + offsetX) / currentScale,
+        boardY: (container.scrollTop + offsetY) / currentScale,
+        offsetX,
+        offsetY,
+      };
       store.setZoom(store.zoom * (wheelEvent.deltaY < 0 ? 1.1 : 0.9));
     };
     container.addEventListener("wheel", onWheel, { passive: false });
     return () => container.removeEventListener("wheel", onWheel);
   }, []);
+
+  // Apply the pending zoom anchor after the stage re-rendered at the
+  // new scale.
+  useEffect(() => {
+    const container = containerRef.current;
+    const anchor = zoomAnchorRef.current;
+    if (!container || !anchor) return;
+    zoomAnchorRef.current = null;
+    container.scrollLeft = anchor.boardX * scale - anchor.offsetX;
+    container.scrollTop = anchor.boardY * scale - anchor.offsetY;
+  }, [scale]);
+
+  // Middle-mouse drag pans the view.
+  const panRef = useRef<{
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
+
+  const onContainerMouseDown = (mouseEvent: React.MouseEvent) => {
+    if (mouseEvent.button !== 1) return;
+    const container = containerRef.current;
+    if (!container) return;
+    mouseEvent.preventDefault();
+    panRef.current = {
+      startX: mouseEvent.clientX,
+      startY: mouseEvent.clientY,
+      scrollLeft: container.scrollLeft,
+      scrollTop: container.scrollTop,
+    };
+    container.style.cursor = "grabbing";
+    const onMove = (moveEvent: MouseEvent) => {
+      const pan = panRef.current;
+      if (!pan) return;
+      container.scrollLeft = pan.scrollLeft - (moveEvent.clientX - pan.startX);
+      container.scrollTop = pan.scrollTop - (moveEvent.clientY - pan.startY);
+    };
+    const onUp = () => {
+      panRef.current = null;
+      container.style.cursor = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   // Keyboard: delete, copy/paste/duplicate, undo/redo.
   useEffect(() => {
@@ -128,7 +196,7 @@ export default function BoardCanvas({
   };
 
   const onMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!canEdit) return;
+    if (!canEdit || konvaEvent.evt.button !== 0) return;
     const store = useBoardStore.getState();
     const position = relativePointer();
     if (!position) return;
@@ -176,6 +244,8 @@ export default function BoardCanvas({
       color,
       strokeWidth,
       filled,
+      borderEnabled,
+      borderColor,
     });
   };
 
@@ -280,6 +350,7 @@ export default function BoardCanvas({
       className="relative flex-1 overflow-auto bg-black/40"
       onDragOver={(dragEvent) => dragEvent.preventDefault()}
       onDrop={onDrop}
+      onMouseDown={onContainerMouseDown}
     >
       {scale > 0 ? (
         <Stage
@@ -327,6 +398,26 @@ export default function BoardCanvas({
                 onTextEdit={() =>
                   canEdit && useBoardStore.getState().setEditingText(element.id)
                 }
+              />
+            ))}
+            {guides?.v.map((x) => (
+              <Line
+                key={`v-${x}`}
+                points={[x, 0, x, BOARD_HEIGHT]}
+                stroke="#d946ef"
+                strokeWidth={1 / Math.max(scale, 0.01)}
+                dash={[8, 6]}
+                listening={false}
+              />
+            ))}
+            {guides?.h.map((y) => (
+              <Line
+                key={`h-${y}`}
+                points={[0, y, BOARD_WIDTH, y]}
+                stroke="#d946ef"
+                strokeWidth={1 / Math.max(scale, 0.01)}
+                dash={[8, 6]}
+                listening={false}
               />
             ))}
             {band ? (
