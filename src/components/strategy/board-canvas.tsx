@@ -12,12 +12,23 @@ import {
   Transformer,
 } from "react-konva";
 
+import { ContextMenu } from "@/components/strategy/board-context-menu";
 import {
   ElementNode,
   useHtmlImage,
 } from "@/components/strategy/board-elements";
-import { BOARD_HEIGHT, BOARD_WIDTH, newId } from "@/lib/strategy";
-import { newIconElement, useBoardStore } from "@/store/board-store";
+import { LineupStrip, NICKNAME_BOX } from "@/components/strategy/board-lineup";
+import { OPERATOR_SRC_PREFIX } from "@/lib/operator-icons";
+import {
+  BOARD_HEIGHT,
+  BOARD_WIDTH,
+  LINEUP_COLORS,
+  LINEUP_SIZE,
+  LINEUP_SLOT_WIDTH,
+  newId,
+  STAGE_HEIGHT,
+} from "@/lib/strategy";
+import { useBoardStore } from "@/store/board-store";
 
 // Supersample the canvas so edges stay crisp on standard-density
 // displays; browsers cap the cost at one board.
@@ -32,6 +43,7 @@ export default function BoardCanvas({
   canEdit: boolean;
   floorUrl: string | null;
 }) {
+  const t = useTranslations("strategy");
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const drawingRef = useRef<{
@@ -59,6 +71,9 @@ export default function BoardCanvas({
   const activePage = useBoardStore((state) => state.activePage);
   const selectedIds = useBoardStore((state) => state.selectedIds);
   const editingTextId = useBoardStore((state) => state.editingTextId);
+  const activeSlot = useBoardStore((state) => state.activeSlot);
+  const editingNickname = useBoardStore((state) => state.editingNickname);
+  const lineup = useBoardStore((state) => state.lineup);
   const tool = useBoardStore((state) => state.tool);
   const color = useBoardStore((state) => state.color);
   const strokeWidth = useBoardStore((state) => state.strokeWidth);
@@ -120,7 +135,7 @@ export default function BoardCanvas({
         offsetX,
         offsetY,
       };
-      store.setZoom(store.zoom * (wheelEvent.deltaY < 0 ? 1.1 : 0.9));
+      store.setZoom(store.zoom * (wheelEvent.deltaY < 0 ? 1.05 : 1 / 1.05));
     };
     container.addEventListener("wheel", onWheel, { passive: false });
     return () => container.removeEventListener("wheel", onWheel);
@@ -229,6 +244,15 @@ export default function BoardCanvas({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [canEdit]);
 
+  // Belt to the preventDefault suspenders: whatever ends up focused after
+  // the opening click, pull focus back to the text editor.
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!editingTextId) return;
+    const frame = requestAnimationFrame(() => textareaRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [editingTextId]);
+
   const relativePointer = () => {
     const position = stage?.getRelativePointerPosition();
     return position ? { x: position.x, y: position.y } : null;
@@ -249,7 +273,13 @@ export default function BoardCanvas({
       return;
     }
 
+    // The lineup strip is not a drawing surface.
+    if (position.y > BOARD_HEIGHT) return;
+
     if (tool === "text") {
+      // Without this the browser moves focus to the canvas after the
+      // handlers run, instantly blurring the freshly opened textarea.
+      konvaEvent.evt.preventDefault();
       const id = newId();
       store.addElement({
         id,
@@ -280,8 +310,13 @@ export default function BoardCanvas({
       width: 1,
       height: 1,
       points: [0, 0, 1, 1],
-      // Lines and arrows start black; recolor them after drawing.
-      color: tool === "line" || tool === "arrow" ? "#09090b" : color,
+      // Lines and arrows start black unless a player color is active.
+      color:
+        tool === "line" || tool === "arrow"
+          ? activeSlot === null
+            ? "#09090b"
+            : (LINEUP_COLORS[activeSlot] ?? "#09090b")
+          : color,
       strokeWidth,
       filled,
       borderEnabled,
@@ -373,11 +408,24 @@ export default function BoardCanvas({
     stage.setPointersPositions(dropEvent.nativeEvent);
     const position = stage.getRelativePointerPosition();
     if (!position) return;
-    useBoardStore
-      .getState()
-      .addElement(
-        newIconElement(icon.url, icon.name, position.x - 32, position.y - 32),
+    const store = useBoardStore.getState();
+
+    // Dropping onto a lineup slot assigns it instead of adding an element.
+    if (position.y > BOARD_HEIGHT) {
+      const slotIndex = Math.min(
+        LINEUP_SIZE - 1,
+        Math.max(0, Math.floor(position.x / LINEUP_SLOT_WIDTH)),
       );
+      const item = { src: icon.url, name: icon.name };
+      if (icon.url.startsWith(OPERATOR_SRC_PREFIX)) {
+        store.setLineupSlot(slotIndex, { operator: item });
+      } else {
+        store.setLineupSlot(slotIndex, { gadget: item });
+      }
+      return;
+    }
+
+    store.insertIcon(icon.url, icon.name, position.x - 32, position.y - 32);
   };
 
   const editingElement = page?.elements.find(
@@ -396,7 +444,7 @@ export default function BoardCanvas({
         <Stage
           ref={(node) => useBoardStore.getState().setStage(node)}
           width={BOARD_WIDTH * scale}
-          height={BOARD_HEIGHT * scale}
+          height={STAGE_HEIGHT * scale}
           scaleX={scale}
           scaleY={scale}
           onMouseDown={onMouseDown}
@@ -461,6 +509,7 @@ export default function BoardCanvas({
                 }
               />
             ))}
+            <LineupStrip canEdit={canEdit} />
             {guides?.v.map((x) => (
               <Line
                 key={`v-${x}`}
@@ -509,6 +558,7 @@ export default function BoardCanvas({
 
       {editingElement ? (
         <textarea
+          ref={textareaRef}
           autoFocus
           value={editingElement.text ?? ""}
           onChange={(changeEvent) =>
@@ -534,102 +584,39 @@ export default function BoardCanvas({
           }}
         />
       ) : null}
-    </div>
-  );
-}
 
-function ContextMenu({
-  menu,
-  onClose,
-}: {
-  menu: { x: number; y: number; onElement: boolean };
-  onClose: () => void;
-}) {
-  const clipboard = useBoardStore((state) => state.clipboard);
-  const t = useTranslations("strategy");
-
-  const run = (action: () => void) => () => {
-    action();
-    onClose();
-  };
-  const store = () => useBoardStore.getState();
-
-  return (
-    <div
-      className="fixed z-50 w-44 rounded-sm border border-border bg-popover p-1 text-popover-foreground shadow-md"
-      style={{
-        left: Math.min(menu.x, window.innerWidth - 190),
-        top: Math.min(menu.y, window.innerHeight - 320),
-      }}
-      onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
-    >
-      {menu.onElement ? (
-        <>
-          <MenuItem
-            label={`${t("cut")} (Ctrl+X)`}
-            onSelect={run(() => store().cutSelected())}
-          />
-          <MenuItem
-            label={`${t("copy")} (Ctrl+C)`}
-            onSelect={run(() => store().copySelected())}
-          />
-        </>
-      ) : null}
-      <MenuItem
-        label={`${t("paste")} (Ctrl+V)`}
-        disabled={clipboard.length === 0}
-        onSelect={run(() => store().paste())}
-      />
-      {menu.onElement ? (
-        <>
-          <MenuItem
-            label={`${t("duplicate")} (Ctrl+D)`}
-            onSelect={run(() => store().duplicateSelected())}
-          />
-          <MenuItem
-            label={t("deleteElement")}
-            onSelect={run(() => store().deleteSelected())}
-          />
-          <div className="my-1 border-t border-border" />
-          <MenuItem
-            label={t("toFront")}
-            onSelect={run(() => store().reorderSelected("front"))}
-          />
-          <MenuItem
-            label={t("bringForward")}
-            onSelect={run(() => store().reorderSelected("forward"))}
-          />
-          <MenuItem
-            label={t("sendBackward")}
-            onSelect={run(() => store().reorderSelected("backward"))}
-          />
-          <MenuItem
-            label={t("toBack")}
-            onSelect={run(() => store().reorderSelected("back"))}
-          />
-        </>
+      {editingNickname !== null && canEdit ? (
+        <input
+          key={editingNickname}
+          autoFocus
+          defaultValue={lineup[editingNickname]?.nickname ?? ""}
+          maxLength={20}
+          aria-label={t("lineupNickname")}
+          onBlur={(blurEvent) => {
+            const store = useBoardStore.getState();
+            store.setLineupSlot(editingNickname, {
+              nickname: blurEvent.target.value.trim() || undefined,
+            });
+            store.setEditingNickname(null);
+          }}
+          onKeyDown={(keyEvent) => {
+            if (keyEvent.key === "Enter") {
+              (keyEvent.target as HTMLInputElement).blur();
+            }
+            if (keyEvent.key === "Escape") {
+              useBoardStore.getState().setEditingNickname(null);
+            }
+          }}
+          className="absolute z-10 border border-ring bg-background/90 p-1 text-center text-sm outline-none"
+          style={{
+            left:
+              (editingNickname * LINEUP_SLOT_WIDTH + NICKNAME_BOX.x) * scale,
+            top: (BOARD_HEIGHT + NICKNAME_BOX.y) * scale,
+            width: NICKNAME_BOX.width * scale,
+            height: Math.max(NICKNAME_BOX.height * scale, 24),
+          }}
+        />
       ) : null}
     </div>
-  );
-}
-
-function MenuItem({
-  label,
-  disabled,
-  onSelect,
-}: {
-  label: string;
-  disabled?: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onSelect}
-      className="w-full rounded-xs px-2 py-1 text-left text-sm hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-    >
-      {label}
-    </button>
   );
 }

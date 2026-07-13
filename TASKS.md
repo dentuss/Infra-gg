@@ -274,9 +274,17 @@ Status
 ## Canvas
 
 - [x] Fixed 16:9 slides-style board (infinite canvas dropped by design)
-- [x] Zoom (toolbar + ctrl-wheel)
+- [x] Zoom (scroll wheel to pointer, clamped 100–300%)
 - [ ] Pan
 - [ ] Grid
+
+---
+
+## Lineup
+
+- [x] Five color-coded player slots under the blueprint
+- [x] Nickname, operator, and gadget per slot (drag in from the panel)
+- [x] Player color context (click a slot; new elements take its color)
 
 ---
 

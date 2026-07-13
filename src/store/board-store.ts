@@ -4,12 +4,15 @@ import { create } from "zustand";
 import {
   BOARD_COLORS,
   DEFAULT_STROKE_WIDTH,
+  emptyLineup,
+  LINEUP_COLORS,
   newId,
   newPage,
   type BoardElement,
   type BoardPage,
   type BoardScene,
   type BoardTool,
+  type LineupSlot,
 } from "@/lib/strategy";
 
 const HISTORY_LIMIT = 50;
@@ -44,6 +47,10 @@ type BoardStore = {
   guides: { v: number[]; h: number[] } | null;
   borderEnabled: boolean;
   borderColor: string;
+  lineup: LineupSlot[];
+  /** Player color context: new elements take this slot's color. */
+  activeSlot: number | null;
+  editingNickname: number | null;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -66,7 +73,11 @@ type BoardStore = {
   addPage: (floor: string) => void;
   removeActivePage: () => void;
   setActiveFloor: (floor: string) => void;
+  setLineupSlot: (index: number, patch: Partial<LineupSlot>) => void;
+  setActiveSlot: (index: number | null) => void;
+  setEditingNickname: (index: number | null) => void;
   addElement: (element: BoardElement) => void;
+  insertIcon: (src: string, name: string, x: number, y: number) => void;
   updateElement: (
     id: string,
     patch: Partial<BoardElement>,
@@ -141,6 +152,9 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   guides: null,
   borderEnabled: true,
   borderColor: "#09090b",
+  lineup: emptyLineup(),
+  activeSlot: null,
+  editingNickname: null,
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -156,6 +170,9 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       historyIndex: 0,
       clipboard: [],
       dragOrigins: null,
+      lineup: scene.lineup.map((slot) => ({ ...slot })),
+      activeSlot: null,
+      editingNickname: null,
     });
   },
 
@@ -184,7 +201,26 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   },
   setGuides: (guides) => set({ guides }),
 
-  setZoom: (zoom) => set({ zoom: Math.min(3, Math.max(0.5, zoom)) }),
+  // 100% already shows the whole board — zooming out past it only shrinks.
+  setZoom: (zoom) => set({ zoom: Math.min(3, Math.max(1, zoom)) }),
+
+  setLineupSlot: (index, patch) =>
+    set((state) => ({
+      lineup: state.lineup.map((slot, slotIndex) =>
+        slotIndex === index ? { ...slot, ...patch } : slot,
+      ),
+      dirty: true,
+    })),
+
+  setActiveSlot: (index) => {
+    if (index === null) {
+      set({ activeSlot: null });
+      return;
+    }
+    set({ activeSlot: index, color: LINEUP_COLORS[index] ?? get().color });
+  },
+
+  setEditingNickname: (index) => set({ editingNickname: index }),
 
   select: (id, additive = false) =>
     set((state) => {
@@ -237,6 +273,19 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
 
   addElement: (element) => {
     const state = get();
+    const update = insertElements(state, [element]);
+    if (update) set(update);
+  },
+
+  insertIcon: (src, name, x, y) => {
+    const state = get();
+    const element = newIconElement(src, name, x, y);
+    const slotColor =
+      state.activeSlot === null ? null : LINEUP_COLORS[state.activeSlot];
+    if (slotColor) {
+      element.borderEnabled = true;
+      element.borderColor = slotColor;
+    }
     const update = insertElements(state, [element]);
     if (update) set(update);
   },
@@ -390,7 +439,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   markSaved: () => set({ dirty: false }),
 }));
 
-export function newIconElement(
+function newIconElement(
   src: string,
   name: string,
   x: number,
