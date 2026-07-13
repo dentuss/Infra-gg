@@ -18,6 +18,10 @@ import {
 const HISTORY_LIMIT = 50;
 const PASTE_OFFSET = 24;
 
+export type BoardHintKey = "boardBasics" | "slotColor";
+
+const hintStorageKey = (key: BoardHintKey) => `board-hint-dismissed:${key}`;
+
 function clonePages(pages: BoardPage[]): BoardPage[] {
   return JSON.parse(JSON.stringify(pages)) as BoardPage[];
 }
@@ -51,6 +55,8 @@ type BoardStore = {
   /** Player color context: new elements take this slot's color. */
   activeSlot: number | null;
   editingNickname: number | null;
+  /** One-time UX hint shown at the top right of the board. */
+  hint: BoardHintKey | null;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -76,6 +82,8 @@ type BoardStore = {
   setLineupSlot: (index: number, patch: Partial<LineupSlot>) => void;
   setActiveSlot: (index: number | null) => void;
   setEditingNickname: (index: number | null) => void;
+  showHint: (key: BoardHintKey) => void;
+  closeHint: (dontShowAgain?: boolean) => void;
   addElement: (element: BoardElement) => void;
   insertIcon: (src: string, name: string, x: number, y: number) => void;
   updateElement: (
@@ -155,6 +163,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   lineup: emptyLineup(),
   activeSlot: null,
   editingNickname: null,
+  hint: null,
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -221,6 +230,19 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   },
 
   setEditingNickname: (index) => set({ editingNickname: index }),
+
+  showHint: (key) => {
+    if (window.localStorage.getItem(hintStorageKey(key))) return;
+    set({ hint: key });
+  },
+
+  closeHint: (dontShowAgain = false) => {
+    const { hint } = get();
+    if (hint && dontShowAgain) {
+      window.localStorage.setItem(hintStorageKey(hint), "1");
+    }
+    set({ hint: null });
+  },
 
   select: (id, additive = false) =>
     set((state) => {

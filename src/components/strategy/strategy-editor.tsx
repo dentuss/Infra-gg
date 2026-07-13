@@ -89,6 +89,11 @@ export function StrategyEditor({
     useBoardStore.getState().load(scene);
   }, [strategy, maps]);
 
+  // First visit: explain zoom, pan, and the context menu.
+  useEffect(() => {
+    if (canEdit) useBoardStore.getState().showHint("boardBasics");
+  }, [canEdit]);
+
   // Debounced autosave whenever the scene is dirty.
   useEffect(() => {
     if (!canEdit || !dirty || !strategy) return;

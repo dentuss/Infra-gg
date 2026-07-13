@@ -288,6 +288,13 @@ Status
 
 ---
 
+## UX
+
+- [x] One-time hint toasts with "Don't show again" (board basics, player color)
+- [x] Animated slot activation (0.25s fade)
+
+---
+
 ## Operators
 
 - [x] Operator icons bundled into the build (r6operators package, MIT)

@@ -17,6 +17,7 @@ import {
   ElementNode,
   useHtmlImage,
 } from "@/components/strategy/board-elements";
+import { BoardHintToast } from "@/components/strategy/board-hints";
 import { LineupStrip, NICKNAME_BOX } from "@/components/strategy/board-lineup";
 import { OPERATOR_SRC_PREFIX } from "@/lib/operator-icons";
 import {
@@ -54,7 +55,7 @@ export default function BoardCanvas({
       "line" | "arrow" | "rect" | "ellipse" | "triangle" | "diamond" | "star";
   } | null>(null);
   const bandStartRef = useRef<{ x: number; y: number } | null>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [band, setBand] = useState<{
     x: number;
     y: number;
@@ -92,13 +93,23 @@ export default function BoardCanvas({
 
   const page = pages[activePage];
   const background = useHtmlImage(floorUrl);
-  const scale = containerWidth ? (containerWidth / BOARD_WIDTH) * zoom : 0;
+  // At 100% the whole stage (board + lineup) fits the visible area.
+  const scale =
+    containerSize.width && containerSize.height
+      ? Math.min(
+          containerSize.width / BOARD_WIDTH,
+          containerSize.height / STAGE_HEIGHT,
+        ) * zoom
+      : 0;
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const observer = new ResizeObserver(() =>
-      setContainerWidth(container.clientWidth),
+      setContainerSize({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      }),
     );
     observer.observe(container);
     return () => observer.disconnect();
@@ -127,11 +138,24 @@ export default function BoardCanvas({
       const rect = container.getBoundingClientRect();
       const offsetX = wheelEvent.clientX - rect.left;
       const offsetY = wheelEvent.clientY - rect.top;
-      const currentScale = (container.clientWidth / BOARD_WIDTH) * store.zoom;
-      // Keep the board point under the cursor stationary through the zoom.
+      const currentScale =
+        Math.min(
+          container.clientWidth / BOARD_WIDTH,
+          container.clientHeight / STAGE_HEIGHT,
+        ) * store.zoom;
+      // Keep the board point under the cursor stationary through the
+      // zoom; the stage is centered while smaller than the container.
+      const stageOffsetX = Math.max(
+        0,
+        (container.clientWidth - BOARD_WIDTH * currentScale) / 2,
+      );
+      const stageOffsetY = Math.max(
+        0,
+        (container.clientHeight - STAGE_HEIGHT * currentScale) / 2,
+      );
       zoomAnchorRef.current = {
-        boardX: (container.scrollLeft + offsetX) / currentScale,
-        boardY: (container.scrollTop + offsetY) / currentScale,
+        boardX: (container.scrollLeft + offsetX - stageOffsetX) / currentScale,
+        boardY: (container.scrollTop + offsetY - stageOffsetY) / currentScale,
         offsetX,
         offsetY,
       };
@@ -148,8 +172,17 @@ export default function BoardCanvas({
     const anchor = zoomAnchorRef.current;
     if (!container || !anchor) return;
     zoomAnchorRef.current = null;
-    container.scrollLeft = anchor.boardX * scale - anchor.offsetX;
-    container.scrollTop = anchor.boardY * scale - anchor.offsetY;
+    const stageOffsetX = Math.max(
+      0,
+      (container.clientWidth - BOARD_WIDTH * scale) / 2,
+    );
+    const stageOffsetY = Math.max(
+      0,
+      (container.clientHeight - STAGE_HEIGHT * scale) / 2,
+    );
+    container.scrollLeft =
+      anchor.boardX * scale + stageOffsetX - anchor.offsetX;
+    container.scrollTop = anchor.boardY * scale + stageOffsetY - anchor.offsetY;
   }, [scale]);
 
   // Middle-mouse drag pans the view.
@@ -433,190 +466,206 @@ export default function BoardCanvas({
   );
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-w-0 flex-1 overflow-auto bg-black/40"
-      onDragOver={(dragEvent) => dragEvent.preventDefault()}
-      onDrop={onDrop}
-      onMouseDown={onContainerMouseDown}
-    >
-      {scale > 0 ? (
-        <Stage
-          ref={(node) => useBoardStore.getState().setStage(node)}
-          width={BOARD_WIDTH * scale}
-          height={STAGE_HEIGHT * scale}
-          scaleX={scale}
-          scaleY={scale}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-          onContextMenu={(konvaEvent) => {
-            konvaEvent.evt.preventDefault();
-            if (!canEdit) return;
-            const store = useBoardStore.getState();
-            let onElement = false;
-            const target = konvaEvent.target;
-            if (target !== target.getStage()) {
-              const id = target.id();
-              if (id && page?.elements.some((element) => element.id === id)) {
-                onElement = true;
-                if (!store.selectedIds.includes(id)) {
-                  store.select(id);
+    <div className="relative min-w-0 flex-1">
+      <div
+        ref={containerRef}
+        className="absolute inset-0 flex overflow-auto bg-black/40"
+        onDragOver={(dragEvent) => dragEvent.preventDefault()}
+        onDrop={onDrop}
+        onMouseDown={onContainerMouseDown}
+      >
+        {scale > 0 ? (
+          <div
+            className="relative m-auto shrink-0"
+            style={{
+              width: BOARD_WIDTH * scale,
+              height: STAGE_HEIGHT * scale,
+            }}
+          >
+            <Stage
+              ref={(node) => useBoardStore.getState().setStage(node)}
+              width={BOARD_WIDTH * scale}
+              height={STAGE_HEIGHT * scale}
+              scaleX={scale}
+              scaleY={scale}
+              onMouseDown={onMouseDown}
+              onMouseMove={onMouseMove}
+              onMouseUp={onMouseUp}
+              onContextMenu={(konvaEvent) => {
+                konvaEvent.evt.preventDefault();
+                if (!canEdit) return;
+                const store = useBoardStore.getState();
+                let onElement = false;
+                const target = konvaEvent.target;
+                if (target !== target.getStage()) {
+                  const id = target.id();
+                  if (
+                    id &&
+                    page?.elements.some((element) => element.id === id)
+                  ) {
+                    onElement = true;
+                    if (!store.selectedIds.includes(id)) {
+                      store.select(id);
+                    }
+                  }
                 }
-              }
-            }
-            setMenu({
-              x: konvaEvent.evt.clientX,
-              y: konvaEvent.evt.clientY,
-              onElement,
-            });
-          }}
-        >
-          <Layer>
-            <Rect
-              x={0}
-              y={0}
-              width={BOARD_WIDTH}
-              height={BOARD_HEIGHT}
-              fill="#18181b"
-              listening={false}
-            />
-            {background ? (
-              <KonvaImage
-                image={background}
-                x={0}
-                y={0}
-                width={BOARD_WIDTH}
-                height={BOARD_HEIGHT}
-                listening={false}
-              />
-            ) : null}
-            {page?.elements.map((element) => (
-              <ElementNode
-                key={element.id}
-                element={element}
-                draggable={canEdit && tool === "select"}
-                onSelect={(additive) =>
-                  useBoardStore.getState().select(element.id, additive)
-                }
-                onChange={(patch, commit) =>
-                  useBoardStore
-                    .getState()
-                    .updateElement(element.id, patch, { commit })
-                }
-                onTextEdit={() =>
-                  canEdit && useBoardStore.getState().setEditingText(element.id)
-                }
-              />
-            ))}
-            <LineupStrip canEdit={canEdit} />
-            {guides?.v.map((x) => (
-              <Line
-                key={`v-${x}`}
-                points={[x, 0, x, BOARD_HEIGHT]}
-                stroke="#d946ef"
-                strokeWidth={1 / Math.max(scale, 0.01)}
-                dash={[8, 6]}
-                listening={false}
-              />
-            ))}
-            {guides?.h.map((y) => (
-              <Line
-                key={`h-${y}`}
-                points={[0, y, BOARD_WIDTH, y]}
-                stroke="#d946ef"
-                strokeWidth={1 / Math.max(scale, 0.01)}
-                dash={[8, 6]}
-                listening={false}
-              />
-            ))}
-            {band ? (
-              <Rect
-                x={band.x}
-                y={band.y}
-                width={band.width}
-                height={band.height}
-                stroke="#3b82f6"
-                strokeWidth={1 / Math.max(scale, 0.01)}
-                dash={[6, 4]}
-                fill="rgba(59, 130, 246, 0.1)"
-                listening={false}
-              />
-            ) : null}
-            {canEdit ? (
-              <Transformer
-                ref={transformerRef}
-                rotateEnabled
-                flipEnabled={false}
-              />
-            ) : null}
-          </Layer>
-        </Stage>
-      ) : null}
+                setMenu({
+                  x: konvaEvent.evt.clientX,
+                  y: konvaEvent.evt.clientY,
+                  onElement,
+                });
+              }}
+            >
+              <Layer>
+                <Rect
+                  x={0}
+                  y={0}
+                  width={BOARD_WIDTH}
+                  height={BOARD_HEIGHT}
+                  fill="#18181b"
+                  listening={false}
+                />
+                {background ? (
+                  <KonvaImage
+                    image={background}
+                    x={0}
+                    y={0}
+                    width={BOARD_WIDTH}
+                    height={BOARD_HEIGHT}
+                    listening={false}
+                  />
+                ) : null}
+                {page?.elements.map((element) => (
+                  <ElementNode
+                    key={element.id}
+                    element={element}
+                    draggable={canEdit && tool === "select"}
+                    onSelect={(additive) =>
+                      useBoardStore.getState().select(element.id, additive)
+                    }
+                    onChange={(patch, commit) =>
+                      useBoardStore
+                        .getState()
+                        .updateElement(element.id, patch, { commit })
+                    }
+                    onTextEdit={() =>
+                      canEdit &&
+                      useBoardStore.getState().setEditingText(element.id)
+                    }
+                  />
+                ))}
+                <LineupStrip canEdit={canEdit} />
+                {guides?.v.map((x) => (
+                  <Line
+                    key={`v-${x}`}
+                    points={[x, 0, x, BOARD_HEIGHT]}
+                    stroke="#d946ef"
+                    strokeWidth={1 / Math.max(scale, 0.01)}
+                    dash={[8, 6]}
+                    listening={false}
+                  />
+                ))}
+                {guides?.h.map((y) => (
+                  <Line
+                    key={`h-${y}`}
+                    points={[0, y, BOARD_WIDTH, y]}
+                    stroke="#d946ef"
+                    strokeWidth={1 / Math.max(scale, 0.01)}
+                    dash={[8, 6]}
+                    listening={false}
+                  />
+                ))}
+                {band ? (
+                  <Rect
+                    x={band.x}
+                    y={band.y}
+                    width={band.width}
+                    height={band.height}
+                    stroke="#3b82f6"
+                    strokeWidth={1 / Math.max(scale, 0.01)}
+                    dash={[6, 4]}
+                    fill="rgba(59, 130, 246, 0.1)"
+                    listening={false}
+                  />
+                ) : null}
+                {canEdit ? (
+                  <Transformer
+                    ref={transformerRef}
+                    rotateEnabled
+                    flipEnabled={false}
+                  />
+                ) : null}
+              </Layer>
+            </Stage>
 
+            {editingElement ? (
+              <textarea
+                ref={textareaRef}
+                autoFocus
+                value={editingElement.text ?? ""}
+                onChange={(changeEvent) =>
+                  useBoardStore.getState().updateElement(editingElement.id, {
+                    text: changeEvent.target.value,
+                  })
+                }
+                onBlur={() => {
+                  const store = useBoardStore.getState();
+                  store.updateElement(editingElement.id, {}, { commit: true });
+                  store.setEditingText(null);
+                }}
+                onKeyDown={(keyEvent) => {
+                  if (keyEvent.key === "Enter" && !keyEvent.shiftKey) {
+                    keyEvent.preventDefault();
+                    (keyEvent.target as HTMLTextAreaElement).blur();
+                  }
+                }}
+                className="absolute z-10 w-64 resize-none border border-ring bg-background/90 p-1 text-sm outline-none"
+                style={{
+                  left: editingElement.x * scale,
+                  top: editingElement.y * scale,
+                }}
+              />
+            ) : null}
+
+            {editingNickname !== null && canEdit ? (
+              <input
+                key={editingNickname}
+                autoFocus
+                defaultValue={lineup[editingNickname]?.nickname ?? ""}
+                maxLength={20}
+                aria-label={t("lineupNickname")}
+                onBlur={(blurEvent) => {
+                  const store = useBoardStore.getState();
+                  store.setLineupSlot(editingNickname, {
+                    nickname: blurEvent.target.value.trim() || undefined,
+                  });
+                  store.setEditingNickname(null);
+                }}
+                onKeyDown={(keyEvent) => {
+                  if (keyEvent.key === "Enter") {
+                    (keyEvent.target as HTMLInputElement).blur();
+                  }
+                  if (keyEvent.key === "Escape") {
+                    useBoardStore.getState().setEditingNickname(null);
+                  }
+                }}
+                className="absolute z-10 border border-ring bg-background/90 p-1 text-center text-sm outline-none"
+                style={{
+                  left:
+                    (editingNickname * LINEUP_SLOT_WIDTH + NICKNAME_BOX.x) *
+                    scale,
+                  top: (BOARD_HEIGHT + NICKNAME_BOX.y) * scale,
+                  width: NICKNAME_BOX.width * scale,
+                  height: Math.max(NICKNAME_BOX.height * scale, 24),
+                }}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <BoardHintToast />
       {menu ? <ContextMenu menu={menu} onClose={() => setMenu(null)} /> : null}
-
-      {editingElement ? (
-        <textarea
-          ref={textareaRef}
-          autoFocus
-          value={editingElement.text ?? ""}
-          onChange={(changeEvent) =>
-            useBoardStore.getState().updateElement(editingElement.id, {
-              text: changeEvent.target.value,
-            })
-          }
-          onBlur={() => {
-            const store = useBoardStore.getState();
-            store.updateElement(editingElement.id, {}, { commit: true });
-            store.setEditingText(null);
-          }}
-          onKeyDown={(keyEvent) => {
-            if (keyEvent.key === "Enter" && !keyEvent.shiftKey) {
-              keyEvent.preventDefault();
-              (keyEvent.target as HTMLTextAreaElement).blur();
-            }
-          }}
-          className="absolute z-10 w-64 resize-none border border-ring bg-background/90 p-1 text-sm outline-none"
-          style={{
-            left: editingElement.x * scale,
-            top: editingElement.y * scale,
-          }}
-        />
-      ) : null}
-
-      {editingNickname !== null && canEdit ? (
-        <input
-          key={editingNickname}
-          autoFocus
-          defaultValue={lineup[editingNickname]?.nickname ?? ""}
-          maxLength={20}
-          aria-label={t("lineupNickname")}
-          onBlur={(blurEvent) => {
-            const store = useBoardStore.getState();
-            store.setLineupSlot(editingNickname, {
-              nickname: blurEvent.target.value.trim() || undefined,
-            });
-            store.setEditingNickname(null);
-          }}
-          onKeyDown={(keyEvent) => {
-            if (keyEvent.key === "Enter") {
-              (keyEvent.target as HTMLInputElement).blur();
-            }
-            if (keyEvent.key === "Escape") {
-              useBoardStore.getState().setEditingNickname(null);
-            }
-          }}
-          className="absolute z-10 border border-ring bg-background/90 p-1 text-center text-sm outline-none"
-          style={{
-            left:
-              (editingNickname * LINEUP_SLOT_WIDTH + NICKNAME_BOX.x) * scale,
-            top: (BOARD_HEIGHT + NICKNAME_BOX.y) * scale,
-            width: NICKNAME_BOX.width * scale,
-            height: Math.max(NICKNAME_BOX.height * scale, 24),
-          }}
-        />
-      ) : null}
     </div>
   );
 }
