@@ -1,6 +1,7 @@
 "use client";
 
 import Konva from "konva";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
   Image as KonvaImage,
@@ -47,6 +48,11 @@ export default function BoardCanvas({
     y: number;
     width: number;
     height: number;
+  } | null>(null);
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    onElement: boolean;
   } | null>(null);
 
   const pages = useBoardStore((state) => state.pages);
@@ -171,6 +177,21 @@ export default function BoardCanvas({
     startPan(mouseEvent.clientX, mouseEvent.clientY);
   };
 
+  // Close the context menu on outside clicks or Escape.
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const onKey = (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key === "Escape") close();
+    };
+    window.addEventListener("mousedown", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
   // Keyboard: delete, copy/paste/duplicate, undo/redo.
   useEffect(() => {
     if (!canEdit) return;
@@ -194,6 +215,9 @@ export default function BoardCanvas({
         store.redo();
       } else if (key === "c") {
         store.copySelected();
+      } else if (key === "x") {
+        keyEvent.preventDefault();
+        store.cutSelected();
       } else if (key === "v") {
         store.paste();
       } else if (key === "d") {
@@ -378,6 +402,27 @@ export default function BoardCanvas({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
+          onContextMenu={(konvaEvent) => {
+            konvaEvent.evt.preventDefault();
+            if (!canEdit) return;
+            const store = useBoardStore.getState();
+            let onElement = false;
+            const target = konvaEvent.target;
+            if (target !== target.getStage()) {
+              const id = target.id();
+              if (id && page?.elements.some((element) => element.id === id)) {
+                onElement = true;
+                if (!store.selectedIds.includes(id)) {
+                  store.select(id);
+                }
+              }
+            }
+            setMenu({
+              x: konvaEvent.evt.clientX,
+              y: konvaEvent.evt.clientY,
+              onElement,
+            });
+          }}
         >
           <Layer>
             <Rect
@@ -460,6 +505,8 @@ export default function BoardCanvas({
         </Stage>
       ) : null}
 
+      {menu ? <ContextMenu menu={menu} onClose={() => setMenu(null)} /> : null}
+
       {editingElement ? (
         <textarea
           autoFocus
@@ -488,5 +535,101 @@ export default function BoardCanvas({
         />
       ) : null}
     </div>
+  );
+}
+
+function ContextMenu({
+  menu,
+  onClose,
+}: {
+  menu: { x: number; y: number; onElement: boolean };
+  onClose: () => void;
+}) {
+  const clipboard = useBoardStore((state) => state.clipboard);
+  const t = useTranslations("strategy");
+
+  const run = (action: () => void) => () => {
+    action();
+    onClose();
+  };
+  const store = () => useBoardStore.getState();
+
+  return (
+    <div
+      className="fixed z-50 w-44 rounded-sm border border-border bg-popover p-1 text-popover-foreground shadow-md"
+      style={{
+        left: Math.min(menu.x, window.innerWidth - 190),
+        top: Math.min(menu.y, window.innerHeight - 320),
+      }}
+      onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+    >
+      {menu.onElement ? (
+        <>
+          <MenuItem
+            label={`${t("cut")} (Ctrl+X)`}
+            onSelect={run(() => store().cutSelected())}
+          />
+          <MenuItem
+            label={`${t("copy")} (Ctrl+C)`}
+            onSelect={run(() => store().copySelected())}
+          />
+        </>
+      ) : null}
+      <MenuItem
+        label={`${t("paste")} (Ctrl+V)`}
+        disabled={clipboard.length === 0}
+        onSelect={run(() => store().paste())}
+      />
+      {menu.onElement ? (
+        <>
+          <MenuItem
+            label={`${t("duplicate")} (Ctrl+D)`}
+            onSelect={run(() => store().duplicateSelected())}
+          />
+          <MenuItem
+            label={t("deleteElement")}
+            onSelect={run(() => store().deleteSelected())}
+          />
+          <div className="my-1 border-t border-border" />
+          <MenuItem
+            label={t("toFront")}
+            onSelect={run(() => store().reorderSelected("front"))}
+          />
+          <MenuItem
+            label={t("bringForward")}
+            onSelect={run(() => store().reorderSelected("forward"))}
+          />
+          <MenuItem
+            label={t("sendBackward")}
+            onSelect={run(() => store().reorderSelected("backward"))}
+          />
+          <MenuItem
+            label={t("toBack")}
+            onSelect={run(() => store().reorderSelected("back"))}
+          />
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function MenuItem({
+  label,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  disabled?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onSelect}
+      className="w-full rounded-xs px-2 py-1 text-left text-sm hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+    >
+      {label}
+    </button>
   );
 }

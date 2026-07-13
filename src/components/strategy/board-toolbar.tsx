@@ -59,12 +59,29 @@ export function BoardToolbar() {
   const borderColor = useBoardStore((state) => state.borderColor);
   const zoom = useBoardStore((state) => state.zoom);
   const selectedIds = useBoardStore((state) => state.selectedIds);
+  const pages = useBoardStore((state) => state.pages);
+  const activePage = useBoardStore((state) => state.activePage);
   const clipboard = useBoardStore((state) => state.clipboard);
   const historyIndex = useBoardStore((state) => state.historyIndex);
   const historyLength = useBoardStore((state) => state.history.length);
 
   const store = () => useBoardStore.getState();
   const hasSelection = selectedIds.length > 0;
+
+  // With a selection, the controls show that element's own properties.
+  const selected = pages[activePage]?.elements.find(
+    (element) => element.id === selectedIds[0],
+  );
+  const shownColor = selected?.color ?? color;
+  const shownStrokeWidth = selected?.strokeWidth ?? strokeWidth;
+  const shownFilled = selected ? (selected.filled ?? false) : filled;
+  const shownBorderColor = selected
+    ? (selected.borderColor ?? selected.color)
+    : borderColor;
+  const shownBorderEnabled = selected
+    ? (selected.borderEnabled ??
+      (selected.type !== "icon" && selected.type !== "text"))
+    : borderEnabled;
 
   return (
     <aside className="flex w-16 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-border py-2">
@@ -84,20 +101,20 @@ export function BoardToolbar() {
       <SectionLabel>{t("color")}</SectionLabel>
       <div className="flex items-center gap-1">
         <ColorPicker
-          value={color}
+          value={shownColor}
           label={t("color")}
           onChange={(next) => store().setColor(next)}
         />
         <button
           type="button"
           aria-label={t("fillHollow")}
-          title={filled ? t("fillFilled") : t("fillHollow")}
-          onClick={() => store().setFilled(!filled)}
+          title={shownFilled ? t("fillFilled") : t("fillHollow")}
+          onClick={() => store().setFilled(!shownFilled)}
           className={cn(
             "flex size-7 items-center justify-center rounded-sm border border-border",
           )}
         >
-          {filled ? (
+          {shownFilled ? (
             <span className="size-3.5 bg-foreground" />
           ) : (
             <span className="size-3.5 border-2 border-foreground" />
@@ -108,7 +125,7 @@ export function BoardToolbar() {
       <SectionLabel>{t("borderLabel")}</SectionLabel>
       <div className="flex items-center gap-1">
         <ColorPicker
-          value={borderColor}
+          value={shownBorderColor}
           label={t("borderColor")}
           onChange={(next) => store().setBorderColor(next)}
         />
@@ -116,10 +133,10 @@ export function BoardToolbar() {
           type="button"
           aria-label={t("toggleBorder")}
           title={t("toggleBorder")}
-          onClick={() => store().setBorderEnabled(!borderEnabled)}
+          onClick={() => store().setBorderEnabled(!shownBorderEnabled)}
           className={cn(
             "flex size-7 items-center justify-center rounded-sm border border-border text-[0.6rem] font-bold uppercase",
-            borderEnabled
+            shownBorderEnabled
               ? "bg-secondary text-secondary-foreground"
               : "text-muted-foreground line-through",
           )}
@@ -130,7 +147,7 @@ export function BoardToolbar() {
       <select
         aria-label={t("strokeWidth")}
         title={t("strokeWidth")}
-        value={strokeWidth}
+        value={shownStrokeWidth}
         onChange={(changeEvent) =>
           store().setStrokeWidth(Number(changeEvent.target.value))
         }

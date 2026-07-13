@@ -285,7 +285,7 @@ Status
 - [x] Icon library from storage (operators, gadgets — uploaded to strategy/icons)
 - [x] Drag
 - [x] Rotate
-- [ ] Duplicate
+- [x] Duplicate
 
 ---
 
@@ -305,7 +305,7 @@ Status
 - [ ] Layer list
 - [ ] Lock
 - [ ] Hide
-- [ ] Reorder
+- [x] Reorder (z-order via the right-click menu)
 
 ---
 
@@ -313,10 +313,10 @@ Status
 
 - [x] Undo
 - [x] Redo
-- [ ] Copy
-- [ ] Paste
+- [x] Copy
+- [x] Paste
 - [x] Delete
-- [ ] Multi-select
+- [x] Multi-select (shift-click and rubber-band)
 
 ---
 

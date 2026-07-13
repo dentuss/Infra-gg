@@ -260,6 +260,11 @@
     "borderColor": "Border color",
     "toggleBorder": "Border on/off",
     "borderShort": "BRD",
-    "hexApply": "Set"
+    "hexApply": "Set",
+    "cut": "Cut",
+    "toFront": "Bring to front",
+    "bringForward": "Bring forward",
+    "sendBackward": "Send backward",
+    "toBack": "Send to back"
   }
 }
