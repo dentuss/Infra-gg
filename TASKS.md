@@ -267,7 +267,7 @@ Status
 
 Status
 
-🟡 (v1 shipped; fix rounds ongoing)
+🟡 (in active development — a major feature is planned next)
 
 ---
 
@@ -298,10 +298,11 @@ Status
 ## Operators
 
 - [x] Operator icons bundled into the build (r6operators package, MIT)
+- [x] Attackers / Defenders / Recruits sub-groups in the panel
 - [x] Gadget icon library from storage (uploaded to strategy/icons)
 - [x] Asset search
 - [x] Drag
-- [x] Rotate
+- [x] Rotate (Shift snaps to 45° steps)
 - [x] Duplicate
 
 ---
@@ -342,6 +343,7 @@ Status
 - [x] Paste
 - [x] Delete
 - [x] Multi-select (shift-click and rubber-band)
+- [x] Arrow-key nudge (Shift for big steps; ignores alignment snapping)
 
 ---
 

@@ -37,6 +37,14 @@ if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(2, window.devicePixelRatio || 1);
 }
 
+// Shift while rotating snaps to these angles, Google Slides style.
+const ROTATION_SNAPS = [0, 45, 90, 135, 180, 225, 270, 315];
+
+const NUDGE_STEP = 2;
+const NUDGE_STEP_LARGE = 10;
+// One undo entry per burst of arrow presses, not one per pixel.
+const NUDGE_COMMIT_DELAY_MS = 400;
+
 export default function BoardCanvas({
   canEdit,
   floorUrl,
@@ -240,7 +248,22 @@ export default function BoardCanvas({
     };
   }, [menu]);
 
-  // Keyboard: delete, copy/paste/duplicate, undo/redo.
+  // Track Shift for the transformer's rotation snapping.
+  const [shiftDown, setShiftDown] = useState(false);
+  useEffect(() => {
+    const onKey = (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key === "Shift") setShiftDown(keyEvent.type === "keydown");
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKey);
+    };
+  }, []);
+
+  // Keyboard: delete, arrow nudge, copy/paste/duplicate, undo/redo.
+  const nudgeCommitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!canEdit) return;
     const onKeyDown = (keyEvent: KeyboardEvent) => {
@@ -252,6 +275,42 @@ export default function BoardCanvas({
         store.deleteSelected();
         return;
       }
+
+      // Arrow nudge: direct moves that ignore alignment snapping.
+      if (keyEvent.key.startsWith("Arrow")) {
+        if (store.selectedIds.length === 0) return;
+        keyEvent.preventDefault();
+        const step = keyEvent.shiftKey ? NUDGE_STEP_LARGE : NUDGE_STEP;
+        const dx =
+          keyEvent.key === "ArrowLeft"
+            ? -step
+            : keyEvent.key === "ArrowRight"
+              ? step
+              : 0;
+        const dy =
+          keyEvent.key === "ArrowUp"
+            ? -step
+            : keyEvent.key === "ArrowDown"
+              ? step
+              : 0;
+        const elements = store.pages[store.activePage]?.elements ?? [];
+        store.updateElements(
+          store.selectedIds.flatMap((id) => {
+            const element = elements.find((candidate) => candidate.id === id);
+            return element
+              ? [{ id, patch: { x: element.x + dx, y: element.y + dy } }]
+              : [];
+          }),
+        );
+        if (nudgeCommitRef.current) clearTimeout(nudgeCommitRef.current);
+        nudgeCommitRef.current = setTimeout(() => {
+          const current = useBoardStore.getState();
+          const anchorId = current.selectedIds[0];
+          if (anchorId) current.updateElement(anchorId, {}, { commit: true });
+        }, NUDGE_COMMIT_DELAY_MS);
+        return;
+      }
+
       if (!(keyEvent.ctrlKey || keyEvent.metaKey)) return;
       const key = keyEvent.key.toLowerCase();
       if (key === "z") {
@@ -274,7 +333,10 @@ export default function BoardCanvas({
       }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      if (nudgeCommitRef.current) clearTimeout(nudgeCommitRef.current);
+    };
   }, [canEdit]);
 
   // Belt to the preventDefault suspenders: whatever ends up focused after
@@ -593,6 +655,8 @@ export default function BoardCanvas({
                     ref={transformerRef}
                     rotateEnabled
                     flipEnabled={false}
+                    rotationSnaps={shiftDown ? ROTATION_SNAPS : []}
+                    rotationSnapTolerance={8}
                   />
                 ) : null}
               </Layer>
