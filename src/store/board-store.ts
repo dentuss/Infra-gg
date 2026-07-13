@@ -128,7 +128,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   tool: "select",
   color: BOARD_COLORS[0] ?? "#fafafa",
   strokeWidth: DEFAULT_STROKE_WIDTH,
-  filled: false,
+  filled: true,
   zoom: 1,
   dirty: false,
   history: [],
@@ -138,7 +138,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   dragOrigins: null,
   guides: null,
   borderEnabled: true,
-  borderColor: BOARD_COLORS[0] ?? "#fafafa",
+  borderColor: "#09090b",
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
