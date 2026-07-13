@@ -12,6 +12,7 @@ import {
 } from "react-konva";
 
 import { computeSnap, type Box } from "@/lib/board-snapping";
+import { resolveIconSrc } from "@/lib/operator-icons";
 import {
   DEFAULT_STROKE_WIDTH,
   diamondPoints,
@@ -65,7 +66,7 @@ export function useHtmlImage(src: string | null | undefined) {
     pendingImages.add(src);
     const img = new window.Image();
     img.crossOrigin = "anonymous";
-    img.src = src;
+    img.src = resolveIconSrc(src);
     img.onload = () => {
       loadedImages.set(src, img);
       pendingImages.delete(src);

@@ -14,6 +14,7 @@ for the roadmap, and [CLAUDE.md](CLAUDE.md) for engineering rules.
 - [Supabase](https://supabase.com) — Postgres, Auth, Realtime, Storage
 - [React Query](https://tanstack.com/query) (server state) + [Zustand](https://zustand.docs.pmnd.rs) (client state)
 - [React Konva](https://konvajs.org/docs/react/) (strategy board), [Tiptap](https://tiptap.dev) (documents), [FullCalendar](https://fullcalendar.io) (calendar)
+- Operator icons by [r6operators](https://github.com/marcopixel/r6operators) (MIT, not affiliated with Ubisoft)
 - Deployed on [Vercel](https://vercel.com)
 
 ## Getting started
