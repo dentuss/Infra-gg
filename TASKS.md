@@ -282,7 +282,9 @@ Status
 
 ## Operators
 
-- [x] Icon library from storage (operators, gadgets — uploaded to strategy/icons)
+- [x] Operator icons bundled into the build (r6operators package, MIT)
+- [x] Gadget icon library from storage (uploaded to strategy/icons)
+- [x] Asset search
 - [x] Drag
 - [x] Rotate
 - [x] Duplicate
