@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useBoardIcons } from "@/hooks/use-board-assets";
 import { listOperatorIcons, operatorIconDataUrl } from "@/lib/operator-icons";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "@/lib/strategy";
-import { newIconElement, useBoardStore } from "@/store/board-store";
+import { useBoardStore } from "@/store/board-store";
 
 type AssetItem = { name: string; src: string; preview: string };
 
@@ -33,13 +33,11 @@ function AssetButton({ asset }: { asset: AssetItem }) {
       onClick={() =>
         useBoardStore
           .getState()
-          .addElement(
-            newIconElement(
-              asset.src,
-              asset.name,
-              BOARD_WIDTH / 2 - 32,
-              BOARD_HEIGHT / 2 - 32,
-            ),
+          .insertIcon(
+            asset.src,
+            asset.name,
+            BOARD_WIDTH / 2 - 32,
+            BOARD_HEIGHT / 2 - 32,
           )
       }
       className="flex aspect-square items-center justify-center border border-border bg-muted/30 p-1 hover:bg-accent"

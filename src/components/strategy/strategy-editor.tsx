@@ -66,6 +66,7 @@ export function StrategyEditor({
   const loadedForId = useRef<string | null>(null);
 
   const pages = useBoardStore((state) => state.pages);
+  const lineup = useBoardStore((state) => state.lineup);
   const activePage = useBoardStore((state) => state.activePage);
   const dirty = useBoardStore((state) => state.dirty);
 
@@ -93,7 +94,10 @@ export function StrategyEditor({
     if (!canEdit || !dirty || !strategy) return;
     const timer = setTimeout(() => {
       saveStrategy.mutate(
-        { id: strategy.id, patch: { data: { pages } as unknown as Json } },
+        {
+          id: strategy.id,
+          patch: { data: { pages, lineup } as unknown as Json },
+        },
         {
           onSuccess: () => {
             useBoardStore.getState().markSaved();
@@ -110,7 +114,7 @@ export function StrategyEditor({
     }, 1500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages, dirty, canEdit, strategy?.id]);
+  }, [pages, lineup, dirty, canEdit, strategy?.id]);
 
   if (error) {
     return (

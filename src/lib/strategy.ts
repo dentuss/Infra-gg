@@ -69,8 +69,35 @@ export type BoardPage = {
   elements: BoardElement[];
 };
 
+/** One player column in the lineup strip under the blueprint. */
+export type LineupSlot = {
+  nickname?: string;
+  operator?: { src: string; name: string };
+  gadget?: { src: string; name: string };
+};
+
+export const LINEUP_SIZE = 5;
+export const LINEUP_HEIGHT = 200;
+export const LINEUP_SLOT_WIDTH = BOARD_WIDTH / LINEUP_SIZE;
+/** Board plus the lineup strip — the full exported canvas. */
+export const STAGE_HEIGHT = BOARD_HEIGHT + LINEUP_HEIGHT;
+
+/** Player colors, slots left to right. */
+export const LINEUP_COLORS = [
+  "#ef4444",
+  "#22c55e",
+  "#3b82f6",
+  "#a855f7",
+  "#ec4899",
+];
+
+export function emptyLineup(): LineupSlot[] {
+  return Array.from({ length: LINEUP_SIZE }, () => ({}));
+}
+
 export type BoardScene = {
   pages: BoardPage[];
+  lineup: LineupSlot[];
 };
 
 export const BOARD_COLORS = [
@@ -114,9 +141,17 @@ export function parseScene(data: Json): BoardScene {
     !Array.isArray(data) &&
     Array.isArray((data as { pages?: unknown }).pages)
   ) {
-    return data as unknown as BoardScene;
+    const raw = data as unknown as {
+      pages: BoardPage[];
+      lineup?: LineupSlot[];
+    };
+    return {
+      pages: raw.pages,
+      // Scenes saved before the lineup existed get five empty slots.
+      lineup: emptyLineup().map((slot, index) => raw.lineup?.[index] ?? slot),
+    };
   }
-  return { pages: [] };
+  return { pages: [], lineup: emptyLineup() };
 }
 
 const FLOOR_ORDER = [

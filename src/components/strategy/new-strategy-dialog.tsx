@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateStrategy, type StrategySide } from "@/hooks/use-strategies";
-import { newPage } from "@/lib/strategy";
+import { emptyLineup, newPage } from "@/lib/strategy";
 
 export function NewStrategyDialog({
   open,
@@ -45,7 +45,7 @@ export function NewStrategyDialog({
       title: title.trim(),
       map: mapSlug,
       side,
-      scene: { pages: [newPage(firstFloor)] },
+      scene: { pages: [newPage(firstFloor)], lineup: emptyLineup() },
     });
     onOpenChange(false);
     setTitle("");
