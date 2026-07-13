@@ -302,6 +302,14 @@ Status
 
 ---
 
+## Library
+
+- [x] Thumbnail previews (board snapshot uploaded on autosave)
+- [x] Folder structure (map → Attack/Defence)
+- [x] Slideshow browser (Next/Back with adjacent previews)
+
+---
+
 ## Layers
 
 - [ ] Layer list

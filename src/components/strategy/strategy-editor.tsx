@@ -1,5 +1,6 @@
 "use client";
 
+import type Konva from "konva";
 import { ArrowLeft, Download, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
@@ -20,6 +21,7 @@ import {
 import { useBlueprintMaps } from "@/hooks/use-board-assets";
 import { useSaveStrategy, useStrategy } from "@/hooks/use-strategies";
 import { BOARD_WIDTH, newPage, parseScene, titleize } from "@/lib/strategy";
+import { uploadStrategyThumbnail } from "@/services/strategy-thumbnails";
 import { useBoardStore } from "@/store/board-store";
 import type { Json } from "@/types/database";
 
@@ -27,6 +29,15 @@ const BoardCanvas = dynamic(
   () => import("@/components/strategy/board-canvas"),
   { ssr: false },
 );
+
+/** Full-board PNG at a fixed pixel width, selection handles hidden. */
+function stageSnapshot(stage: Konva.Stage, pixelWidth: number): string {
+  const helpers = stage.find("Transformer");
+  helpers.forEach((node) => node.visible(false));
+  const dataUrl = stage.toDataURL({ pixelRatio: pixelWidth / stage.width() });
+  helpers.forEach((node) => node.visible(true));
+  return dataUrl;
+}
 
 const KNOWN_FLOORS = new Set([
   "basement",
@@ -83,7 +94,18 @@ export function StrategyEditor({
     const timer = setTimeout(() => {
       saveStrategy.mutate(
         { id: strategy.id, patch: { data: { pages } as unknown as Json } },
-        { onSuccess: () => useBoardStore.getState().markSaved() },
+        {
+          onSuccess: () => {
+            useBoardStore.getState().markSaved();
+            const stage = useBoardStore.getState().stage;
+            if (stage) {
+              void uploadStrategyThumbnail(
+                strategy.id,
+                stageSnapshot(stage, 640),
+              );
+            }
+          },
+        },
       );
     }, 1500);
     return () => clearTimeout(timer);
@@ -114,9 +136,7 @@ export function StrategyEditor({
     const link = document.createElement("a");
     link.download = `${strategy.title}.png`;
     // Export at a fixed 3200x1800 regardless of the on-screen zoom.
-    link.href = stage.toDataURL({
-      pixelRatio: (BOARD_WIDTH * 2) / stage.width(),
-    });
+    link.href = stageSnapshot(stage, BOARD_WIDTH * 2);
     link.click();
   };
 
