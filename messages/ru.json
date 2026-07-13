@@ -246,6 +246,16 @@
       "second_floor": "2-й этаж",
       "third_floor": "3-й этаж",
       "roof": "Крыша"
-    }
+    },
+    "toolTriangle": "Треугольник",
+    "toolDiamond": "Ромб",
+    "toolStar": "Звезда",
+    "fillFilled": "С заливкой",
+    "fillHollow": "Только контур",
+    "strokeWidth": "Толщина линии",
+    "customColor": "Свой цвет",
+    "duplicate": "Дублировать",
+    "copy": "Копировать",
+    "paste": "Вставить"
   }
 }

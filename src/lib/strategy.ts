@@ -3,12 +3,14 @@ import type { Json } from "@/types/database";
 export const BOARD_WIDTH = 1600;
 export const BOARD_HEIGHT = 900;
 
-export type BoardTool =
-  "select" | "text" | "line" | "arrow" | "rect" | "ellipse";
+export type BoardShapeType =
+  "rect" | "ellipse" | "triangle" | "diamond" | "star";
+
+export type BoardTool = "select" | "text" | "line" | "arrow" | BoardShapeType;
 
 export type BoardElement = {
   id: string;
-  type: "icon" | "text" | "line" | "arrow" | "rect" | "ellipse";
+  type: "icon" | "text" | "line" | "arrow" | BoardShapeType;
   x: number;
   y: number;
   rotation: number;
@@ -20,13 +22,42 @@ export type BoardElement = {
   /** text */
   text?: string;
   fontSize?: number;
-  /** rect / ellipse */
+  /** shapes: bounding box (ellipse x/y is the center) */
   width?: number;
   height?: number;
   /** line / arrow, relative to x/y */
   points?: number[];
   color: string;
+  /** shapes / lines / arrows */
+  strokeWidth?: number;
+  /** shapes only: solid fill instead of outline */
+  filled?: boolean;
 };
+
+export const DEFAULT_STROKE_WIDTH = 3;
+
+/** Closed polygon points within a w×h bounding box, per shape. */
+export function trianglePoints(width: number, height: number): number[] {
+  return [width / 2, 0, width, height, 0, height];
+}
+
+export function diamondPoints(width: number, height: number): number[] {
+  return [width / 2, 0, width, height / 2, width / 2, height, 0, height / 2];
+}
+
+export function starPoints(width: number, height: number): number[] {
+  const spikes = 5;
+  const points: number[] = [];
+  for (let i = 0; i < spikes * 2; i++) {
+    const angle = (Math.PI / spikes) * i - Math.PI / 2;
+    const factor = i % 2 === 0 ? 1 : 0.45;
+    points.push(
+      width / 2 + factor * (width / 2) * Math.cos(angle),
+      height / 2 + factor * (height / 2) * Math.sin(angle),
+    );
+  }
+  return points;
+}
 
 export type BoardPage = {
   id: string;
@@ -40,11 +71,27 @@ export type BoardScene = {
 
 export const BOARD_COLORS = [
   "#fafafa",
+  "#a1a1aa",
+  "#52525b",
+  "#09090b",
   "#ef4444",
-  "#3b82f6",
-  "#eab308",
-  "#22c55e",
+  "#b91c1c",
   "#f97316",
+  "#f59e0b",
+  "#eab308",
+  "#84cc16",
+  "#22c55e",
+  "#10b981",
+  "#14b8a6",
+  "#06b6d4",
+  "#0ea5e9",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#a855f7",
+  "#d946ef",
+  "#ec4899",
+  "#f43f5e",
 ];
 
 export function newId(): string {
