@@ -272,6 +272,18 @@
     "borderShort": "BRD",
     "hexApply": "Set",
     "lineupNickname": "Nickname",
+    "hints": {
+      "boardBasics": {
+        "title": "Board controls",
+        "body": "Scroll to zoom, hold the middle mouse button to pan, right-click an element for more actions."
+      },
+      "slotColor": {
+        "title": "Player color on",
+        "body": "New shapes, lines and text now use this player's color, and placed icons get a matching outline. Click the slot again to switch it off."
+      }
+    },
+    "hintClose": "Close",
+    "hintDontShowAgain": "Don't show again",
     "cut": "Cut",
     "toFront": "Bring to front",
     "bringForward": "Bring forward",

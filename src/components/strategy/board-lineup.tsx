@@ -1,5 +1,7 @@
 "use client";
 
+import type Konva from "konva";
+import { useEffect, useRef } from "react";
 import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
 
 import { useHtmlImage } from "@/components/strategy/board-elements";
@@ -14,8 +16,45 @@ import {
 import { useBoardStore } from "@/store/board-store";
 
 export const NICKNAME_BOX = { x: 60, y: 12, width: 200, height: 28 };
-const OPERATOR_BOX = { size: 92, y: 48 };
-const GADGET_BOX = { size: 52, y: 144 };
+const OPERATOR_BOX = { size: 92, y: 44 };
+const GADGET_BOX = { size: 48, y: 142 };
+
+/** Activation highlight that fades in and out instead of snapping. */
+function ActiveGlow({
+  x,
+  y,
+  width,
+  height,
+  color,
+  active,
+}: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  active: boolean;
+}) {
+  const ref = useRef<Konva.Rect>(null);
+  useEffect(() => {
+    ref.current?.to({ opacity: active ? 1 : 0, duration: 0.25 });
+  }, [active]);
+  return (
+    <Rect
+      ref={ref}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      cornerRadius={10}
+      stroke={color}
+      strokeWidth={3}
+      fill={`${color}1a`}
+      opacity={0}
+      listening={false}
+    />
+  );
+}
 
 function SlotImage({
   src,
@@ -59,7 +98,9 @@ function LineupSlotNode({
 
   const toggleActive = () => {
     const store = useBoardStore.getState();
-    store.setActiveSlot(store.activeSlot === index ? null : index);
+    const activating = store.activeSlot !== index;
+    store.setActiveSlot(activating ? index : null);
+    if (activating) store.showHint("slotColor");
   };
   const patchSlot = (patch: Partial<LineupSlot>) =>
     useBoardStore.getState().setLineupSlot(index, patch);
@@ -73,10 +114,19 @@ function LineupSlotNode({
         height={LINEUP_HEIGHT - 12}
         cornerRadius={10}
         stroke={color}
-        strokeWidth={active ? 3 : 1.5}
-        fill={active ? `${color}1a` : undefined}
+        strokeWidth={1.5}
+      />
+      <ActiveGlow
+        x={cellX + 6}
+        y={y + 6}
+        width={LINEUP_SLOT_WIDTH - 12}
+        height={LINEUP_HEIGHT - 12}
+        color={color}
+        active={active}
       />
 
+      {/* Plate is invisible once a nickname is set, but stays clickable
+          (Konva hit detection ignores opacity). */}
       <Rect
         x={cellX + NICKNAME_BOX.x}
         y={y + NICKNAME_BOX.y}
@@ -84,6 +134,7 @@ function LineupSlotNode({
         height={NICKNAME_BOX.height}
         cornerRadius={6}
         fill="#1c1c20"
+        opacity={slot.nickname ? 0 : 1}
         onClick={(konvaEvent) => {
           konvaEvent.cancelBubble = true;
           useBoardStore.getState().setEditingNickname(index);
