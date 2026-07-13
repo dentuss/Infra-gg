@@ -246,6 +246,16 @@
       "second_floor": "2nd floor",
       "third_floor": "3rd floor",
       "roof": "Roof"
-    }
+    },
+    "toolTriangle": "Triangle",
+    "toolDiamond": "Diamond",
+    "toolStar": "Star",
+    "fillFilled": "Filled",
+    "fillHollow": "Outline only",
+    "strokeWidth": "Border width",
+    "customColor": "Custom color",
+    "duplicate": "Duplicate",
+    "copy": "Copy",
+    "paste": "Paste"
   }
 }

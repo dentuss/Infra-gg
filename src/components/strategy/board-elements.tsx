@@ -11,7 +11,14 @@ import {
   Text,
 } from "react-konva";
 
-import type { BoardElement } from "@/lib/strategy";
+import {
+  DEFAULT_STROKE_WIDTH,
+  diamondPoints,
+  starPoints,
+  trianglePoints,
+  type BoardElement,
+} from "@/lib/strategy";
+import { useBoardStore } from "@/store/board-store";
 
 // Module-level image cache: the same icon placed many times loads once,
 // and useSyncExternalStore keeps the effect free of setState calls.
@@ -48,7 +55,7 @@ export function useHtmlImage(src: string | null | undefined) {
 export type ElementNodeProps = {
   element: BoardElement;
   draggable: boolean;
-  onSelect: () => void;
+  onSelect: (additive: boolean) => void;
   onChange: (patch: Partial<BoardElement>, commit: boolean) => void;
   onTextEdit: () => void;
 };
@@ -86,10 +93,54 @@ export function ElementNode({
     scaleX: element.scaleX,
     scaleY: element.scaleY,
     draggable,
-    onClick: onSelect,
-    onTap: onSelect,
-    onDragEnd: (konvaEvent: Konva.KonvaEventObject<DragEvent>) =>
-      onChange({ x: konvaEvent.target.x(), y: konvaEvent.target.y() }, true),
+    onClick: (konvaEvent: Konva.KonvaEventObject<MouseEvent>) =>
+      onSelect(konvaEvent.evt.shiftKey),
+    onTap: () => onSelect(false),
+    onDragStart: () => {
+      const store = useBoardStore.getState();
+      if (!store.selectedIds.includes(element.id)) {
+        store.select(element.id);
+        return;
+      }
+      // Group drag: remember every selected node's starting position.
+      if (store.selectedIds.length > 1 && store.stage) {
+        const origins: Record<string, { x: number; y: number }> = {};
+        for (const id of store.selectedIds) {
+          const node = store.stage.findOne(`#${id}`);
+          if (node) origins[id] = { x: node.x(), y: node.y() };
+        }
+        store.setDragOrigins(origins);
+      }
+    },
+    onDragMove: (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+      const store = useBoardStore.getState();
+      const origins = store.dragOrigins;
+      const origin = origins?.[element.id];
+      if (!origins || !origin || !store.stage) return;
+      const dx = konvaEvent.target.x() - origin.x;
+      const dy = konvaEvent.target.y() - origin.y;
+      for (const id of store.selectedIds) {
+        if (id === element.id) continue;
+        const peerOrigin = origins[id];
+        if (!peerOrigin) continue;
+        store.stage
+          .findOne(`#${id}`)
+          ?.position({ x: peerOrigin.x + dx, y: peerOrigin.y + dy });
+      }
+    },
+    onDragEnd: (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+      const store = useBoardStore.getState();
+      if (store.dragOrigins && store.stage) {
+        const patches = store.selectedIds.flatMap((id) => {
+          const node = store.stage?.findOne(`#${id}`);
+          return node ? [{ id, patch: { x: node.x(), y: node.y() } }] : [];
+        });
+        store.updateElements(patches, { commit: true });
+        store.setDragOrigins(null);
+        return;
+      }
+      onChange({ x: konvaEvent.target.x(), y: konvaEvent.target.y() }, true);
+    },
     onTransformEnd: (konvaEvent: Konva.KonvaEventObject<Event>) => {
       const node = konvaEvent.target;
       onChange(
@@ -104,6 +155,9 @@ export function ElementNode({
       );
     },
   };
+
+  const strokeWidth = element.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const shapeFill = element.filled ? element.color : undefined;
 
   switch (element.type) {
     case "icon":
@@ -127,7 +181,8 @@ export function ElementNode({
           width={element.width ?? 1}
           height={element.height ?? 1}
           stroke={element.color}
-          strokeWidth={3}
+          fill={shapeFill}
+          strokeWidth={strokeWidth}
           hitStrokeWidth={14}
         />
       );
@@ -138,17 +193,42 @@ export function ElementNode({
           radiusX={(element.width ?? 1) / 2}
           radiusY={(element.height ?? 1) / 2}
           stroke={element.color}
-          strokeWidth={3}
+          fill={shapeFill}
+          strokeWidth={strokeWidth}
           hitStrokeWidth={14}
         />
       );
+    case "triangle":
+    case "diamond":
+    case "star": {
+      const width = element.width ?? 1;
+      const height = element.height ?? 1;
+      const points =
+        element.type === "triangle"
+          ? trianglePoints(width, height)
+          : element.type === "diamond"
+            ? diamondPoints(width, height)
+            : starPoints(width, height);
+      return (
+        <Line
+          {...common}
+          points={points}
+          closed
+          stroke={element.color}
+          fill={shapeFill}
+          strokeWidth={strokeWidth}
+          hitStrokeWidth={14}
+          lineJoin="round"
+        />
+      );
+    }
     case "line":
       return (
         <Line
           {...common}
           points={element.points ?? [0, 0, 0, 0]}
           stroke={element.color}
-          strokeWidth={4}
+          strokeWidth={strokeWidth}
           hitStrokeWidth={16}
           lineCap="round"
         />
@@ -160,10 +240,10 @@ export function ElementNode({
           points={element.points ?? [0, 0, 0, 0]}
           stroke={element.color}
           fill={element.color}
-          strokeWidth={4}
+          strokeWidth={strokeWidth}
           hitStrokeWidth={16}
-          pointerLength={14}
-          pointerWidth={14}
+          pointerLength={10 + strokeWidth * 2}
+          pointerWidth={10 + strokeWidth * 2}
           lineCap="round"
         />
       );

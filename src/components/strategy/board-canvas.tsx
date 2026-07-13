@@ -27,14 +27,23 @@ export default function BoardCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const drawingRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const bandStartRef = useRef<{ x: number; y: number } | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [band, setBand] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const pages = useBoardStore((state) => state.pages);
   const activePage = useBoardStore((state) => state.activePage);
-  const selectedId = useBoardStore((state) => state.selectedId);
+  const selectedIds = useBoardStore((state) => state.selectedIds);
   const editingTextId = useBoardStore((state) => state.editingTextId);
   const tool = useBoardStore((state) => state.tool);
   const color = useBoardStore((state) => state.color);
+  const strokeWidth = useBoardStore((state) => state.strokeWidth);
+  const filled = useBoardStore((state) => state.filled);
   const zoom = useBoardStore((state) => state.zoom);
   const stage = useBoardStore((state) => state.stage);
 
@@ -52,24 +61,61 @@ export default function BoardCanvas({
     return () => observer.disconnect();
   }, []);
 
-  // Attach the transformer to the selected node.
+  // Attach the transformer to all selected nodes.
   useEffect(() => {
     const transformer = transformerRef.current;
     if (!transformer || !stage) return;
-    const node = selectedId ? stage.findOne(`#${selectedId}`) : null;
-    transformer.nodes(node ? [node] : []);
-  }, [selectedId, stage, pages, activePage]);
+    const nodes = selectedIds.flatMap((id) => {
+      const node = stage.findOne(`#${id}`);
+      return node ? [node] : [];
+    });
+    transformer.nodes(nodes);
+  }, [selectedIds, stage, pages, activePage]);
 
-  // Delete key removes the selection while not editing text.
+  // Ctrl+wheel zoom needs a non-passive listener: React attaches wheel
+  // handlers passively, so preventDefault there cannot stop the
+  // browser's own page zoom.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onWheel = (wheelEvent: WheelEvent) => {
+      if (!wheelEvent.ctrlKey) return;
+      wheelEvent.preventDefault();
+      const store = useBoardStore.getState();
+      store.setZoom(store.zoom * (wheelEvent.deltaY < 0 ? 1.1 : 0.9));
+    };
+    container.addEventListener("wheel", onWheel, { passive: false });
+    return () => container.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Keyboard: delete, copy/paste/duplicate, undo/redo.
   useEffect(() => {
     if (!canEdit) return;
     const onKeyDown = (keyEvent: KeyboardEvent) => {
       const target = keyEvent.target as HTMLElement;
-      if (
-        (keyEvent.key === "Delete" || keyEvent.key === "Backspace") &&
-        !["INPUT", "TEXTAREA"].includes(target.tagName)
-      ) {
-        useBoardStore.getState().deleteSelected();
+      if (["INPUT", "TEXTAREA"].includes(target.tagName)) return;
+      const store = useBoardStore.getState();
+
+      if (keyEvent.key === "Delete" || keyEvent.key === "Backspace") {
+        store.deleteSelected();
+        return;
+      }
+      if (!(keyEvent.ctrlKey || keyEvent.metaKey)) return;
+      const key = keyEvent.key.toLowerCase();
+      if (key === "z") {
+        keyEvent.preventDefault();
+        if (keyEvent.shiftKey) store.redo();
+        else store.undo();
+      } else if (key === "y") {
+        keyEvent.preventDefault();
+        store.redo();
+      } else if (key === "c") {
+        store.copySelected();
+      } else if (key === "v") {
+        store.paste();
+      } else if (key === "d") {
+        keyEvent.preventDefault();
+        store.duplicateSelected();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -89,7 +135,8 @@ export default function BoardCanvas({
 
     if (tool === "select") {
       if (konvaEvent.target === konvaEvent.target.getStage()) {
-        store.select(null);
+        bandStartRef.current = position;
+        setBand({ x: position.x, y: position.y, width: 0, height: 0 });
         store.setEditingText(null);
       }
       return;
@@ -127,14 +174,26 @@ export default function BoardCanvas({
       height: 1,
       points: [0, 0, 1, 1],
       color,
+      strokeWidth,
+      filled,
     });
   };
 
   const onMouseMove = () => {
-    const drawing = drawingRef.current;
-    if (!drawing) return;
     const position = relativePointer();
     if (!position) return;
+    const bandStart = bandStartRef.current;
+    if (bandStart) {
+      setBand({
+        x: Math.min(bandStart.x, position.x),
+        y: Math.min(bandStart.y, position.y),
+        width: Math.abs(position.x - bandStart.x),
+        height: Math.abs(position.y - bandStart.y),
+      });
+      return;
+    }
+    const drawing = drawingRef.current;
+    if (!drawing) return;
     const store = useBoardStore.getState();
     const dx = position.x - drawing.x;
     const dy = position.y - drawing.y;
@@ -161,10 +220,35 @@ export default function BoardCanvas({
   };
 
   const onMouseUp = () => {
+    const store = useBoardStore.getState();
+
+    if (bandStartRef.current) {
+      bandStartRef.current = null;
+      const area = band;
+      setBand(null);
+      if (!area || !stage || (area.width < 4 && area.height < 4)) {
+        store.clearSelection();
+        return;
+      }
+      // Select every element whose box intersects the rubber band.
+      const hits = (page?.elements ?? []).filter((element) => {
+        const node = stage.findOne(`#${element.id}`);
+        if (!node) return false;
+        const box = node.getClientRect({ relativeTo: stage });
+        return (
+          box.x < area.x + area.width &&
+          box.x + box.width > area.x &&
+          box.y < area.y + area.height &&
+          box.y + box.height > area.y
+        );
+      });
+      store.selectMany(hits.map((element) => element.id));
+      return;
+    }
+
     const drawing = drawingRef.current;
     if (!drawing) return;
     drawingRef.current = null;
-    const store = useBoardStore.getState();
     store.updateElement(drawing.id, {}, { commit: true });
     store.setTool("select");
     store.select(drawing.id);
@@ -196,12 +280,6 @@ export default function BoardCanvas({
       className="relative flex-1 overflow-auto bg-black/40"
       onDragOver={(dragEvent) => dragEvent.preventDefault()}
       onDrop={onDrop}
-      onWheel={(wheelEvent) => {
-        if (!wheelEvent.ctrlKey) return;
-        wheelEvent.preventDefault();
-        const store = useBoardStore.getState();
-        store.setZoom(zoom * (wheelEvent.deltaY < 0 ? 1.1 : 0.9));
-      }}
     >
       {scale > 0 ? (
         <Stage
@@ -238,7 +316,9 @@ export default function BoardCanvas({
                 key={element.id}
                 element={element}
                 draggable={canEdit && tool === "select"}
-                onSelect={() => useBoardStore.getState().select(element.id)}
+                onSelect={(additive) =>
+                  useBoardStore.getState().select(element.id, additive)
+                }
                 onChange={(patch, commit) =>
                   useBoardStore
                     .getState()
@@ -249,6 +329,19 @@ export default function BoardCanvas({
                 }
               />
             ))}
+            {band ? (
+              <Rect
+                x={band.x}
+                y={band.y}
+                width={band.width}
+                height={band.height}
+                stroke="#3b82f6"
+                strokeWidth={1 / Math.max(scale, 0.01)}
+                dash={[6, 4]}
+                fill="rgba(59, 130, 246, 0.1)"
+                listening={false}
+              />
+            ) : null}
             {canEdit ? (
               <Transformer
                 ref={transformerRef}
