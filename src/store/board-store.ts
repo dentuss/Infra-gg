@@ -40,6 +40,10 @@ type BoardStore = {
   clipboard: BoardElement[];
   /** Transient node positions captured at group-drag start. */
   dragOrigins: Record<string, { x: number; y: number }> | null;
+  /** Transient snap guide lines shown while dragging. */
+  guides: { v: number[]; h: number[] } | null;
+  borderEnabled: boolean;
+  borderColor: string;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -47,6 +51,9 @@ type BoardStore = {
   setColor: (color: string) => void;
   setStrokeWidth: (strokeWidth: number) => void;
   setFilled: (filled: boolean) => void;
+  setBorderEnabled: (borderEnabled: boolean) => void;
+  setBorderColor: (borderColor: string) => void;
+  setGuides: (guides: { v: number[]; h: number[] } | null) => void;
   setZoom: (zoom: number) => void;
   select: (id: string, additive?: boolean) => void;
   selectMany: (ids: string[]) => void;
@@ -129,6 +136,9 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   stage: null,
   clipboard: [],
   dragOrigins: null,
+  guides: null,
+  borderEnabled: true,
+  borderColor: BOARD_COLORS[0] ?? "#fafafa",
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -162,6 +172,15 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
     set({ filled });
     get().applyToSelected({ filled });
   },
+  setBorderEnabled: (borderEnabled) => {
+    set({ borderEnabled });
+    get().applyToSelected({ borderEnabled });
+  },
+  setBorderColor: (borderColor) => {
+    set({ borderColor });
+    get().applyToSelected({ borderColor, borderEnabled: true });
+  },
+  setGuides: (guides) => set({ guides }),
 
   setZoom: (zoom) => set({ zoom: Math.min(3, Math.max(0.5, zoom)) }),
 

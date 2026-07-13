@@ -11,6 +11,7 @@ import {
   Text,
 } from "react-konva";
 
+import { computeSnap, type Box } from "@/lib/board-snapping";
 import {
   DEFAULT_STROKE_WIDTH,
   diamondPoints,
@@ -19,6 +20,33 @@ import {
   type BoardElement,
 } from "@/lib/strategy";
 import { useBoardStore } from "@/store/board-store";
+
+function snapDraggedNode(node: Konva.Node, elementId: string) {
+  const store = useBoardStore.getState();
+  const stage = store.stage;
+  const page = store.pages[store.activePage];
+  if (!stage || !page) return;
+
+  const moving = new Set(
+    store.selectedIds.length > 0 ? store.selectedIds : [elementId],
+  );
+  const others: Box[] = page.elements
+    .filter((candidate) => !moving.has(candidate.id))
+    .flatMap((candidate) => {
+      const other = stage.findOne(`#${candidate.id}`);
+      return other ? [other.getClientRect({ relativeTo: stage })] : [];
+    });
+
+  const snap = computeSnap(node.getClientRect({ relativeTo: stage }), others);
+  if (snap.dx !== 0 || snap.dy !== 0) {
+    node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
+  }
+  store.setGuides(
+    snap.vGuides.length || snap.hGuides.length
+      ? { v: snap.vGuides, h: snap.hGuides }
+      : null,
+  );
+}
 
 // Module-level image cache: the same icon placed many times loads once,
 // and useSyncExternalStore keeps the effect free of setState calls.
@@ -68,12 +96,17 @@ function IconImage({
   common: Record<string, unknown>;
 }) {
   const image = useHtmlImage(element.src);
+  const borderOn = element.borderEnabled ?? false;
   return (
     <KonvaImage
       {...common}
       image={image ?? undefined}
       width={element.width}
       height={element.height}
+      stroke={borderOn ? (element.borderColor ?? element.color) : undefined}
+      strokeWidth={
+        borderOn ? (element.strokeWidth ?? DEFAULT_STROKE_WIDTH) : undefined
+      }
     />
   );
 }
@@ -113,6 +146,7 @@ export function ElementNode({
       }
     },
     onDragMove: (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+      snapDraggedNode(konvaEvent.target, element.id);
       const store = useBoardStore.getState();
       const origins = store.dragOrigins;
       const origin = origins?.[element.id];
@@ -130,6 +164,7 @@ export function ElementNode({
     },
     onDragEnd: (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
       const store = useBoardStore.getState();
+      store.setGuides(null);
       if (store.dragOrigins && store.stage) {
         const patches = store.selectedIds.flatMap((id) => {
           const node = store.stage?.findOne(`#${id}`);
@@ -158,6 +193,13 @@ export function ElementNode({
 
   const strokeWidth = element.strokeWidth ?? DEFAULT_STROKE_WIDTH;
   const shapeFill = element.filled ? element.color : undefined;
+  // Shapes default to an outline; icons and text default to none.
+  const borderOn =
+    element.borderEnabled ??
+    (element.type !== "icon" && element.type !== "text");
+  const borderStroke = borderOn
+    ? (element.borderColor ?? element.color)
+    : undefined;
 
   switch (element.type) {
     case "icon":
@@ -180,7 +222,7 @@ export function ElementNode({
           {...common}
           width={element.width ?? 1}
           height={element.height ?? 1}
-          stroke={element.color}
+          stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
           hitStrokeWidth={14}
@@ -192,7 +234,7 @@ export function ElementNode({
           {...common}
           radiusX={(element.width ?? 1) / 2}
           radiusY={(element.height ?? 1) / 2}
-          stroke={element.color}
+          stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
           hitStrokeWidth={14}
@@ -214,7 +256,7 @@ export function ElementNode({
           {...common}
           points={points}
           closed
-          stroke={element.color}
+          stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
           hitStrokeWidth={14}

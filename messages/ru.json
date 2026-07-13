@@ -253,9 +253,13 @@
     "fillFilled": "С заливкой",
     "fillHollow": "Только контур",
     "strokeWidth": "Толщина линии",
-    "customColor": "Свой цвет",
     "duplicate": "Дублировать",
     "copy": "Копировать",
-    "paste": "Вставить"
+    "paste": "Вставить",
+    "borderLabel": "Контур",
+    "borderColor": "Цвет контура",
+    "toggleBorder": "Контур вкл/выкл",
+    "borderShort": "КНТ",
+    "hexApply": "ОК"
   }
 }

@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { ColorPicker } from "@/components/strategy/color-picker";
 import { Button } from "@/components/ui/button";
-import { BOARD_COLORS, type BoardTool } from "@/lib/strategy";
+import type { BoardTool } from "@/lib/strategy";
 import { cn } from "@/lib/utils";
 import { useBoardStore } from "@/store/board-store";
 
@@ -40,12 +41,22 @@ const TOOLS: { tool: BoardTool; icon: typeof Type; key: string }[] = [
 
 const STROKE_WIDTHS = [1, 2, 3, 4, 6, 8, 12];
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mt-2 text-[0.6rem] tracking-wide text-muted-foreground uppercase">
+      {children}
+    </span>
+  );
+}
+
 export function BoardToolbar() {
   const t = useTranslations("strategy");
   const tool = useBoardStore((state) => state.tool);
   const color = useBoardStore((state) => state.color);
   const strokeWidth = useBoardStore((state) => state.strokeWidth);
   const filled = useBoardStore((state) => state.filled);
+  const borderEnabled = useBoardStore((state) => state.borderEnabled);
+  const borderColor = useBoardStore((state) => state.borderColor);
   const zoom = useBoardStore((state) => state.zoom);
   const selectedIds = useBoardStore((state) => state.selectedIds);
   const clipboard = useBoardStore((state) => state.clipboard);
@@ -70,33 +81,52 @@ export function BoardToolbar() {
         </Button>
       ))}
 
-      <div className="mt-2 flex items-center gap-1">
+      <SectionLabel>{t("color")}</SectionLabel>
+      <div className="flex items-center gap-1">
+        <ColorPicker
+          value={color}
+          label={t("color")}
+          onChange={(next) => store().setColor(next)}
+        />
         <button
           type="button"
           aria-label={t("fillHollow")}
-          title={t("fillHollow")}
-          onClick={() => store().setFilled(false)}
+          title={filled ? t("fillFilled") : t("fillHollow")}
+          onClick={() => store().setFilled(!filled)}
           className={cn(
-            "flex size-6 items-center justify-center rounded-sm border border-border",
-            !filled && "ring-2 ring-ring",
+            "flex size-7 items-center justify-center rounded-sm border border-border",
           )}
         >
-          <span className="size-3 border-2 border-foreground" />
-        </button>
-        <button
-          type="button"
-          aria-label={t("fillFilled")}
-          title={t("fillFilled")}
-          onClick={() => store().setFilled(true)}
-          className={cn(
-            "flex size-6 items-center justify-center rounded-sm border border-border",
-            filled && "ring-2 ring-ring",
+          {filled ? (
+            <span className="size-3.5 bg-foreground" />
+          ) : (
+            <span className="size-3.5 border-2 border-foreground" />
           )}
-        >
-          <span className="size-3 bg-foreground" />
         </button>
       </div>
 
+      <SectionLabel>{t("borderLabel")}</SectionLabel>
+      <div className="flex items-center gap-1">
+        <ColorPicker
+          value={borderColor}
+          label={t("borderColor")}
+          onChange={(next) => store().setBorderColor(next)}
+        />
+        <button
+          type="button"
+          aria-label={t("toggleBorder")}
+          title={t("toggleBorder")}
+          onClick={() => store().setBorderEnabled(!borderEnabled)}
+          className={cn(
+            "flex size-7 items-center justify-center rounded-sm border border-border text-[0.6rem] font-bold uppercase",
+            borderEnabled
+              ? "bg-secondary text-secondary-foreground"
+              : "text-muted-foreground line-through",
+          )}
+        >
+          {t("borderShort")}
+        </button>
+      </div>
       <select
         aria-label={t("strokeWidth")}
         title={t("strokeWidth")}
@@ -112,32 +142,6 @@ export function BoardToolbar() {
           </option>
         ))}
       </select>
-
-      <div className="my-2 grid grid-cols-2 gap-1 px-1">
-        {BOARD_COLORS.map((candidate) => (
-          <button
-            key={candidate}
-            type="button"
-            aria-label={t("color")}
-            title={candidate}
-            className={cn(
-              "size-5 rounded-sm border border-border",
-              color === candidate && "ring-2 ring-ring",
-            )}
-            style={{ backgroundColor: candidate }}
-            onClick={() => store().setColor(candidate)}
-          />
-        ))}
-      </div>
-
-      <input
-        type="color"
-        aria-label={t("customColor")}
-        title={t("customColor")}
-        value={color}
-        onChange={(changeEvent) => store().setColor(changeEvent.target.value)}
-        className="h-7 w-11 cursor-pointer rounded-sm border border-border bg-background p-0.5"
-      />
 
       <div className="mt-2 flex flex-col items-center gap-1">
         <Button
