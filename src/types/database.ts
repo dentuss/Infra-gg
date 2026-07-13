@@ -186,6 +186,7 @@ export type Database = {
           data: Json;
           id: string;
           map: string;
+          side: string;
           title: string;
           updated_at: string;
         };
@@ -195,6 +196,7 @@ export type Database = {
           data?: Json;
           id?: string;
           map: string;
+          side?: string;
           title: string;
           updated_at?: string;
         };
@@ -204,6 +206,7 @@ export type Database = {
           data?: Json;
           id?: string;
           map?: string;
+          side?: string;
           title?: string;
           updated_at?: string;
         };

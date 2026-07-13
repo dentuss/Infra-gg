@@ -4,9 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { BoardScene } from "@/lib/strategy";
 import { createClient } from "@/lib/supabase/client";
+import { removeStrategyThumbnail } from "@/services/strategy-thumbnails";
 import type { Json, Tables } from "@/types/database";
 
 export type StrategyRow = Tables<"strategies">;
+export type StrategySide = "attack" | "defense";
 
 const STRATEGIES_KEY = ["strategies"] as const;
 
@@ -47,6 +49,7 @@ export function useCreateStrategy() {
     mutationFn: async (input: {
       title: string;
       map: string;
+      side: StrategySide;
       scene: BoardScene;
     }): Promise<StrategyRow> => {
       const supabase = createClient();
@@ -59,6 +62,7 @@ export function useCreateStrategy() {
         .insert({
           title: input.title,
           map: input.map,
+          side: input.side,
           data: input.scene as unknown as Json,
           created_by: userId,
         })
@@ -96,6 +100,8 @@ export function useDeleteStrategy() {
   return useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
+      // Before the row: thumbnail write access is tied to the strategy row.
+      await removeStrategyThumbnail(id);
       const { error } = await supabase.from("strategies").delete().eq("id", id);
       if (error) throw new Error(error.message);
     },
