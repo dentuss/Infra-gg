@@ -12,10 +12,27 @@ import { useBoardStore } from "@/store/board-store";
 
 type AssetItem = { name: string; src: string; preview: string };
 
-const OPERATOR_ASSETS: AssetItem[] = listOperatorIcons().map((operator) => ({
-  name: operator.name,
-  src: operator.src,
-  preview: operatorIconDataUrl(operator.id) ?? "",
+type OperatorGroupKey = "attackers" | "defenders" | "recruits";
+
+const GROUP_BY_SIDE: Record<string, OperatorGroupKey> = {
+  Attacker: "attackers",
+  Defender: "defenders",
+  Recruit: "recruits",
+};
+
+const OPERATOR_GROUPS: { key: OperatorGroupKey; assets: AssetItem[] }[] = [
+  { key: "attackers" as const, assets: [] },
+  { key: "defenders" as const, assets: [] },
+  { key: "recruits" as const, assets: [] },
+].map((group) => ({
+  ...group,
+  assets: listOperatorIcons()
+    .filter((operator) => GROUP_BY_SIDE[operator.side] === group.key)
+    .map((operator) => ({
+      name: operator.name,
+      src: operator.src,
+      preview: operatorIconDataUrl(operator.id) ?? "",
+    })),
 }));
 
 function AssetButton({ asset }: { asset: AssetItem }) {
@@ -58,21 +75,25 @@ function AssetSection({
   count,
   open,
   onToggle,
+  nested = false,
   children,
 }: {
   title: string;
   count: number;
   open: boolean;
   onToggle: () => void;
+  nested?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-2">
+    <section className={`flex flex-col gap-2 ${nested ? "pl-2" : ""}`}>
       <button
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="flex w-full items-center gap-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase hover:text-foreground"
+        className={`flex w-full items-center gap-1 font-semibold tracking-wide text-muted-foreground uppercase hover:text-foreground ${
+          nested ? "text-[11px]" : "text-xs"
+        }`}
       >
         {open ? (
           <ChevronDown className="size-3.5" />
@@ -96,10 +117,25 @@ export function AssetsPanel() {
   const t = useTranslations("strategy");
   const { data: gadgets, isPending, error } = useBoardIcons();
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState({ operators: true, gadgets: true });
+  const [open, setOpen] = useState({
+    operators: true,
+    attackers: true,
+    defenders: true,
+    recruits: false,
+    gadgets: true,
+  });
+  const toggle = (key: keyof typeof open) =>
+    setOpen((state) => ({ ...state, [key]: !state[key] }));
 
   const search = query.trim().toLowerCase();
-  const operatorAssets = matches(OPERATOR_ASSETS, search);
+  const operatorGroups = OPERATOR_GROUPS.map((group) => ({
+    key: group.key,
+    assets: matches(group.assets, search),
+  }));
+  const operatorCount = operatorGroups.reduce(
+    (sum, group) => sum + group.assets.length,
+    0,
+  );
   const gadgetAssets = matches(
     (gadgets ?? []).map((icon) => ({
       name: icon.name,
@@ -124,23 +160,36 @@ export function AssetsPanel() {
       />
       <p className="text-xs text-muted-foreground">{t("assetsHint")}</p>
 
-      {search && operatorAssets.length === 0 && gadgetAssets.length === 0 ? (
+      {search && operatorCount === 0 && gadgetAssets.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("noResults")}</p>
       ) : null}
 
-      {!search || operatorAssets.length > 0 ? (
+      {!search || operatorCount > 0 ? (
         <AssetSection
           title={t("operatorsSection")}
-          count={operatorAssets.length}
+          count={operatorCount}
           open={!!search || open.operators}
-          onToggle={() =>
-            setOpen((state) => ({ ...state, operators: !state.operators }))
-          }
+          onToggle={() => toggle("operators")}
         >
-          <div className="grid grid-cols-3 gap-2">
-            {operatorAssets.map((asset) => (
-              <AssetButton key={asset.src} asset={asset} />
-            ))}
+          <div className="flex flex-col gap-2">
+            {operatorGroups.map((group) =>
+              !search || group.assets.length > 0 ? (
+                <AssetSection
+                  key={group.key}
+                  nested
+                  title={t(group.key)}
+                  count={group.assets.length}
+                  open={!!search || open[group.key]}
+                  onToggle={() => toggle(group.key)}
+                >
+                  <div className="grid grid-cols-3 gap-2">
+                    {group.assets.map((asset) => (
+                      <AssetButton key={asset.src} asset={asset} />
+                    ))}
+                  </div>
+                </AssetSection>
+              ) : null,
+            )}
           </div>
         </AssetSection>
       ) : null}
@@ -150,9 +199,7 @@ export function AssetsPanel() {
           title={t("gadgetsSection")}
           count={gadgetAssets.length}
           open={!!search || open.gadgets}
-          onToggle={() =>
-            setOpen((state) => ({ ...state, gadgets: !state.gadgets }))
-          }
+          onToggle={() => toggle("gadgets")}
         >
           {error ? (
             <p className="text-xs text-destructive">{error.message}</p>
