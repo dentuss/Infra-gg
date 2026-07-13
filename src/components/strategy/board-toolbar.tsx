@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  BrickWall,
   Circle,
+  CircleDot,
   ClipboardPaste,
   Copy,
   CopyPlus,
@@ -37,6 +39,15 @@ const TOOLS: { tool: BoardTool; icon: typeof Type; key: string }[] = [
   { tool: "triangle", icon: Triangle, key: "toolTriangle" },
   { tool: "diamond", icon: Diamond, key: "toolDiamond" },
   { tool: "star", icon: Star, key: "toolStar" },
+  { tool: "reinforce", icon: BrickWall, key: "toolReinforce" },
+  { tool: "hole", icon: CircleDot, key: "toolHole" },
+];
+
+const HOLE_LABELS: { value: string; key: string }[] = [
+  { value: "", key: "holePlain" },
+  { value: "1", key: "holeFeet" },
+  { value: "2", key: "holeHead" },
+  { value: "3", key: "holeThrow" },
 ];
 
 const STROKE_WIDTHS = [1, 2, 3, 4, 6, 8, 12];
@@ -52,6 +63,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function BoardToolbar() {
   const t = useTranslations("strategy");
   const tool = useBoardStore((state) => state.tool);
+  const holeLabel = useBoardStore((state) => state.holeLabel);
   const color = useBoardStore((state) => state.color);
   const strokeWidth = useBoardStore((state) => state.strokeWidth);
   const filled = useBoardStore((state) => state.filled);
@@ -92,11 +104,38 @@ export function BoardToolbar() {
           size="icon"
           aria-label={t(key)}
           title={t(key)}
-          onClick={() => store().setTool(candidate)}
+          onClick={() => {
+            store().setTool(candidate);
+            if (candidate === "reinforce" || candidate === "hole") {
+              store().showHint("wallTags");
+            }
+          }}
         >
           <Icon />
         </Button>
       ))}
+
+      {tool === "hole" ? (
+        <div className="grid grid-cols-2 gap-1">
+          {HOLE_LABELS.map(({ value, key }) => (
+            <button
+              key={key}
+              type="button"
+              aria-label={t(key)}
+              title={t(key)}
+              onClick={() => store().setHoleLabel(value)}
+              className={cn(
+                "flex size-6 items-center justify-center rounded-sm border border-border text-xs font-bold",
+                holeLabel === value
+                  ? "bg-secondary text-secondary-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {value || "·"}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <SectionLabel>{t("color")}</SectionLabel>
       <div className="flex items-center gap-1">

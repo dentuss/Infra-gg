@@ -318,6 +318,15 @@ Status
 
 ---
 
+## Wall Tagging
+
+- [x] Reinforcement markers snapped and fitted to blueprint walls
+- [x] Rotation/hole circles (numbered 1 feet / 2 head / 3 throw)
+- [x] Hatch detection (fitted square, inscribed circle when opened)
+- [x] Markers take the active player's color
+
+---
+
 ## Library
 
 - [x] Thumbnail previews (board snapshot uploaded on autosave)

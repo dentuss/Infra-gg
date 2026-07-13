@@ -6,11 +6,13 @@ export const BOARD_HEIGHT = 900;
 export type BoardShapeType =
   "rect" | "ellipse" | "triangle" | "diamond" | "star";
 
-export type BoardTool = "select" | "text" | "line" | "arrow" | BoardShapeType;
+export type BoardTool =
+  "select" | "text" | "line" | "arrow" | "reinforce" | "hole" | BoardShapeType;
 
 export type BoardElement = {
   id: string;
-  type: "icon" | "text" | "line" | "arrow" | BoardShapeType;
+  /** "hole" is a rotation/hatch circle; x/y is its center like ellipse. */
+  type: "icon" | "text" | "line" | "arrow" | "hole" | BoardShapeType;
   x: number;
   y: number;
   rotation: number;
@@ -36,6 +38,8 @@ export type BoardElement = {
   borderEnabled?: boolean;
   /** outline color; falls back to the element color */
   borderColor?: string;
+  /** hole circles: centered number (1 feet, 2 head, 3 throw holes) */
+  label?: string;
 };
 
 export const DEFAULT_STROKE_WIDTH = 3;

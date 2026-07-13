@@ -263,6 +263,12 @@
     "toolTriangle": "Triangle",
     "toolDiamond": "Diamond",
     "toolStar": "Star",
+    "toolReinforce": "Reinforcement — click a wall or hatch",
+    "toolHole": "Rotation / holes — click a wall or hatch",
+    "holePlain": "No number (open hatch)",
+    "holeFeet": "1 — feet holes",
+    "holeHead": "2 — head holes",
+    "holeThrow": "3 — throw holes",
     "fillFilled": "Filled",
     "fillHollow": "Outline only",
     "strokeWidth": "Border width",
@@ -283,6 +289,10 @@
       "slotColor": {
         "title": "Player color on",
         "body": "New shapes, lines and text now use this player's color, and placed icons get a matching outline. Click the slot again to switch it off."
+      },
+      "wallTags": {
+        "title": "Wall tagging",
+        "body": "Click a wall and the marker snaps onto it; click inside a dotted hatch to fit it there. Markers use the active player's color. Numbers: 1 feet, 2 head, 3 throw holes. Esc to exit."
       }
     },
     "hintClose": "Close",
