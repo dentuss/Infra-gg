@@ -260,6 +260,11 @@
     "borderColor": "Цвет контура",
     "toggleBorder": "Контур вкл/выкл",
     "borderShort": "КНТ",
-    "hexApply": "ОК"
+    "hexApply": "ОК",
+    "cut": "Вырезать",
+    "toFront": "На передний план",
+    "bringForward": "Переместить вперёд",
+    "sendBackward": "Переместить назад",
+    "toBack": "На задний план"
   }
 }

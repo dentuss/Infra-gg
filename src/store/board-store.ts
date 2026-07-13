@@ -79,8 +79,10 @@ type BoardStore = {
   applyToSelected: (patch: Partial<BoardElement>) => void;
   deleteSelected: () => void;
   copySelected: () => void;
+  cutSelected: () => void;
   paste: () => void;
   duplicateSelected: () => void;
+  reorderSelected: (op: "front" | "forward" | "backward" | "back") => void;
   undo: () => void;
   redo: () => void;
   markSaved: () => void;
@@ -296,10 +298,58 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
     });
   },
 
+  cutSelected: () => {
+    get().copySelected();
+    get().deleteSelected();
+  },
+
   paste: () => {
     const state = get();
     const update = insertElements(state, withNewIdsAndOffset(state.clipboard));
     if (update) set(update);
+  },
+
+  reorderSelected: (op) => {
+    const state = get();
+    const pages = clonePages(state.pages);
+    const page = pages[state.activePage];
+    if (!page || state.selectedIds.length === 0) return;
+
+    const isSelected = (element: BoardElement) =>
+      state.selectedIds.includes(element.id);
+    const selected = page.elements.filter(isSelected);
+    const others = page.elements.filter((element) => !isSelected(element));
+
+    if (op === "front") {
+      page.elements = [...others, ...selected];
+    } else if (op === "back") {
+      page.elements = [...selected, ...others];
+    } else if (op === "forward") {
+      for (let i = page.elements.length - 2; i >= 0; i--) {
+        const current = page.elements[i];
+        const next = page.elements[i + 1];
+        if (current && next && isSelected(current) && !isSelected(next)) {
+          page.elements[i] = next;
+          page.elements[i + 1] = current;
+        }
+      }
+    } else {
+      for (let i = 1; i < page.elements.length; i++) {
+        const current = page.elements[i];
+        const previous = page.elements[i - 1];
+        if (
+          current &&
+          previous &&
+          isSelected(current) &&
+          !isSelected(previous)
+        ) {
+          page.elements[i] = previous;
+          page.elements[i - 1] = current;
+        }
+      }
+    }
+
+    set(commit(state, pages));
   },
 
   duplicateSelected: () => {
