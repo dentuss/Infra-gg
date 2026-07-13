@@ -27,7 +27,13 @@ export default function BoardCanvas({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
-  const drawingRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const drawingRef = useRef<{
+    id: string;
+    x: number;
+    y: number;
+    tool:
+      "line" | "arrow" | "rect" | "ellipse" | "triangle" | "diamond" | "star";
+  } | null>(null);
   const bandStartRef = useRef<{ x: number; y: number } | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [band, setBand] = useState<{
@@ -89,7 +95,6 @@ export default function BoardCanvas({
     const container = containerRef.current;
     if (!container) return;
     const onWheel = (wheelEvent: WheelEvent) => {
-      if (!wheelEvent.ctrlKey) return;
       wheelEvent.preventDefault();
       const store = useBoardStore.getState();
       const rect = container.getBoundingClientRect();
@@ -128,21 +133,29 @@ export default function BoardCanvas({
     scrollTop: number;
   } | null>(null);
 
-  const onContainerMouseDown = (mouseEvent: React.MouseEvent) => {
-    if (mouseEvent.button !== 1) return;
+  const startPan = (
+    clientX: number,
+    clientY: number,
+    clearSelectionOnClick: boolean,
+  ) => {
     const container = containerRef.current;
     if (!container) return;
-    mouseEvent.preventDefault();
     panRef.current = {
-      startX: mouseEvent.clientX,
-      startY: mouseEvent.clientY,
+      startX: clientX,
+      startY: clientY,
       scrollLeft: container.scrollLeft,
       scrollTop: container.scrollTop,
     };
     container.style.cursor = "grabbing";
+    let moved = 0;
     const onMove = (moveEvent: MouseEvent) => {
       const pan = panRef.current;
       if (!pan) return;
+      moved = Math.max(
+        moved,
+        Math.abs(moveEvent.clientX - pan.startX) +
+          Math.abs(moveEvent.clientY - pan.startY),
+      );
       container.scrollLeft = pan.scrollLeft - (moveEvent.clientX - pan.startX);
       container.scrollTop = pan.scrollTop - (moveEvent.clientY - pan.startY);
     };
@@ -151,9 +164,19 @@ export default function BoardCanvas({
       container.style.cursor = "";
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+      // A drag-less click on empty board still clears the selection.
+      if (clearSelectionOnClick && moved < 4) {
+        useBoardStore.getState().clearSelection();
+      }
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+  };
+
+  const onContainerMouseDown = (mouseEvent: React.MouseEvent) => {
+    if (mouseEvent.button !== 1) return;
+    mouseEvent.preventDefault();
+    startPan(mouseEvent.clientX, mouseEvent.clientY, false);
   };
 
   // Keyboard: delete, copy/paste/duplicate, undo/redo.
@@ -196,16 +219,21 @@ export default function BoardCanvas({
   };
 
   const onMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!canEdit || konvaEvent.evt.button !== 0) return;
+    if (konvaEvent.evt.button !== 0) return;
     const store = useBoardStore.getState();
     const position = relativePointer();
     if (!position) return;
+    const onEmptyBoard = konvaEvent.target === konvaEvent.target.getStage();
 
-    if (tool === "select") {
-      if (konvaEvent.target === konvaEvent.target.getStage()) {
+    if (!canEdit || tool === "select") {
+      if (!onEmptyBoard) return;
+      store.setEditingText(null);
+      // Shift+drag rubber-band selects; plain drag pans the view.
+      if (canEdit && konvaEvent.evt.shiftKey) {
         bandStartRef.current = position;
         setBand({ x: position.x, y: position.y, width: 0, height: 0 });
-        store.setEditingText(null);
+      } else {
+        startPan(konvaEvent.evt.clientX, konvaEvent.evt.clientY, canEdit);
       }
       return;
     }
@@ -229,7 +257,7 @@ export default function BoardCanvas({
     }
 
     const id = newId();
-    drawingRef.current = { id, x: position.x, y: position.y };
+    drawingRef.current = { id, x: position.x, y: position.y, tool };
     store.addElement({
       id,
       type: tool,
@@ -241,7 +269,8 @@ export default function BoardCanvas({
       width: 1,
       height: 1,
       points: [0, 0, 1, 1],
-      color,
+      // Lines and arrows start black; recolor them after drawing.
+      color: tool === "line" || tool === "arrow" ? "#09090b" : color,
       strokeWidth,
       filled,
       borderEnabled,
@@ -268,11 +297,11 @@ export default function BoardCanvas({
     const dx = position.x - drawing.x;
     const dy = position.y - drawing.y;
 
-    if (tool === "line" || tool === "arrow") {
+    if (drawing.tool === "line" || drawing.tool === "arrow") {
       store.updateElement(drawing.id, { points: [0, 0, dx, dy] });
       return;
     }
-    if (tool === "ellipse") {
+    if (drawing.tool === "ellipse") {
       store.updateElement(drawing.id, {
         x: drawing.x + dx / 2,
         y: drawing.y + dy / 2,
@@ -347,7 +376,7 @@ export default function BoardCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 overflow-auto bg-black/40"
+      className="relative min-w-0 flex-1 overflow-auto bg-black/40"
       onDragOver={(dragEvent) => dragEvent.preventDefault()}
       onDrop={onDrop}
       onMouseDown={onContainerMouseDown}

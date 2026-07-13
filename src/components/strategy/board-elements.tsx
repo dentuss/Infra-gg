@@ -103,6 +103,7 @@ function IconImage({
       image={image ?? undefined}
       width={element.width}
       height={element.height}
+      strokeScaleEnabled={false}
       stroke={borderOn ? (element.borderColor ?? element.color) : undefined}
       strokeWidth={
         borderOn ? (element.strokeWidth ?? DEFAULT_STROKE_WIDTH) : undefined
@@ -178,6 +179,34 @@ export function ElementNode({
     },
     onTransformEnd: (konvaEvent: Konva.KonvaEventObject<Event>) => {
       const node = konvaEvent.target;
+      const boxBased = [
+        "icon",
+        "rect",
+        "ellipse",
+        "triangle",
+        "diamond",
+        "star",
+      ];
+      if (boxBased.includes(element.type)) {
+        // Bake the scale into the box so strokes stay uniform.
+        const width = Math.max(4, (element.width ?? 1) * node.scaleX());
+        const height = Math.max(4, (element.height ?? 1) * node.scaleY());
+        node.scaleX(1);
+        node.scaleY(1);
+        onChange(
+          {
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation(),
+            width,
+            height,
+            scaleX: 1,
+            scaleY: 1,
+          },
+          true,
+        );
+        return;
+      }
       onChange(
         {
           x: node.x(),
@@ -222,6 +251,7 @@ export function ElementNode({
           {...common}
           width={element.width ?? 1}
           height={element.height ?? 1}
+          strokeScaleEnabled={false}
           stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
@@ -234,6 +264,7 @@ export function ElementNode({
           {...common}
           radiusX={(element.width ?? 1) / 2}
           radiusY={(element.height ?? 1) / 2}
+          strokeScaleEnabled={false}
           stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
@@ -256,6 +287,7 @@ export function ElementNode({
           {...common}
           points={points}
           closed
+          strokeScaleEnabled={false}
           stroke={borderStroke}
           fill={shapeFill}
           strokeWidth={strokeWidth}
