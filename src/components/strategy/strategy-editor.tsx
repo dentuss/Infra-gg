@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useBlueprintMaps } from "@/hooks/use-board-assets";
 import { useSaveStrategy, useStrategy } from "@/hooks/use-strategies";
-import { newPage, parseScene, titleize } from "@/lib/strategy";
+import { BOARD_WIDTH, newPage, parseScene, titleize } from "@/lib/strategy";
 import { useBoardStore } from "@/store/board-store";
 import type { Json } from "@/types/database";
 
@@ -113,7 +113,10 @@ export function StrategyEditor({
     if (!stage) return;
     const link = document.createElement("a");
     link.download = `${strategy.title}.png`;
-    link.href = stage.toDataURL({ pixelRatio: 2 });
+    // Export at a fixed 3200x1800 regardless of the on-screen zoom.
+    link.href = stage.toDataURL({
+      pixelRatio: (BOARD_WIDTH * 2) / stage.width(),
+    });
     link.click();
   };
 

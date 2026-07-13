@@ -1,6 +1,6 @@
 "use client";
 
-import type Konva from "konva";
+import Konva from "konva";
 import { useEffect, useRef, useState } from "react";
 import {
   Image as KonvaImage,
@@ -17,6 +17,12 @@ import {
 } from "@/components/strategy/board-elements";
 import { BOARD_HEIGHT, BOARD_WIDTH, newId } from "@/lib/strategy";
 import { newIconElement, useBoardStore } from "@/store/board-store";
+
+// Supersample the canvas so edges stay crisp on standard-density
+// displays; browsers cap the cost at one board.
+if (typeof window !== "undefined") {
+  Konva.pixelRatio = Math.max(2, window.devicePixelRatio || 1);
+}
 
 export default function BoardCanvas({
   canEdit,
@@ -133,11 +139,7 @@ export default function BoardCanvas({
     scrollTop: number;
   } | null>(null);
 
-  const startPan = (
-    clientX: number,
-    clientY: number,
-    clearSelectionOnClick: boolean,
-  ) => {
+  const startPan = (clientX: number, clientY: number) => {
     const container = containerRef.current;
     if (!container) return;
     panRef.current = {
@@ -147,15 +149,9 @@ export default function BoardCanvas({
       scrollTop: container.scrollTop,
     };
     container.style.cursor = "grabbing";
-    let moved = 0;
     const onMove = (moveEvent: MouseEvent) => {
       const pan = panRef.current;
       if (!pan) return;
-      moved = Math.max(
-        moved,
-        Math.abs(moveEvent.clientX - pan.startX) +
-          Math.abs(moveEvent.clientY - pan.startY),
-      );
       container.scrollLeft = pan.scrollLeft - (moveEvent.clientX - pan.startX);
       container.scrollTop = pan.scrollTop - (moveEvent.clientY - pan.startY);
     };
@@ -164,10 +160,6 @@ export default function BoardCanvas({
       container.style.cursor = "";
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
-      // A drag-less click on empty board still clears the selection.
-      if (clearSelectionOnClick && moved < 4) {
-        useBoardStore.getState().clearSelection();
-      }
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -176,7 +168,7 @@ export default function BoardCanvas({
   const onContainerMouseDown = (mouseEvent: React.MouseEvent) => {
     if (mouseEvent.button !== 1) return;
     mouseEvent.preventDefault();
-    startPan(mouseEvent.clientX, mouseEvent.clientY, false);
+    startPan(mouseEvent.clientX, mouseEvent.clientY);
   };
 
   // Keyboard: delete, copy/paste/duplicate, undo/redo.
@@ -226,15 +218,10 @@ export default function BoardCanvas({
     const onEmptyBoard = konvaEvent.target === konvaEvent.target.getStage();
 
     if (!canEdit || tool === "select") {
-      if (!onEmptyBoard) return;
+      if (!canEdit || !onEmptyBoard) return;
       store.setEditingText(null);
-      // Shift+drag rubber-band selects; plain drag pans the view.
-      if (canEdit && konvaEvent.evt.shiftKey) {
-        bandStartRef.current = position;
-        setBand({ x: position.x, y: position.y, width: 0, height: 0 });
-      } else {
-        startPan(konvaEvent.evt.clientX, konvaEvent.evt.clientY, canEdit);
-      }
+      bandStartRef.current = position;
+      setBand({ x: position.x, y: position.y, width: 0, height: 0 });
       return;
     }
 
