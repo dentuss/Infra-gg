@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 
 import { ColorPicker } from "@/components/strategy/color-picker";
 import { Button } from "@/components/ui/button";
+import { HOLE_LABELS } from "@/lib/board-markers";
 import type { BoardTool } from "@/lib/strategy";
 import { cn } from "@/lib/utils";
 import { useBoardStore } from "@/store/board-store";
@@ -41,13 +42,6 @@ const TOOLS: { tool: BoardTool; icon: typeof Type; key: string }[] = [
   { tool: "star", icon: Star, key: "toolStar" },
   { tool: "reinforce", icon: BrickWall, key: "toolReinforce" },
   { tool: "hole", icon: CircleDot, key: "toolHole" },
-];
-
-const HOLE_LABELS: { value: string; key: string }[] = [
-  { value: "", key: "holePlain" },
-  { value: "1", key: "holeFeet" },
-  { value: "2", key: "holeHead" },
-  { value: "3", key: "holeThrow" },
 ];
 
 const STROKE_WIDTHS = [1, 2, 3, 4, 6, 8, 12];

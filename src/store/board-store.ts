@@ -1,6 +1,7 @@
 import type Konva from "konva";
 import { create } from "zustand";
 
+import type { HatchZone, WallPanel } from "@/lib/blueprint-analyze";
 import {
   BOARD_COLORS,
   DEFAULT_STROKE_WIDTH,
@@ -18,7 +19,14 @@ import {
 const HISTORY_LIMIT = 50;
 const PASTE_OFFSET = 24;
 
-export type BoardHintKey = "boardBasics" | "slotColor" | "wallTags";
+export type BoardHintKey =
+  "boardBasics" | "slotColor" | "wallTags" | "enhanced";
+
+export type BoardMode = "default" | "enhanced";
+
+export type EnhancedTarget =
+  | { kind: "wall"; panel: WallPanel; clickX: number; clickY: number }
+  | { kind: "hatch"; zone: HatchZone };
 
 const hintStorageKey = (key: BoardHintKey) => `board-hint-dismissed:${key}`;
 
@@ -59,6 +67,9 @@ type BoardStore = {
   hint: BoardHintKey | null;
   /** Number stamped on newly placed hole circles ("" = plain). */
   holeLabel: string;
+  boardMode: BoardMode;
+  /** Highlighted wall/hatch awaiting a menu choice in enhanced mode. */
+  enhancedTarget: EnhancedTarget | null;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -87,6 +98,8 @@ type BoardStore = {
   showHint: (key: BoardHintKey) => void;
   closeHint: (dontShowAgain?: boolean) => void;
   setHoleLabel: (label: string) => void;
+  setBoardMode: (mode: BoardMode) => void;
+  setEnhancedTarget: (target: EnhancedTarget | null) => void;
   /** Adds a fitted marker without leaving the tagging tool. */
   placeMarker: (element: BoardElement) => void;
   addElement: (element: BoardElement) => void;
@@ -170,6 +183,8 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   editingNickname: null,
   hint: null,
   holeLabel: "",
+  boardMode: "default",
+  enhancedTarget: null,
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -188,11 +203,17 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       lineup: scene.lineup.map((slot) => ({ ...slot })),
       activeSlot: null,
       editingNickname: null,
+      // Module-level store: without these a stale enhanced menu or hint
+      // from the previous strategy leaks into this one.
+      boardMode: "default",
+      enhancedTarget: null,
+      hint: null,
     });
   },
 
   setStage: (stage) => set({ stage }),
-  setTool: (tool) => set({ tool, selectedIds: [], editingTextId: null }),
+  setTool: (tool) =>
+    set({ tool, selectedIds: [], editingTextId: null, enhancedTarget: null }),
 
   setColor: (color) => {
     set({ color });
@@ -265,7 +286,13 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   setDragOrigins: (origins) => set({ dragOrigins: origins }),
 
   setActivePage: (index) =>
-    set({ activePage: index, selectedIds: [], editingTextId: null }),
+    set({
+      activePage: index,
+      selectedIds: [],
+      editingTextId: null,
+      // The open menu points at the previous blueprint's geometry.
+      enhancedTarget: null,
+    }),
 
   addPage: (floor) => {
     const state = get();
@@ -287,6 +314,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       ...commit(state, pages),
       activePage: Math.max(0, state.activePage - 1),
       selectedIds: [],
+      enhancedTarget: null,
     });
   },
 
@@ -296,7 +324,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
     const page = pages[state.activePage];
     if (!page) return;
     page.floor = floor;
-    set(commit(state, pages));
+    set({ ...commit(state, pages), enhancedTarget: null });
   },
 
   addElement: (element) => {
@@ -306,6 +334,17 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   },
 
   setHoleLabel: (holeLabel) => set({ holeLabel }),
+
+  setBoardMode: (boardMode) =>
+    set({
+      boardMode,
+      enhancedTarget: null,
+      tool: "select",
+      selectedIds: [],
+      editingTextId: null,
+    }),
+
+  setEnhancedTarget: (enhancedTarget) => set({ enhancedTarget }),
 
   placeMarker: (element) => {
     const state = get();
@@ -460,6 +499,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       historyIndex: index,
       selectedIds: [],
       dirty: true,
+      enhancedTarget: null,
     });
   },
 
@@ -472,6 +512,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       historyIndex: index,
       selectedIds: [],
       dirty: true,
+      enhancedTarget: null,
     });
   },
 

@@ -324,6 +324,9 @@ Status
 - [x] Rotation/hole circles (numbered 1 feet / 2 head / 3 throw)
 - [x] Hatch detection (fitted square, inscribed circle when opened)
 - [x] Markers take the active player's color
+- [x] Reinforcements cover the full wall panel (length fit)
+- [x] Enhanced mode: all destructible walls/hatches highlighted,
+      click-to-place menu (reinforcement, rotation numbers, hatch square/circle)
 
 ---
 
