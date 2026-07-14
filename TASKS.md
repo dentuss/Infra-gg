@@ -327,6 +327,9 @@ Status
 - [x] Reinforcements cover the full wall panel (length fit)
 - [x] Enhanced mode: all destructible walls/hatches highlighted,
       click-to-place menu (reinforcement, rotation numbers, hatch square/circle)
+- [x] Multi-style detection: reads the yellow destructible annotation on
+      rendered R6 maps (BG/Black/Blue) and falls back to geometric
+      inference on light line-art
 
 ---
 
