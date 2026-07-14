@@ -8,6 +8,15 @@ const HATCH_PADDING = 4;
 const MARKER_BORDER = "#09090b";
 const MARKER_STROKE = 3;
 
+// Hole-circle number choices, shared by the toolbar and the enhanced
+// menu. "" = plain circle (open hatch, or an unnumbered rotation).
+export const HOLE_LABELS: { value: string; key: string }[] = [
+  { value: "", key: "holeNone" },
+  { value: "1", key: "holeFeet" },
+  { value: "2", key: "holeHead" },
+  { value: "3", key: "holeThrow" },
+];
+
 const base = (color: string) => ({
   id: newId(),
   rotation: 0,

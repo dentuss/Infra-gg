@@ -105,7 +105,9 @@ function buildPanelMask(lum: Uint8Array, w: number, h: number): Uint8Array {
 
 function maskToPanels(mask: Uint8Array, w: number, h: number): WallPanel[] {
   const seen = new Uint8Array(mask.length);
-  const stack = new Int32Array(65536);
+  // Sized to the whole image: each pixel is pushed at most once (marked
+  // seen on push), so this can never overflow and drop a component.
+  const stack = new Int32Array(mask.length);
   const panels: WallPanel[] = [];
   for (let start = 0; start < mask.length; start++) {
     if (!mask[start] || seen[start]) continue;

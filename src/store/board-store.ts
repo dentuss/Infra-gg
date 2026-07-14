@@ -203,11 +203,17 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       lineup: scene.lineup.map((slot) => ({ ...slot })),
       activeSlot: null,
       editingNickname: null,
+      // Module-level store: without these a stale enhanced menu or hint
+      // from the previous strategy leaks into this one.
+      boardMode: "default",
+      enhancedTarget: null,
+      hint: null,
     });
   },
 
   setStage: (stage) => set({ stage }),
-  setTool: (tool) => set({ tool, selectedIds: [], editingTextId: null }),
+  setTool: (tool) =>
+    set({ tool, selectedIds: [], editingTextId: null, enhancedTarget: null }),
 
   setColor: (color) => {
     set({ color });
@@ -280,7 +286,13 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   setDragOrigins: (origins) => set({ dragOrigins: origins }),
 
   setActivePage: (index) =>
-    set({ activePage: index, selectedIds: [], editingTextId: null }),
+    set({
+      activePage: index,
+      selectedIds: [],
+      editingTextId: null,
+      // The open menu points at the previous blueprint's geometry.
+      enhancedTarget: null,
+    }),
 
   addPage: (floor) => {
     const state = get();
@@ -302,6 +314,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       ...commit(state, pages),
       activePage: Math.max(0, state.activePage - 1),
       selectedIds: [],
+      enhancedTarget: null,
     });
   },
 
@@ -311,7 +324,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
     const page = pages[state.activePage];
     if (!page) return;
     page.floor = floor;
-    set(commit(state, pages));
+    set({ ...commit(state, pages), enhancedTarget: null });
   },
 
   addElement: (element) => {
@@ -486,6 +499,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       historyIndex: index,
       selectedIds: [],
       dirty: true,
+      enhancedTarget: null,
     });
   },
 
@@ -498,6 +512,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       historyIndex: index,
       selectedIds: [],
       dirty: true,
+      enhancedTarget: null,
     });
   },
 

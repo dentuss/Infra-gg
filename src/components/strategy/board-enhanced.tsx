@@ -82,10 +82,20 @@ function HatchHighlight({ zone }: { zone: HatchZone }) {
   );
 }
 
-/** Clickable highlights over every detected wall panel and hatch. */
-export function EnhancedOverlay({ analysis }: { analysis: BlueprintAnalysis }) {
+/**
+ * Clickable highlights over every detected wall panel and hatch. Only
+ * interactive with the select tool — otherwise a drawing/marker tool
+ * would both act on its mousedown and open the menu on the click.
+ */
+export function EnhancedOverlay({
+  analysis,
+  interactive,
+}: {
+  analysis: BlueprintAnalysis;
+  interactive: boolean;
+}) {
   return (
-    <Group>
+    <Group listening={interactive}>
       {analysis.panels.map((panel, index) => (
         <PanelHighlight key={`panel-${index}`} panel={panel} />
       ))}

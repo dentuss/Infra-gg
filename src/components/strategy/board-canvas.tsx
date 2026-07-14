@@ -24,6 +24,7 @@ import { LineupStrip, NICKNAME_BOX } from "@/components/strategy/board-lineup";
 import { useBlueprintAnalysis } from "@/hooks/use-blueprint-analysis";
 import { hatchAt, panelAt } from "@/lib/blueprint-analyze";
 import { detectBlueprintFit } from "@/lib/blueprint-detect";
+import { getBlueprintImageData } from "@/lib/blueprint-image";
 import {
   buildHatchCircle,
   buildHatchSquare,
@@ -377,34 +378,20 @@ export default function BoardCanvas({
     return () => cancelAnimationFrame(frame);
   }, [editingTextId]);
 
+  // Clear any hover cursor the enhanced overlay left behind when the tool
+  // changes: as highlights go passive, Konva may skip their mouseleave.
+  useEffect(() => {
+    if (stage) stage.container().style.cursor = "";
+  }, [tool, stage]);
+
   const relativePointer = () => {
     const position = stage?.getRelativePointerPosition();
     return position ? { x: position.x, y: position.y } : null;
   };
 
   // Blueprint pixels at board resolution, for wall/hatch detection.
-  const detectCacheRef = useRef<{ url: string; data: ImageData } | null>(null);
-  const blueprintPixels = (): ImageData | null => {
-    if (!background || !floorUrl) return null;
-    if (detectCacheRef.current?.url === floorUrl) {
-      return detectCacheRef.current.data;
-    }
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = BOARD_WIDTH;
-      canvas.height = BOARD_HEIGHT;
-      const context = canvas.getContext("2d");
-      if (!context) return null;
-      context.drawImage(background, 0, 0, BOARD_WIDTH, BOARD_HEIGHT);
-      const data = context.getImageData(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
-      detectCacheRef.current = { url: floorUrl, data };
-      return data;
-    } catch {
-      // Tainted canvas (blueprint served without CORS) — markers still
-      // place, just unfitted.
-      return null;
-    }
-  };
+  const blueprintPixels = (): ImageData | null =>
+    background && floorUrl ? getBlueprintImageData(background, floorUrl) : null;
 
   const onMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
     if (konvaEvent.evt.button !== 0) return;
@@ -696,7 +683,10 @@ export default function BoardCanvas({
                   />
                 ) : null}
                 {canEdit && boardMode === "enhanced" && analysis ? (
-                  <EnhancedOverlay analysis={analysis} />
+                  <EnhancedOverlay
+                    analysis={analysis}
+                    interactive={tool === "select"}
+                  />
                 ) : null}
                 {page?.elements.map((element) => (
                   <ElementNode
