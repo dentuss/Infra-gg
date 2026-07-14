@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { AssetsPanel } from "@/components/strategy/assets-panel";
+import { BoardModeSwitch } from "@/components/strategy/board-mode-switch";
 import { BoardToolbar } from "@/components/strategy/board-toolbar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -251,6 +252,7 @@ export function StrategyEditor({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {canEdit ? <BoardModeSwitch /> : null}
           <span className="text-xs text-muted-foreground">
             {saveStrategy.isPending
               ? t("saving")

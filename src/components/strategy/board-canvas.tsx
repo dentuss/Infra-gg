@@ -17,10 +17,21 @@ import {
   ElementNode,
   useHtmlImage,
 } from "@/components/strategy/board-elements";
+import { EnhancedOverlay } from "@/components/strategy/board-enhanced";
+import { EnhancedMenu } from "@/components/strategy/board-enhanced-menu";
 import { BoardHintToast } from "@/components/strategy/board-hints";
 import { LineupStrip, NICKNAME_BOX } from "@/components/strategy/board-lineup";
+import { useBlueprintAnalysis } from "@/hooks/use-blueprint-analysis";
+import { hatchAt, panelAt } from "@/lib/blueprint-analyze";
 import { detectBlueprintFit } from "@/lib/blueprint-detect";
-import { buildHole, buildReinforcement } from "@/lib/board-markers";
+import {
+  buildHatchCircle,
+  buildHatchSquare,
+  buildHole,
+  buildPanelHole,
+  buildPanelReinforcement,
+  buildReinforcement,
+} from "@/lib/board-markers";
 import { OPERATOR_SRC_PREFIX } from "@/lib/operator-icons";
 import {
   BOARD_HEIGHT,
@@ -85,6 +96,7 @@ export default function BoardCanvas({
   const activeSlot = useBoardStore((state) => state.activeSlot);
   const editingNickname = useBoardStore((state) => state.editingNickname);
   const lineup = useBoardStore((state) => state.lineup);
+  const boardMode = useBoardStore((state) => state.boardMode);
   const tool = useBoardStore((state) => state.tool);
   const color = useBoardStore((state) => state.color);
   const strokeWidth = useBoardStore((state) => state.strokeWidth);
@@ -103,6 +115,12 @@ export default function BoardCanvas({
 
   const page = pages[activePage];
   const background = useHtmlImage(floorUrl);
+  const analysis = useBlueprintAnalysis(
+    background,
+    floorUrl,
+    canEdit &&
+      (boardMode === "enhanced" || tool === "reinforce" || tool === "hole"),
+  );
   // At 100% the whole stage (board + lineup) fits the visible area.
   const scale =
     containerSize.width && containerSize.height
@@ -278,8 +296,12 @@ export default function BoardCanvas({
         return;
       }
 
-      if (keyEvent.key === "Escape" && store.tool !== "select") {
-        store.setTool("select");
+      if (keyEvent.key === "Escape") {
+        if (store.enhancedTarget) {
+          store.setEnhancedTarget(null);
+          return;
+        }
+        if (store.tool !== "select") store.setTool("select");
         return;
       }
 
@@ -394,6 +416,7 @@ export default function BoardCanvas({
     if (!canEdit || tool === "select") {
       if (!canEdit || !onEmptyBoard) return;
       store.setEditingText(null);
+      store.setEnhancedTarget(null);
       bandStartRef.current = position;
       setBand({ x: position.x, y: position.y, width: 0, height: 0 });
       return;
@@ -405,6 +428,34 @@ export default function BoardCanvas({
     if (tool === "reinforce" || tool === "hole") {
       const markerColor =
         activeSlot === null ? color : (LINEUP_COLORS[activeSlot] ?? color);
+      // Prefer the segmented panel/hatch under the click — exact fit;
+      // fall back to local detection for black walls and diagonals.
+      const panel = analysis && panelAt(analysis, position.x, position.y);
+      const zone =
+        !panel && analysis && hatchAt(analysis, position.x, position.y);
+      if (tool === "reinforce") {
+        if (panel) {
+          store.placeMarker(buildPanelReinforcement(panel, markerColor));
+          return;
+        }
+        if (zone) {
+          store.placeMarker(buildHatchSquare(zone, markerColor));
+          return;
+        }
+      } else {
+        if (panel) {
+          store.placeMarker(
+            buildPanelHole(panel, position, markerColor, store.holeLabel),
+          );
+          return;
+        }
+        if (zone) {
+          store.placeMarker(
+            buildHatchCircle(zone, markerColor, store.holeLabel),
+          );
+          return;
+        }
+      }
       const fit = detectBlueprintFit(
         blueprintPixels(),
         Math.round(position.x),
@@ -644,6 +695,9 @@ export default function BoardCanvas({
                     listening={false}
                   />
                 ) : null}
+                {canEdit && boardMode === "enhanced" && analysis ? (
+                  <EnhancedOverlay analysis={analysis} />
+                ) : null}
                 {page?.elements.map((element) => (
                   <ElementNode
                     key={element.id}
@@ -708,6 +762,10 @@ export default function BoardCanvas({
                 ) : null}
               </Layer>
             </Stage>
+
+            {canEdit && boardMode === "enhanced" ? (
+              <EnhancedMenu scale={scale} />
+            ) : null}
 
             {editingElement ? (
               <textarea

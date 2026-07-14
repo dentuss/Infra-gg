@@ -269,6 +269,13 @@
     "holeFeet": "1 — feet holes",
     "holeHead": "2 — head holes",
     "holeThrow": "3 — throw holes",
+    "modeLabel": "Editing mode",
+    "modeDefault": "Default",
+    "modeEnhanced": "Enhanced",
+    "placeReinforcement": "Reinforcement",
+    "placeRotation": "Rotation holes",
+    "hatchReinforced": "Reinforce (square)",
+    "hatchOpened": "Opened (circle)",
     "fillFilled": "Filled",
     "fillHollow": "Outline only",
     "strokeWidth": "Border width",
@@ -293,6 +300,10 @@
       "wallTags": {
         "title": "Wall tagging",
         "body": "Click a wall and the marker snaps onto it; click inside a dotted hatch to fit it there. Markers use the active player's color. Numbers: 1 feet, 2 head, 3 throw holes. Esc to exit."
+      },
+      "enhanced": {
+        "title": "Enhanced editing",
+        "body": "Destructible walls and hatches are highlighted — click one and pick what to place. Markers use the active player's color."
       }
     },
     "hintClose": "Close",
