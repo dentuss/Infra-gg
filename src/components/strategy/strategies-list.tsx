@@ -263,6 +263,9 @@ export function StrategiesList({
                 maps?.find((m) => m.slug === currentMap.slug)?.floors[0]
                   ?.slug ?? "first_floor"
               }
+              styles={
+                maps?.find((m) => m.slug === currentMap.slug)?.styles ?? []
+              }
             />
           ) : null}
 

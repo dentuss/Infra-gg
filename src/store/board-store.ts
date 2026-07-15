@@ -70,6 +70,8 @@ type BoardStore = {
   boardMode: BoardMode;
   /** Highlighted wall/hatch awaiting a menu choice in enhanced mode. */
   enhancedTarget: EnhancedTarget | null;
+  /** Blueprint render style for the strategy ("" until one is chosen). */
+  style: string;
 
   load: (scene: BoardScene) => void;
   setStage: (stage: Konva.Stage | null) => void;
@@ -99,6 +101,7 @@ type BoardStore = {
   closeHint: (dontShowAgain?: boolean) => void;
   setHoleLabel: (label: string) => void;
   setBoardMode: (mode: BoardMode) => void;
+  setStyle: (style: string) => void;
   setEnhancedTarget: (target: EnhancedTarget | null) => void;
   /** Adds a fitted marker without leaving the tagging tool. */
   placeMarker: (element: BoardElement) => void;
@@ -185,6 +188,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   holeLabel: "",
   boardMode: "default",
   enhancedTarget: null,
+  style: "",
 
   load: (scene) => {
     const pages = scene.pages.length ? clonePages(scene.pages) : [];
@@ -208,6 +212,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       boardMode: "default",
       enhancedTarget: null,
       hint: null,
+      style: scene.style ?? "",
     });
   },
 
@@ -343,6 +348,11 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
       selectedIds: [],
       editingTextId: null,
     }),
+
+  setStyle: (style) =>
+    // Switching render style swaps the blueprint, so any pending enhanced
+    // target points at the old geometry and must be dropped.
+    set({ style, dirty: true, enhancedTarget: null }),
 
   setEnhancedTarget: (enhancedTarget) => set({ enhancedTarget }),
 

@@ -330,6 +330,10 @@ Status
 - [x] Multi-style detection: reads the yellow destructible annotation on
       rendered R6 maps (BG/Black/Blue) and falls back to geometric
       inference on light line-art
+- [x] Enhanced mode gated to yellow-annotated renders; disabled with a
+      notice on Black & White line-art (no annotation to read)
+- [x] Closely-spaced parallel ("double"/"triple") walls stay separate
+      panels instead of collapsing into one
 
 ---
 
@@ -338,6 +342,10 @@ Status
 - [x] Thumbnail previews (board snapshot uploaded on autosave)
 - [x] Folder structure (map → Attack/Defence)
 - [x] Slideshow browser (Next/Back with adjacent previews)
+- [x] Full blueprint library: nine maps read from nested storage folders,
+      several render styles per floor (Blueprint/Dark/Black/Blue/BW)
+- [x] Render-style choice on New Strategy and switchable in the editor
+      (BG renders excluded for now)
 
 ---
 
