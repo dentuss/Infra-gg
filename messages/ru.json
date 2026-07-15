@@ -258,7 +258,9 @@
       "first_floor": "1-й этаж",
       "second_floor": "2-й этаж",
       "third_floor": "3-й этаж",
-      "roof": "Крыша"
+      "roof": "Крыша",
+      "middle_floor": "Средний этаж",
+      "top_floor": "Верхний этаж"
     },
     "toolTriangle": "Треугольник",
     "toolDiamond": "Ромб",
@@ -313,6 +315,15 @@
     "toFront": "На передний план",
     "bringForward": "Переместить вперёд",
     "sendBackward": "Переместить назад",
-    "toBack": "На задний план"
+    "toBack": "На задний план",
+    "styleLabel": "Стиль",
+    "styleHint": "Чёрный или синий лучше всего подходят для разметки стен.",
+    "styleBlueprint": "Чертёж",
+    "styleDark": "Тёмный",
+    "styleBlack": "Чёрный",
+    "styleBlue": "Синий",
+    "styleBW": "Чёрно-белый",
+    "styleBackground": "Фон",
+    "enhancedUnavailableBw": "Расширенный режим сейчас недоступен для чёрно-белых чертежей."
   }
 }

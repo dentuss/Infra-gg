@@ -102,6 +102,8 @@ export function emptyLineup(): LineupSlot[] {
 export type BoardScene = {
   pages: BoardPage[];
   lineup: LineupSlot[];
+  /** Blueprint render style chosen for the strategy (e.g. "black", "bw"). */
+  style?: string;
 };
 
 export const BOARD_COLORS = [
@@ -148,11 +150,13 @@ export function parseScene(data: Json): BoardScene {
     const raw = data as unknown as {
       pages: BoardPage[];
       lineup?: LineupSlot[];
+      style?: string;
     };
     return {
       pages: raw.pages,
       // Scenes saved before the lineup existed get five empty slots.
       lineup: emptyLineup().map((slot, index) => raw.lineup?.[index] ?? slot),
+      style: typeof raw.style === "string" ? raw.style : undefined,
     };
   }
   return { pages: [], lineup: emptyLineup() };
@@ -161,9 +165,11 @@ export function parseScene(data: Json): BoardScene {
 const FLOOR_ORDER = [
   "basement",
   "ground_floor",
+  "middle_floor",
   "first_floor",
   "second_floor",
   "third_floor",
+  "top_floor",
   "roof",
 ];
 
@@ -175,51 +181,156 @@ export function titleize(slug: string): string {
     .join(" ");
 }
 
-export type BlueprintFloor = { slug: string; name: string; url: string };
+/** One render of a floor: same geometry, different colour/annotation style. */
+export type BlueprintVariant = { style: string; url: string };
+export type BlueprintFloor = {
+  slug: string;
+  name: string;
+  variants: BlueprintVariant[];
+};
 export type BlueprintMap = {
   slug: string;
   name: string;
+  /** Render styles available across this map's floors (BG excluded). */
+  styles: string[];
   floors: BlueprintFloor[];
 };
 
-/** `consulate_second_floor.png` → map `consulate`, floor `second_floor`. */
+// The user's uploads are named inconsistently (camelCase, spaces, underscores,
+// "RW"/"Rework" infixes), so the floor and render style are recovered by
+// keyword rather than a fixed pattern. The map name comes from the folder.
+const STYLE_WORDS: Record<string, string> = {
+  bw: "bw",
+  bg: "bg",
+  black: "black",
+  blue: "blue",
+  blueprint: "base",
+  b: "b",
+};
+
+const FLOOR_WORDS: { matches: string[]; slug: string }[] = [
+  { matches: ["basement", "sub"], slug: "basement" },
+  { matches: ["ground"], slug: "ground_floor" },
+  { matches: ["middle", "mid"], slug: "middle_floor" },
+  { matches: ["first", "1f", "1st"], slug: "first_floor" },
+  { matches: ["second", "2f", "2nd"], slug: "second_floor" },
+  { matches: ["third", "3f", "3rd"], slug: "third_floor" },
+  { matches: ["top"], slug: "top_floor" },
+  { matches: ["roof"], slug: "roof" },
+];
+
+const STYLE_ORDER = ["base", "b", "black", "blue", "bw", "bg"];
+
+export function styleOrder(style: string): number {
+  const index = STYLE_ORDER.indexOf(style);
+  return index === -1 ? STYLE_ORDER.length : index;
+}
+
+export function styleLabelKey(style: string): string {
+  const keys: Record<string, string> = {
+    base: "styleBlueprint",
+    b: "styleDark",
+    black: "styleBlack",
+    blue: "styleBlue",
+    bw: "styleBW",
+    bg: "styleBackground",
+  };
+  return keys[style] ?? "styleBlueprint";
+}
+
+/** BW line-art has no yellow annotation, so enhanced tagging can't read it. */
+export function styleSupportsEnhanced(style: string): boolean {
+  return style !== "bw";
+}
+
+export function slugifyMap(folder: string): string {
+  return folder
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/** `BankReworkGroundFloorBlack.png` → floor `ground_floor`, style `black`. */
 export function parseBlueprintFileName(
   fileName: string,
-): { map: string; floor: string } | null {
-  const base = fileName.replace(/\.[a-z0-9]+$/i, "").toLowerCase();
-  for (const floor of FLOOR_ORDER) {
-    if (base.endsWith(`_${floor}`)) {
-      return { map: base.slice(0, -(floor.length + 1)), floor };
-    }
+): { floor: string; style: string } | null {
+  const words = fileName
+    .replace(/\.[a-z0-9]+$/i, "")
+    // Split camelCase, but keep floor tags like "1F"/"2F" intact (no digit→A-Z).
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length === 0) return null;
+
+  let style = "base";
+  const last = words[words.length - 1]!;
+  if (last in STYLE_WORDS) {
+    style = STYLE_WORDS[last]!;
+    words.pop();
   }
-  // Unknown floor suffix: treat the last underscore segment as the floor.
-  const index = base.lastIndexOf("_");
-  if (index <= 0) return null;
-  return { map: base.slice(0, index), floor: base.slice(index + 1) };
+
+  for (const word of words) {
+    const floor = FLOOR_WORDS.find((entry) => entry.matches.includes(word));
+    if (floor) return { floor: floor.slug, style };
+  }
+  return null;
+}
+
+/** The floor's chosen-style render, falling back to the closest available. */
+export function resolveVariant(
+  floor: BlueprintFloor,
+  style: string,
+): BlueprintVariant | null {
+  return (
+    floor.variants.find((variant) => variant.style === style) ??
+    [...floor.variants].sort(
+      (a, b) => styleOrder(a.style) - styleOrder(b.style),
+    )[0] ??
+    null
+  );
 }
 
 export function buildBlueprintMaps(
-  files: { name: string; url: string }[],
+  files: { mapFolder: string; name: string; url: string }[],
 ): BlueprintMap[] {
   const maps = new Map<string, BlueprintMap>();
 
   for (const file of files) {
     const parsed = parseBlueprintFileName(file.name);
-    if (!parsed) continue;
-    const entry = maps.get(parsed.map) ?? {
-      slug: parsed.map,
-      name: titleize(parsed.map),
+    if (!parsed || parsed.style === "bg") continue; // BG excluded for now
+    const slug = slugifyMap(file.mapFolder);
+    const map: BlueprintMap = maps.get(slug) ?? {
+      slug,
+      name: file.mapFolder.trim(),
+      styles: [],
       floors: [],
     };
-    entry.floors.push({
-      slug: parsed.floor,
-      name: titleize(parsed.floor),
-      url: file.url,
-    });
-    maps.set(parsed.map, entry);
+    let floor = map.floors.find((entry) => entry.slug === parsed.floor);
+    if (!floor) {
+      floor = {
+        slug: parsed.floor,
+        name: titleize(parsed.floor),
+        variants: [],
+      };
+      map.floors.push(floor);
+    }
+    if (!floor.variants.some((variant) => variant.style === parsed.style)) {
+      floor.variants.push({ style: parsed.style, url: file.url });
+    }
+    maps.set(slug, map);
   }
 
   for (const map of maps.values()) {
+    const styles = new Set<string>();
+    for (const floor of map.floors) {
+      floor.variants.sort((a, b) => styleOrder(a.style) - styleOrder(b.style));
+      floor.variants.forEach((variant) => styles.add(variant.style));
+    }
+    map.styles = [...styles].sort((a, b) => styleOrder(a) - styleOrder(b));
     map.floors.sort((a, b) => {
       const ai = FLOOR_ORDER.indexOf(a.slug);
       const bi = FLOOR_ORDER.indexOf(b.slug);

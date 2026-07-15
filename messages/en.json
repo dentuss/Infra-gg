@@ -258,7 +258,9 @@
       "first_floor": "1st floor",
       "second_floor": "2nd floor",
       "third_floor": "3rd floor",
-      "roof": "Roof"
+      "roof": "Roof",
+      "middle_floor": "Middle floor",
+      "top_floor": "Top floor"
     },
     "toolTriangle": "Triangle",
     "toolDiamond": "Diamond",
@@ -313,6 +315,15 @@
     "toFront": "Bring to front",
     "bringForward": "Bring forward",
     "sendBackward": "Send backward",
-    "toBack": "Send to back"
+    "toBack": "Send to back",
+    "styleLabel": "Style",
+    "styleHint": "Black or Blue read best for wall tagging.",
+    "styleBlueprint": "Blueprint",
+    "styleDark": "Dark",
+    "styleBlack": "Black",
+    "styleBlue": "Blue",
+    "styleBW": "Black & White",
+    "styleBackground": "Background",
+    "enhancedUnavailableBw": "Enhanced mode is currently unavailable for Black & White blueprints."
   }
 }

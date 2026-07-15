@@ -316,7 +316,11 @@ function scanHatches(lum: Uint8Array, w: number, h: number): HatchZone[] {
 const YELLOW_MIN_COUNT = 200;
 const YELLOW_SAMPLE_STEP = 3;
 const YELLOW_MIN_SEG = 5;
-const YELLOW_MERGE_AXIS_TOL = 7;
+// A wall's dashes share the same center line (±1-2px), so a tight tolerance
+// bridges one wall's dashes while keeping parallel "double" walls — which sit
+// well beyond this — as separate panels. Checked against the group's anchor,
+// never a running average, so the group can't drift across a neighbour.
+const YELLOW_MERGE_AXIS_TOL = 5;
 const YELLOW_MERGE_GAP = 24;
 const YELLOW_MIN_WALL_LEN = 15;
 const YELLOW_WALL_MIN_THICK = 12;
@@ -429,8 +433,9 @@ function yellowBars(data: ImageData): YellowBar[] {
       for (let j = 0; j < segs.length; j++) {
         const sj = segs[j]!;
         if (used[j] || sj.vertical !== first.vertical) continue;
-        const axis = group.reduce((s, x) => s + x.axis, 0) / group.length;
-        if (Math.abs(sj.axis - axis) > YELLOW_MERGE_AXIS_TOL) continue;
+        // Anchor to the first segment's axis (not a running average) so a run
+        // of dashes can never walk sideways onto a parallel neighbouring wall.
+        if (Math.abs(sj.axis - first.axis) > YELLOW_MERGE_AXIS_TOL) continue;
         const near = group.some(
           (m) =>
             sj.a0 <= m.a1 + YELLOW_MERGE_GAP &&

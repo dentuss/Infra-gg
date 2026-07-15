@@ -21,7 +21,15 @@ import {
 } from "@/components/ui/select";
 import { useBlueprintMaps } from "@/hooks/use-board-assets";
 import { useSaveStrategy, useStrategy } from "@/hooks/use-strategies";
-import { BOARD_WIDTH, newPage, parseScene, titleize } from "@/lib/strategy";
+import {
+  BOARD_WIDTH,
+  newPage,
+  parseScene,
+  resolveVariant,
+  styleLabelKey,
+  styleSupportsEnhanced,
+  titleize,
+} from "@/lib/strategy";
 import { uploadStrategyThumbnail } from "@/services/strategy-thumbnails";
 import { useBoardStore } from "@/store/board-store";
 import type { Json } from "@/types/database";
@@ -43,9 +51,11 @@ function stageSnapshot(stage: Konva.Stage, pixelWidth: number): string {
 const KNOWN_FLOORS = new Set([
   "basement",
   "ground_floor",
+  "middle_floor",
   "first_floor",
   "second_floor",
   "third_floor",
+  "top_floor",
   "roof",
 ]);
 
@@ -70,6 +80,7 @@ export function StrategyEditor({
   const lineup = useBoardStore((state) => state.lineup);
   const activePage = useBoardStore((state) => state.activePage);
   const dirty = useBoardStore((state) => state.dirty);
+  const style = useBoardStore((state) => state.style);
 
   const mapInfo = maps?.find((candidate) => candidate.slug === strategy?.map);
   const canEdit =
@@ -102,7 +113,7 @@ export function StrategyEditor({
       saveStrategy.mutate(
         {
           id: strategy.id,
-          patch: { data: { pages, lineup } as unknown as Json },
+          patch: { data: { pages, lineup, style } as unknown as Json },
         },
         {
           onSuccess: () => {
@@ -120,7 +131,29 @@ export function StrategyEditor({
     }, 1500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages, lineup, dirty, canEdit, strategy?.id]);
+  }, [pages, lineup, style, dirty, canEdit, strategy?.id]);
+
+  const page = pages[activePage];
+  // Style chosen for the strategy, falling back to the map's first render.
+  const effectiveStyle = style || mapInfo?.styles[0] || "";
+  const currentFloor =
+    mapInfo?.floors.find((floor) => floor.slug === page?.floor) ?? null;
+  const variant = currentFloor
+    ? resolveVariant(currentFloor, effectiveStyle)
+    : null;
+  const floorUrl = variant?.url ?? null;
+  const resolvedStyle = variant?.style ?? effectiveStyle;
+  const enhancedAvailable = !!variant && styleSupportsEnhanced(resolvedStyle);
+
+  // BW line-art can't be tagged, so never leave the board stuck in enhanced.
+  useEffect(() => {
+    if (
+      !enhancedAvailable &&
+      useBoardStore.getState().boardMode === "enhanced"
+    ) {
+      useBoardStore.getState().setBoardMode("default");
+    }
+  }, [enhancedAvailable]);
 
   if (error) {
     return (
@@ -132,10 +165,6 @@ export function StrategyEditor({
   if (isPending || !strategy) {
     return <p className="p-6 text-sm text-muted-foreground">{t("loading")}</p>;
   }
-
-  const page = pages[activePage];
-  const floorUrl =
-    mapInfo?.floors.find((floor) => floor.slug === page?.floor)?.url ?? null;
 
   const floorName = (slug: string) =>
     KNOWN_FLOORS.has(slug) ? t(`floors.${slug}`) : titleize(slug);
@@ -252,7 +281,26 @@ export function StrategyEditor({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {canEdit ? <BoardModeSwitch /> : null}
+          {canEdit && (mapInfo?.styles.length ?? 0) > 0 ? (
+            <Select
+              value={effectiveStyle}
+              onValueChange={(next) => {
+                if (canEdit && next) useBoardStore.getState().setStyle(next);
+              }}
+            >
+              <SelectTrigger className="w-36" aria-label={t("styleLabel")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(mapInfo?.styles ?? []).map((styleOption) => (
+                  <SelectItem key={styleOption} value={styleOption}>
+                    {t(styleLabelKey(styleOption))}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
+          {canEdit ? <BoardModeSwitch available={enhancedAvailable} /> : null}
           <span className="text-xs text-muted-foreground">
             {saveStrategy.isPending
               ? t("saving")
@@ -269,6 +317,12 @@ export function StrategyEditor({
       {!canEdit ? (
         <p className="border-b border-border px-4 py-1 text-xs text-muted-foreground">
           {t("readOnly")}
+        </p>
+      ) : null}
+
+      {canEdit && resolvedStyle === "bw" ? (
+        <p className="border-b border-border px-4 py-1 text-xs text-amber-500/90">
+          {t("enhancedUnavailableBw")}
         </p>
       ) : null}
 

@@ -3,7 +3,10 @@ import type { BlueprintFit } from "@/lib/blueprint-detect";
 import { newId, type BoardElement } from "@/lib/strategy";
 
 const REINFORCEMENT_LENGTH = 36;
-const WALL_PADDING = 8;
+// Cross-wall thickness of a reinforcement marker. Kept slim so it reads as a
+// band on the wall rather than a chunky block; the length still overhangs.
+const WALL_MAX_THICK = 20;
+const WALL_PADDING = 3;
 const HATCH_PADDING = 4;
 const MARKER_BORDER = "#09090b";
 const MARKER_STROKE = 3;
@@ -65,7 +68,7 @@ export function buildPanelReinforcement(
   color: string,
 ): BoardElement {
   const width = panel.length + 2;
-  const height = Math.min(panel.thickness, 28) + WALL_PADDING;
+  const height = Math.min(panel.thickness, WALL_MAX_THICK) + WALL_PADDING;
   const rad = (panel.angle * Math.PI) / 180;
   return {
     ...base(color),
@@ -115,7 +118,9 @@ export function buildReinforcement(
   const width = fit
     ? Math.max(16, Math.min(REINFORCEMENT_LENGTH, fit.alongExtent + 4))
     : REINFORCEMENT_LENGTH;
-  const height = fit ? Math.min(fit.thickness, 28) + WALL_PADDING : 16;
+  const height = fit
+    ? Math.min(fit.thickness, WALL_MAX_THICK) + WALL_PADDING
+    : 16;
   const angle = fit?.angle ?? 0;
   const cx = fit?.cx ?? click.x;
   const cy = fit?.cy ?? click.y;

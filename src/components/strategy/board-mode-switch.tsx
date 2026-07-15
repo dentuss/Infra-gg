@@ -11,11 +11,12 @@ const MODES: { mode: BoardMode; key: string }[] = [
 ];
 
 /** Slider-style switch between default and enhanced editing. */
-export function BoardModeSwitch() {
+export function BoardModeSwitch({ available = true }: { available?: boolean }) {
   const t = useTranslations("strategy");
   const boardMode = useBoardStore((state) => state.boardMode);
 
   const select = (mode: BoardMode) => {
+    if (mode === "enhanced" && !available) return;
     const store = useBoardStore.getState();
     store.setBoardMode(mode);
     if (mode === "enhanced") store.showHint("enhanced");
@@ -34,23 +35,29 @@ export function BoardModeSwitch() {
           boardMode === "enhanced" ? "translate-x-24" : "translate-x-0",
         )}
       />
-      {MODES.map(({ mode, key }) => (
-        <button
-          key={mode}
-          type="button"
-          role="radio"
-          aria-checked={boardMode === mode}
-          onClick={() => select(mode)}
-          className={cn(
-            "relative z-10 w-24 rounded-full px-2 py-1 text-center transition-colors duration-[250ms]",
-            boardMode === mode
-              ? "font-semibold text-secondary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {t(key)}
-        </button>
-      ))}
+      {MODES.map(({ mode, key }) => {
+        const disabled = mode === "enhanced" && !available;
+        return (
+          <button
+            key={mode}
+            type="button"
+            role="radio"
+            aria-checked={boardMode === mode}
+            disabled={disabled}
+            title={disabled ? t("enhancedUnavailableBw") : undefined}
+            onClick={() => select(mode)}
+            className={cn(
+              "relative z-10 w-24 rounded-full px-2 py-1 text-center transition-colors duration-[250ms]",
+              disabled && "cursor-not-allowed opacity-40",
+              boardMode === mode
+                ? "font-semibold text-secondary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t(key)}
+          </button>
+        );
+      })}
     </div>
   );
 }

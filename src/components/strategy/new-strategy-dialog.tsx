@@ -16,7 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateStrategy, type StrategySide } from "@/hooks/use-strategies";
-import { emptyLineup, newPage } from "@/lib/strategy";
+import { emptyLineup, newPage, styleLabelKey } from "@/lib/strategy";
+import { cn } from "@/lib/utils";
 
 export function NewStrategyDialog({
   open,
@@ -25,6 +26,7 @@ export function NewStrategyDialog({
   mapName,
   side,
   firstFloor,
+  styles,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,11 +34,15 @@ export function NewStrategyDialog({
   mapName: string;
   side: StrategySide;
   firstFloor: string;
+  styles: string[];
 }) {
   const t = useTranslations("strategy");
   const router = useRouter();
   const createStrategy = useCreateStrategy();
   const [title, setTitle] = useState("");
+  const [chosenStyle, setChosenStyle] = useState<string | null>(null);
+
+  const style = chosenStyle ?? styles[0] ?? "";
 
   const onCreate = async (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
@@ -45,10 +51,11 @@ export function NewStrategyDialog({
       title: title.trim(),
       map: mapSlug,
       side,
-      scene: { pages: [newPage(firstFloor)], lineup: emptyLineup() },
+      scene: { pages: [newPage(firstFloor)], lineup: emptyLineup(), style },
     });
     onOpenChange(false);
     setTitle("");
+    setChosenStyle(null);
     router.push(`/strategies/${created.id}`);
   };
 
@@ -73,6 +80,36 @@ export function NewStrategyDialog({
               onChange={(changeEvent) => setTitle(changeEvent.target.value)}
             />
           </div>
+
+          {styles.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <Label>{t("styleLabel")}</Label>
+              <div
+                role="radiogroup"
+                aria-label={t("styleLabel")}
+                className="flex flex-wrap gap-2"
+              >
+                {styles.map((styleOption) => (
+                  <button
+                    key={styleOption}
+                    type="button"
+                    role="radio"
+                    aria-checked={styleOption === style}
+                    onClick={() => setChosenStyle(styleOption)}
+                    className={cn(
+                      "rounded-md border px-3 py-1.5 text-sm transition-colors",
+                      styleOption === style
+                        ? "border-primary bg-primary/10 font-medium text-foreground"
+                        : "border-border text-muted-foreground hover:bg-accent",
+                    )}
+                  >
+                    {t(styleLabelKey(styleOption))}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("styleHint")}</p>
+            </div>
+          ) : null}
 
           {createStrategy.error ? (
             <p role="alert" className="text-sm text-destructive">
