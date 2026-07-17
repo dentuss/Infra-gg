@@ -10,6 +10,7 @@ import { useEffect, useRef } from "react";
 import { AssetsPanel } from "@/components/strategy/assets-panel";
 import { BoardModeSwitch } from "@/components/strategy/board-mode-switch";
 import { BoardToolbar } from "@/components/strategy/board-toolbar";
+import { badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,6 +31,7 @@ import {
   styleSupportsEnhanced,
   titleize,
 } from "@/lib/strategy";
+import { cn } from "@/lib/utils";
 import { uploadStrategyThumbnail } from "@/services/strategy-thumbnails";
 import { useBoardStore } from "@/store/board-store";
 import type { Json } from "@/types/database";
@@ -208,6 +210,15 @@ export function StrategyEditor({
 
         <span className="text-sm text-muted-foreground">
           {mapInfo?.name ?? titleize(strategy.map)}
+        </span>
+
+        <span
+          className={cn(
+            badgeVariants({ variant: "outline" }),
+            "border-amber-500/40 text-amber-500",
+          )}
+        >
+          {t("inDev")}
         </span>
 
         {page ? (

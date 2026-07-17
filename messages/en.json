@@ -199,6 +199,7 @@
   "strategy": {
     "metaTitle": "Strategies",
     "title": "Strategies",
+    "inDev": "In development",
     "newStrategy": "New strategy",
     "createTitle": "New strategy",
     "titleLabel": "Title",
