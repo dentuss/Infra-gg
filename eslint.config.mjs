@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Go WASM runtime glue — third-party, not our source.
+    "public/wasm/**",
   ]),
 ]);
 
