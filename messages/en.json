@@ -43,6 +43,14 @@
     "soon": "Soon",
     "signOut": "Sign out"
   },
+  "common": {
+    "loading": "Loading…"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Switch to light theme",
+    "dark": "Switch to dark theme"
+  },
   "matches": {
     "metaTitle": "Matches",
     "title": "Match Replay",

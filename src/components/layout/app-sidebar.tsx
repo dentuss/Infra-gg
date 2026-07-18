@@ -1,9 +1,11 @@
 import { LogOut } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { NavMain } from "@/components/layout/nav-main";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +15,15 @@ import {
   SidebarGroup,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import { DEFAULT_THEME, isTheme, THEME_COOKIE } from "@/lib/theme";
 import { signOut } from "@/services/auth";
 import type { Profile } from "@/services/profile";
 import { getTeamName } from "@/services/team";
 
 export async function AppSidebar({ profile }: { profile: Profile }) {
   const [t, teamName] = await Promise.all([getTranslations(), getTeamName()]);
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
 
   return (
     <Sidebar>
@@ -35,8 +40,9 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="px-2">
+        <div className="flex items-center justify-between gap-2 px-2">
           <LocaleSwitcher />
+          <ThemeToggle initialTheme={theme} />
         </div>
         <div className="flex items-center gap-2 px-2 py-1">
           <Link

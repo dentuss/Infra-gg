@@ -42,7 +42,7 @@ export function NavMain() {
   const pathname = usePathname();
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className="gap-1.5">
       {NAV_ITEMS.map((item) =>
         item.href ? (
           <SidebarMenuItem key={item.key}>
