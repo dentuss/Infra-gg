@@ -199,6 +199,7 @@
   "strategy": {
     "metaTitle": "Стратегии",
     "title": "Стратегии",
+    "inDev": "В разработке",
     "newStrategy": "Новая стратегия",
     "createTitle": "Новая стратегия",
     "titleLabel": "Название",
