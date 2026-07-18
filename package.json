@@ -31,6 +31,8 @@
     "@tiptap/starter-kit": "^3.27.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fast-xml-parser": "^5.10.1",
+    "fflate": "^0.8.3",
     "framer-motion": "^12.42.2",
     "konva": "^10.3.0",
     "lucide-react": "^1.24.0",

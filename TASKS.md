@@ -357,6 +357,10 @@ Status
       several render styles per floor (Blueprint/Dark/Black/Blue/BW)
 - [x] Render-style choice on New Strategy and switchable in the editor
       (BG renders excluded for now)
+- [x] Import from PowerPoint/Google-Slides `.pptx`: parsed in-browser
+      (fflate + fast-xml-parser) into editable pages — operators/gadgets →
+      icons, connectors → arrows, text/zones kept; deck media uploaded to
+      `strategy/imports/<id>/`; one pass can split a deck into several strats
 
 ---
 

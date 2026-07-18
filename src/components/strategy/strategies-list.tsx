@@ -2,6 +2,7 @@
 
 import {
   ChevronRight,
+  FileUp,
   Folder,
   GalleryHorizontalEnd,
   Plus,
@@ -14,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { LocalTime } from "@/components/local-time";
+import { ImportDialog } from "@/components/strategy/import-dialog";
 import { NewStrategyDialog } from "@/components/strategy/new-strategy-dialog";
 import { StrategyBrowseDialog } from "@/components/strategy/strategy-browse-dialog";
 import { StrategyThumbnail } from "@/components/strategy/strategy-thumbnail";
@@ -88,6 +90,7 @@ export function StrategiesList({
   const [mapSlug, setMapSlug] = useState<string | null>(null);
   const [side, setSide] = useState<StrategySide | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [browseIndex, setBrowseIndex] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StrategyRow | null>(null);
 
@@ -132,32 +135,46 @@ export function StrategiesList({
 
   return (
     <div className="flex flex-col gap-4">
-      <nav aria-label={t("title")} className="flex items-center gap-1 text-sm">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setMapSlug(null);
-            setSide(null);
-          }}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <nav
+          aria-label={t("title")}
+          className="flex items-center gap-1 text-sm"
         >
-          {t("allMaps")}
-        </Button>
-        {currentMap ? (
-          <>
-            <ChevronRight className="size-4 text-muted-foreground" />
-            <Button variant="ghost" size="sm" onClick={() => setSide(null)}>
-              {currentMap.name}
-            </Button>
-          </>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setMapSlug(null);
+              setSide(null);
+            }}
+          >
+            {t("allMaps")}
+          </Button>
+          {currentMap ? (
+            <>
+              <ChevronRight className="size-4 text-muted-foreground" />
+              <Button variant="ghost" size="sm" onClick={() => setSide(null)}>
+                {currentMap.name}
+              </Button>
+            </>
+          ) : null}
+          {side ? (
+            <>
+              <ChevronRight className="size-4 text-muted-foreground" />
+              <span className="px-2 font-medium">{t(side)}</span>
+            </>
+          ) : null}
+        </nav>
+        {canCreate ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+          >
+            <FileUp /> {t("import.button")}
+          </Button>
         ) : null}
-        {side ? (
-          <>
-            <ChevronRight className="size-4 text-muted-foreground" />
-            <span className="px-2 font-medium">{t(side)}</span>
-          </>
-        ) : null}
-      </nav>
+      </div>
 
       {!currentMap ? (
         mapFolders.size === 0 ? (
@@ -308,6 +325,10 @@ export function StrategiesList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {canCreate ? (
+        <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      ) : null}
     </div>
   );
 }
