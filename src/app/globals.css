@@ -126,6 +126,8 @@
   }
   html {
     @apply font-sans;
+    /* Scale the whole rem-based UI up ~15%, like a browser zoom. */
+    font-size: 115%;
   }
 }
 

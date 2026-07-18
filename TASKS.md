@@ -178,6 +178,9 @@ Status
 - [x] Username
 - [ ] Team
 - [x] Role
+- [x] In-game role picker (Classic / Expanded lists) in account settings
+- [ ] Ubisoft (R6) + Discord account links (placeholders shown; linking is
+      future work)
 
 ---
 
@@ -241,6 +244,8 @@ Status
 - [x] Team settings (workspace name, shown in the sidebar)
 - [x] Invite players (create, copy, revoke single-use invite links)
 - [x] Remove players (revokes membership; the account itself stays)
+- [x] Staff-assigned in-game role (Classic / Expanded lists), independent from
+      the player's own account role — staff-only via a SECURITY DEFINER RPC
 
 ---
 

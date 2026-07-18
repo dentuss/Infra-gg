@@ -48,18 +48,27 @@ export function useUpdateMemberProfile() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      patch: {
-        username: string;
-        full_name: string | null;
-        ingame_role: string | null;
-      };
+      username: string;
+      full_name: string | null;
+      // Staff-assigned in-game role — written via an RPC so it never touches the
+      // player's own `ingame_role` set in their account settings.
+      assigned_role: string | null;
     }) => {
       const supabase = createClient();
       const { error } = await supabase
         .from("profiles")
-        .update(input.patch)
+        .update({ username: input.username, full_name: input.full_name })
         .eq("id", input.id);
       if (error) throw new Error(error.message);
+
+      const { error: roleError } = await supabase.rpc(
+        "set_member_ingame_role",
+        {
+          member_id: input.id,
+          new_role: input.assigned_role,
+        },
+      );
+      if (roleError) throw new Error(roleError.message);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMBERS_KEY }),
   });

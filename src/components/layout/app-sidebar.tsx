@@ -28,9 +28,12 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-3">
-        <span className="truncate text-lg font-bold tracking-widest uppercase">
+        <Link
+          href="/dashboard"
+          className="truncate text-lg font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
+        >
           {teamName}
-        </span>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>

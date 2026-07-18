@@ -75,7 +75,7 @@ export function RosterCards({ canManage = false }: { canManage?: boolean }) {
               <Badge variant="secondary">
                 {member.role === "igl"
                   ? tRoles("igl")
-                  : (member.ingame_role ?? "—")}
+                  : (member.assigned_role ?? member.ingame_role ?? "—")}
               </Badge>
               <div className="w-full border-t border-border pt-3">
                 <div className="flex items-center justify-between gap-2 text-xs">
