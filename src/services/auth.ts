@@ -67,6 +67,37 @@ export async function signUpWithPassword(
   return { error: null, message: t("success") };
 }
 
+function isOAuthProvider(value: string): value is "discord" | "google" {
+  return value === "discord" || value === "google";
+}
+
+export async function signInWithProvider(formData: FormData) {
+  const provider = String(formData.get("provider"));
+  if (!isOAuthProvider(provider)) {
+    redirect("/login?error=auth");
+  }
+
+  const origin =
+    (await headers()).get("origin") ?? "https://infra-gg.vercel.app";
+  const supabase = await createClient();
+  // skipBrowserRedirect so the SSR client writes the PKCE verifier cookie here;
+  // the browser is then sent to the provider, and /auth/callback exchanges the
+  // code (redeeming a pending invite, exactly like the email flow).
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error || !data.url) {
+    redirect("/login?error=auth");
+  }
+
+  redirect(data.url);
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

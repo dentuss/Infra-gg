@@ -31,6 +31,14 @@
       "errorPasswordShort": "Пароль должен быть не короче 8 символов.",
       "errorMismatch": "Пароли не совпадают.",
       "errorFailed": "Не удалось создать аккаунт. Попробуйте ещё раз."
+    },
+    "oauth": {
+      "divider": "или войти через",
+      "discord": "Войти через Discord",
+      "google": "Войти через Google",
+      "ubisoft": "Ubisoft",
+      "soon": "Скоро",
+      "ubisoftHint": "У Ubisoft нет публичного входа — привяжите аккаунт R6 в профиле (скоро)."
     }
   },
   "nav": {

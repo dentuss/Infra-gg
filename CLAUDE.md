@@ -77,7 +77,7 @@ Authentication
 Implement:
 
 - Supabase Auth
-- Discord OAuth
+- Discord + Google OAuth (Ubisoft has no public sign-in provider)
 - Session handling
 - Route protection
 - Invite-only registration
