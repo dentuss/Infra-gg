@@ -157,13 +157,19 @@ rounds ongoing; Documents follows afterwards
 
 Status
 
-🟢 (Discord OAuth and public registration deferred by decision)
+🟢 (Discord + Google OAuth added — need provider credentials in the Supabase
+dashboard; Ubisoft has no public sign-in provider)
 
 ---
 
 ## Authentication
 
-- [ ] Discord OAuth (deferred — dropped from scope for now)
+- [x] Discord OAuth (login + sign-up; enable the provider in the Supabase
+      dashboard with a Discord app's client ID/secret)
+- [x] Google OAuth (login + sign-up; enable the provider with a Google Cloud
+      OAuth client)
+- [ ] Ubisoft login — no public OAuth provider exists; shown as a disabled
+      placeholder. Link the R6 account from the profile instead.
 - [x] Email login
 - [x] Invite-only registration (public sign-up restored, simplified — team membership still requires an invite)
 - [x] Session persistence

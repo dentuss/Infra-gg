@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -82,6 +83,8 @@ export function RegisterForm() {
             </Button>
           </form>
         )}
+
+        <OAuthButtons />
 
         <p className="text-center text-sm text-muted-foreground">
           {t("haveAccount")}{" "}

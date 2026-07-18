@@ -31,6 +31,14 @@
       "errorPasswordShort": "Password must be at least 8 characters.",
       "errorMismatch": "Passwords do not match.",
       "errorFailed": "Could not create the account. Please try again."
+    },
+    "oauth": {
+      "divider": "or continue with",
+      "discord": "Continue with Discord",
+      "google": "Continue with Google",
+      "ubisoft": "Ubisoft",
+      "soon": "Soon",
+      "ubisoftHint": "Ubisoft has no public sign-in — link your R6 account from your profile instead (coming soon)."
     }
   },
   "nav": {
