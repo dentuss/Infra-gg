@@ -407,9 +407,27 @@ Status
 
 Status
 
-🔴
+🟡 (started early — the Match Replay report shipped; screenshot/timeline
+tools still to come)
 
 ---
+
+## Match Replay (r6tv-inspired)
+
+- [x] Decode Siege `.rec` replay files fully in-browser (r6-dissect → WebAssembly)
+- [x] Post-match report: map, per-round bomb site, lineups + operators,
+      timestamped kill feed, per-player K/D/A/HS, score with W/L round pips
+- [x] Storage-hosted decoder (public `tools` bucket); replay bytes never leave
+      the client
+- [x] Marked "in development" (`/matches`)
+- [ ] Persist decoded matches to a table (currently view-only, no DB)
+- [ ] Render the map floor image behind the report
+- [ ] Out of scope from open data: continuous player positions aren't in replay
+      files, so a spatial top-down movement replay isn't possible
+
+---
+
+## Review tools
 
 - [ ] Upload screenshots
 - [ ] Timeline
@@ -505,7 +523,7 @@ These should NOT be started until every previous phase is complete.
 
 - [ ] AI strategy suggestions
 - [ ] AI VOD analysis
-- [ ] Replay parser
+- [x] Replay parser (shipped early as the Match Replay report — `/matches`)
 - [ ] Match timeline
 - [ ] Mobile support
 - [ ] Progressive Web App

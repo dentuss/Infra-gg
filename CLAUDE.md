@@ -130,6 +130,13 @@ Statistics
 
 VOD Review
 
+Started early with a **Match Replay** report (r6tv-inspired): Siege `.rec` files
+are decoded in the browser (r6-dissect compiled to WebAssembly) into a
+post-match report — rosters, per-round bomb site, timestamped kill feed, and
+per-player stats — at `/matches`. Replay files contain events but not player
+positions, so this is a report, not a spatial (top-down movement) replay. In
+development.
+
 ---
 
 # Technology Stack

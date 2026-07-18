@@ -1,25 +1,21 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
-import { Chakra_Petch, Geist_Mono, Play } from "next/font/google";
+import { Exo_2, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { formattingLocale } from "@/i18n/config";
+import { DEFAULT_THEME, isTheme, THEME_COOKIE } from "@/lib/theme";
 
 import "./globals.css";
 
-const chakraPetch = Chakra_Petch({
-  variable: "--font-chakra",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-// Chakra Petch has no Cyrillic glyphs; Play is a matching squared face
-// that covers Russian and sits behind it in the font stack.
-const play = Play({
-  variable: "--font-play",
+// Exo 2 is a wide, squared techno sans with full Cyrillic — one face covers
+// both English and Russian. It stands in for Toxigenesis (whose free release is
+// desktop-license-only); drop a licensed Toxigenesis .woff2 here to swap later.
+const exo = Exo_2({
+  variable: "--font-exo",
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -41,11 +37,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
 
   return (
     <html
       lang={formattingLocale(locale)}
-      className={`${chakraPetch.variable} ${play.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${exo.variable} ${geistMono.variable} ${
+        theme === "dark" ? "dark" : ""
+      } h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
