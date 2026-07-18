@@ -358,6 +358,12 @@ Rules:
 - Enforce permissions with RLS using private.is_staff — never only in
   the UI.
 
+In-game roles (Entry / Flex / Support / … — a Classic set and an Expanded set)
+are distinct from these permission roles. Each player has their own, set in
+account settings (`ingame_role`), plus a staff-assigned one set in Team
+management (`assigned_role`, written via a staff-only RPC); the two never
+overwrite each other.
+
 ---
 
 # Internationalization

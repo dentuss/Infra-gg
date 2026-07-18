@@ -145,6 +145,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          assigned_role: string | null;
           avatar_url: string | null;
           created_at: string;
           full_name: string | null;
@@ -156,6 +157,7 @@ export type Database = {
           username: string;
         };
         Insert: {
+          assigned_role?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           full_name?: string | null;
@@ -167,6 +169,7 @@ export type Database = {
           username: string;
         };
         Update: {
+          assigned_role?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           full_name?: string | null;
@@ -245,6 +248,10 @@ export type Database = {
     Functions: {
       redeem_invite: { Args: { invite_code: string }; Returns: boolean };
       remove_member: { Args: { member_id: string }; Returns: undefined };
+      set_member_ingame_role: {
+        Args: { member_id: string; new_role: string | null };
+        Returns: undefined;
+      };
       set_member_role: {
         Args: {
           member_id: string;

@@ -86,7 +86,7 @@ export function MembersList({
                 {[
                   member.id === currentUserId ? t("you") : null,
                   member.full_name,
-                  member.ingame_role,
+                  member.assigned_role ?? member.ingame_role,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

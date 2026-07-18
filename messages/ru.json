@@ -51,6 +51,12 @@
     "light": "Светлая тема",
     "dark": "Тёмная тема"
   },
+  "ingameRoles": {
+    "classic": "Классика",
+    "expanded": "Расширенный",
+    "placeholder": "Выберите роль",
+    "none": "Без роли"
+  },
   "matches": {
     "metaTitle": "Матчи",
     "title": "Повтор матча",
@@ -177,7 +183,8 @@
     "nicknameLabel": "Никнейм",
     "fullNameLabel": "Имя",
     "ingameRoleLabel": "Игровая роль",
-    "ingameRolePlaceholder": "Энтри, саппорт, флекс…"
+    "ingameRolePlaceholder": "Энтри, саппорт, флекс…",
+    "assignedRoleHint": "Назначается стаффом для команды — не влияет на роль, выбранную игроком в настройках аккаунта."
   },
   "eventDialog": {
     "newTitle": "Новое событие",
@@ -222,6 +229,12 @@
     "metaTitle": "Профиль",
     "title": "Ваш профиль",
     "subtitle": "Так вас видят в составе и по всему приложению.",
+    "linkedTitle": "Привязанные аккаунты",
+    "linkedSubtitle": "Привязка игрового и коммьюнити-аккаунтов — скоро.",
+    "ubisoftName": "Ubisoft (R6)",
+    "discordName": "Discord",
+    "notLinked": "Не привязан",
+    "comingSoon": "Скоро",
     "changeAvatar": "Сменить аватар",
     "uploading": "Загружаем…",
     "avatarHint": "PNG, JPEG или WebP, до 2 МБ.",

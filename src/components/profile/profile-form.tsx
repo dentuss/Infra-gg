@@ -1,10 +1,11 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Gamepad2, MessageCircle, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+import { IngameRoleSelect } from "@/components/ingame-role-select";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,9 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   const [username, setUsername] = useState(profile.username);
   const [fullName, setFullName] = useState(profile.full_name ?? "");
-  const [ingameRole, setIngameRole] = useState(profile.ingame_role ?? "");
+  const [ingameRole, setIngameRole] = useState<string | null>(
+    profile.ingame_role,
+  );
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [saved, setSaved] = useState(false);
 
@@ -42,7 +45,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
     await updateProfile.mutateAsync({
       username: username.trim(),
       full_name: fullName.trim() || null,
-      ingame_role: ingameRole.trim() || null,
+      ingame_role: ingameRole,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -102,12 +105,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="profile-ingame-role">{t("ingameRoleLabel")}</Label>
-          <Input
+          <IngameRoleSelect
             id="profile-ingame-role"
             value={ingameRole}
-            maxLength={30}
-            placeholder={t("ingameRolePlaceholder")}
-            onChange={(changeEvent) => setIngameRole(changeEvent.target.value)}
+            onChange={setIngameRole}
           />
         </div>
 
@@ -126,6 +127,33 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           ) : null}
         </div>
       </form>
+
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">{t("linkedTitle")}</h2>
+          <p className="text-xs text-muted-foreground">{t("linkedSubtitle")}</p>
+        </div>
+        {(
+          [
+            { key: "ubisoft", icon: Gamepad2 },
+            { key: "discord", icon: MessageCircle },
+          ] as const
+        ).map(({ key, icon: Icon }) => (
+          <div
+            key={key}
+            className="flex items-center gap-3 rounded-lg border border-border p-3"
+          >
+            <Icon className="size-5 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">{t(`${key}Name`)}</p>
+              <p className="text-xs text-muted-foreground">{t("notLinked")}</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled>
+              {t("comingSoon")}
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

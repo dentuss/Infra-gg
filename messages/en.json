@@ -51,6 +51,12 @@
     "light": "Switch to light theme",
     "dark": "Switch to dark theme"
   },
+  "ingameRoles": {
+    "classic": "Classic",
+    "expanded": "Expanded",
+    "placeholder": "Select a role",
+    "none": "No role"
+  },
   "matches": {
     "metaTitle": "Matches",
     "title": "Match Replay",
@@ -177,7 +183,8 @@
     "nicknameLabel": "Nickname",
     "fullNameLabel": "Name",
     "ingameRoleLabel": "In-game role",
-    "ingameRolePlaceholder": "Entry, support, flex…"
+    "ingameRolePlaceholder": "Entry, support, flex…",
+    "assignedRoleHint": "Set by staff for the team — separate from the player's own role in their account settings."
   },
   "eventDialog": {
     "newTitle": "New event",
@@ -222,6 +229,12 @@
     "metaTitle": "Profile",
     "title": "Your profile",
     "subtitle": "How you appear on the roster and around the app.",
+    "linkedTitle": "Linked accounts",
+    "linkedSubtitle": "Connect your game and community accounts — coming soon.",
+    "ubisoftName": "Ubisoft (R6)",
+    "discordName": "Discord",
+    "notLinked": "Not linked",
+    "comingSoon": "Coming soon",
     "changeAvatar": "Change avatar",
     "uploading": "Uploading…",
     "avatarHint": "PNG, JPEG, or WebP, up to 2 MB.",

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { IngameRoleSelect } from "@/components/ingame-role-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,18 +48,18 @@ function EditMemberForm({
   const updateProfile = useUpdateMemberProfile();
   const [username, setUsername] = useState(member.username);
   const [fullName, setFullName] = useState(member.full_name ?? "");
-  const [ingameRole, setIngameRole] = useState(member.ingame_role ?? "");
+  const [assignedRole, setAssignedRole] = useState<string | null>(
+    member.assigned_role,
+  );
 
   const onSubmit = async (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
     if (!username.trim()) return;
     await updateProfile.mutateAsync({
       id: member.id,
-      patch: {
-        username: username.trim(),
-        full_name: fullName.trim() || null,
-        ingame_role: ingameRole.trim() || null,
-      },
+      username: username.trim(),
+      full_name: fullName.trim() || null,
+      assigned_role: assignedRole,
     });
     onClose();
   };
@@ -92,13 +93,14 @@ function EditMemberForm({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="member-ingame-role">{t("ingameRoleLabel")}</Label>
-          <Input
+          <IngameRoleSelect
             id="member-ingame-role"
-            value={ingameRole}
-            maxLength={30}
-            placeholder={t("ingameRolePlaceholder")}
-            onChange={(changeEvent) => setIngameRole(changeEvent.target.value)}
+            value={assignedRole}
+            onChange={setAssignedRole}
           />
+          <p className="text-xs text-muted-foreground">
+            {t("assignedRoleHint")}
+          </p>
         </div>
 
         {updateProfile.error ? (
