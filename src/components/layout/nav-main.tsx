@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  Clapperboard,
   Crosshair,
   FileText,
   LayoutDashboard,
@@ -20,7 +21,8 @@ import {
 } from "@/components/ui/sidebar";
 
 type NavItem = {
-  key: "dashboard" | "calendar" | "team" | "documents" | "strategies";
+  key:
+    "dashboard" | "calendar" | "team" | "documents" | "strategies" | "matches";
   icon: LucideIcon;
   href?: string;
 };
@@ -32,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "team", icon: Users, href: "/team" },
   { key: "documents", icon: FileText },
   { key: "strategies", icon: Crosshair, href: "/strategies" },
+  { key: "matches", icon: Clapperboard, href: "/matches" },
 ];
 
 export function NavMain() {
