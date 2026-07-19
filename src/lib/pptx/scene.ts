@@ -1,5 +1,7 @@
 import { listOperatorIcons } from "@/lib/operator-icons";
 import {
+  BOARD_HEIGHT,
+  BOARD_WIDTH,
   emptyLineup,
   LINEUP_SIZE,
   newId,
@@ -9,6 +11,45 @@ import {
 } from "@/lib/strategy";
 
 import type { ParsedSlide, PptxElement } from "./types";
+
+/** The region a fitted background occupies inside the board (letterboxed). */
+type Fit = { x: number; y: number; width: number; height: number };
+
+export type ImageDims = { width: number; height: number };
+
+function computeFit(imgW: number, imgH: number): Fit {
+  const scale = Math.min(BOARD_WIDTH / imgW, BOARD_HEIGHT / imgH);
+  const width = imgW * scale;
+  const height = imgH * scale;
+  return {
+    x: (BOARD_WIDTH - width) / 2,
+    y: (BOARD_HEIGHT - height) / 2,
+    width,
+    height,
+  };
+}
+
+/** Remap an element from full-board space into the fitted (letterboxed) region. */
+function applyFit(element: BoardElement, fit: Fit): BoardElement {
+  const sx = fit.width / BOARD_WIDTH;
+  const sy = fit.height / BOARD_HEIGHT;
+  return {
+    ...element,
+    x: fit.x + element.x * sx,
+    y: fit.y + element.y * sy,
+    width: element.width == null ? element.width : element.width * sx,
+    height: element.height == null ? element.height : element.height * sy,
+    fontSize:
+      element.fontSize == null ? element.fontSize : element.fontSize * sy,
+    strokeWidth:
+      element.strokeWidth == null
+        ? element.strokeWidth
+        : element.strokeWidth * Math.min(sx, sy),
+    points: element.points
+      ? element.points.map((p, i) => (i % 2 === 0 ? p * sx : p * sy))
+      : element.points,
+  };
+}
 
 // Imported icons/text carry no board colour of their own; these are only used
 // where the board model requires a colour (e.g. an icon's optional border).
@@ -103,13 +144,21 @@ export function slidesToPages(
   slides: ParsedSlide[],
   floor: string,
   srcFor: SrcResolver,
+  dimsFor: (mediaPath: string) => ImageDims | null,
 ): BoardPage[] {
-  return slides.map((slide) => ({
-    id: newId(),
-    floor,
-    background: slide.background ? srcFor(slide.background) : undefined,
-    elements: slide.elements.map((element) => elementToBoard(element, srcFor)),
-  }));
+  return slides.map((slide) => {
+    const dims = slide.background ? dimsFor(slide.background) : null;
+    const fit = dims ? computeFit(dims.width, dims.height) : null;
+    return {
+      id: newId(),
+      floor,
+      background: slide.background ? srcFor(slide.background) : undefined,
+      elements: slide.elements.map((element) => {
+        const board = elementToBoard(element, srcFor);
+        return fit ? applyFit(board, fit) : board;
+      }),
+    };
+  });
 }
 
 /**

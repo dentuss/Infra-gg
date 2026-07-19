@@ -341,7 +341,11 @@ export function StrategyEditor({
 
       <div className="flex min-h-0 flex-1">
         {canEdit ? <BoardToolbar /> : null}
-        <BoardCanvas canEdit={canEdit} floorUrl={floorUrl} />
+        <BoardCanvas
+          canEdit={canEdit}
+          floorUrl={floorUrl}
+          containBackground={!!page?.background}
+        />
         {canEdit ? <AssetsPanel /> : null}
       </div>
     </div>
