@@ -10,7 +10,7 @@ import {
 import { parsePptx } from "@/lib/pptx/parse";
 import { lineupFromSlides, slidesToPages } from "@/lib/pptx/scene";
 import type { ParsedDeck, ParsedSlide } from "@/lib/pptx/types";
-import { emptyLineup } from "@/lib/strategy";
+import { emptyLineup, SCENE_VERSION } from "@/lib/strategy";
 import { uploadDeckMedia } from "@/services/pptx-import";
 import type { Json } from "@/types/database";
 
@@ -106,6 +106,7 @@ export function usePptxImport() {
               data: {
                 pages,
                 lineup: lineupFromSlides(plan.slides, plan.side),
+                version: SCENE_VERSION,
               } as unknown as Json,
             },
           });

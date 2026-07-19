@@ -527,18 +527,10 @@ export default function BoardCanvas({
       store.updateElement(drawing.id, { points: [0, 0, dx, dy] });
       return;
     }
-    if (drawing.tool === "ellipse") {
-      store.updateElement(drawing.id, {
-        x: drawing.x + dx / 2,
-        y: drawing.y + dy / 2,
-        width: Math.abs(dx),
-        height: Math.abs(dy),
-      });
-      return;
-    }
+    // Every box shape is centred on x/y, so the drag midpoint works for all.
     store.updateElement(drawing.id, {
-      x: Math.min(drawing.x, position.x),
-      y: Math.min(drawing.y, position.y),
+      x: drawing.x + dx / 2,
+      y: drawing.y + dy / 2,
       width: Math.abs(dx),
       height: Math.abs(dy),
     });
@@ -605,7 +597,7 @@ export default function BoardCanvas({
       return;
     }
 
-    store.insertIcon(icon.url, icon.name, position.x - 32, position.y - 32);
+    store.insertIcon(icon.url, icon.name, position.x, position.y);
   };
 
   const editingElement = page?.elements.find(

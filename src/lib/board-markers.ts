@@ -37,8 +37,8 @@ export function buildHatchSquare(zone: HatchZone, color: string): BoardElement {
   return {
     ...base(color),
     type: "rect",
-    x: zone.x - HATCH_PADDING,
-    y: zone.y - HATCH_PADDING,
+    x: zone.x + zone.width / 2,
+    y: zone.y + zone.height / 2,
     width: zone.width + HATCH_PADDING * 2,
     height: zone.height + HATCH_PADDING * 2,
   };
@@ -67,17 +67,14 @@ export function buildPanelReinforcement(
   panel: WallPanel,
   color: string,
 ): BoardElement {
-  const width = panel.length + 2;
-  const height = Math.min(panel.thickness, WALL_MAX_THICK) + WALL_PADDING;
-  const rad = (panel.angle * Math.PI) / 180;
   return {
     ...base(color),
     type: "rect",
-    x: panel.cx - (Math.cos(rad) * width) / 2 + (Math.sin(rad) * height) / 2,
-    y: panel.cy - (Math.sin(rad) * width) / 2 - (Math.cos(rad) * height) / 2,
+    x: panel.cx,
+    y: panel.cy,
     rotation: panel.angle,
-    width,
-    height,
+    width: panel.length + 2,
+    height: Math.min(panel.thickness, WALL_MAX_THICK) + WALL_PADDING,
   };
 }
 
@@ -121,18 +118,12 @@ export function buildReinforcement(
   const height = fit
     ? Math.min(fit.thickness, WALL_MAX_THICK) + WALL_PADDING
     : 16;
-  const angle = fit?.angle ?? 0;
-  const cx = fit?.cx ?? click.x;
-  const cy = fit?.cy ?? click.y;
-  // Rects rotate around their top-left corner; place it so the marker
-  // stays centered on the wall line.
-  const rad = (angle * Math.PI) / 180;
   return {
     ...base(color),
     type: "rect",
-    x: cx - (Math.cos(rad) * width) / 2 + (Math.sin(rad) * height) / 2,
-    y: cy - (Math.sin(rad) * width) / 2 - (Math.cos(rad) * height) / 2,
-    rotation: angle,
+    x: fit?.cx ?? click.x,
+    y: fit?.cy ?? click.y,
+    rotation: fit?.angle ?? 0,
     width,
     height,
   };

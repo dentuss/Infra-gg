@@ -27,6 +27,7 @@ import {
   newPage,
   parseScene,
   resolveVariant,
+  SCENE_VERSION,
   styleLabelKey,
   styleSupportsEnhanced,
   titleize,
@@ -115,7 +116,14 @@ export function StrategyEditor({
       saveStrategy.mutate(
         {
           id: strategy.id,
-          patch: { data: { pages, lineup, style } as unknown as Json },
+          patch: {
+            data: {
+              pages,
+              lineup,
+              style,
+              version: SCENE_VERSION,
+            } as unknown as Json,
+          },
         },
         {
           onSuccess: () => {
