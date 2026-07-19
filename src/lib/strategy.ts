@@ -70,6 +70,8 @@ export function starPoints(width: number, height: number): number[] {
 export type BoardPage = {
   id: string;
   floor: string;
+  /** Fixed background image (imported decks); overrides the floor blueprint. */
+  background?: string;
   elements: BoardElement[];
 };
 

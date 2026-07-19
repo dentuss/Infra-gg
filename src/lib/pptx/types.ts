@@ -12,6 +12,7 @@ export type PptxElement =
       width: number;
       height: number;
       rotation: number;
+      stroke: { color: string; width: number } | null;
     }
   | {
       kind: "text";
@@ -30,6 +31,7 @@ export type PptxElement =
       rotation: number;
       color: string | null;
       filled: boolean;
+      stroke: { color: string; width: number } | null;
     }
   | {
       kind: "arrow" | "line";
@@ -45,6 +47,8 @@ export type ParsedSlide = {
   index: number;
   /** Has a background map image (content slide vs. a title/section slide). */
   hasMap: boolean;
+  /** The slide-background image's zip path — becomes the page's fixed board. */
+  background: string | null;
   elements: PptxElement[];
   /** Distinct zip entries referenced by this slide, for upload. */
   mediaPaths: string[];

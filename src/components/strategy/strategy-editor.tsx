@@ -143,9 +143,11 @@ export function StrategyEditor({
   const variant = currentFloor
     ? resolveVariant(currentFloor, effectiveStyle)
     : null;
-  const floorUrl = variant?.url ?? null;
+  // Imported pages carry their own fixed background; it overrides the blueprint.
+  const floorUrl = page?.background ?? variant?.url ?? null;
   const resolvedStyle = variant?.style ?? effectiveStyle;
-  const enhancedAvailable = !!variant && styleSupportsEnhanced(resolvedStyle);
+  const enhancedAvailable =
+    !page?.background && !!variant && styleSupportsEnhanced(resolvedStyle);
 
   // BW line-art can't be tagged, so never leave the board stuck in enhanced.
   useEffect(() => {

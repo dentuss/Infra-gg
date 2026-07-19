@@ -8,7 +8,7 @@ import {
   type StrategySide,
 } from "@/hooks/use-strategies";
 import { parsePptx } from "@/lib/pptx/parse";
-import { slidesToPages } from "@/lib/pptx/scene";
+import { lineupFromSlides, slidesToPages } from "@/lib/pptx/scene";
 import type { ParsedDeck, ParsedSlide } from "@/lib/pptx/types";
 import { emptyLineup } from "@/lib/strategy";
 import { uploadDeckMedia } from "@/services/pptx-import";
@@ -103,7 +103,10 @@ export function usePptxImport() {
           await saveStrategy.mutateAsync({
             id: created.id,
             patch: {
-              data: { pages, lineup: emptyLineup() } as unknown as Json,
+              data: {
+                pages,
+                lineup: lineupFromSlides(plan.slides, plan.side),
+              } as unknown as Json,
             },
           });
         }
