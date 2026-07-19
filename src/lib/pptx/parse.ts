@@ -3,7 +3,7 @@ import { unzipSync } from "fflate";
 
 import { buildColorResolver } from "./color";
 import { extractElements } from "./shapes";
-import type { ParsedDeck, ParsedSlide, PptxElement } from "./types";
+import type { ParsedDeck, ParsedSlide } from "./types";
 import {
   attrOf,
   descendants,
@@ -82,7 +82,13 @@ export function parsePptx(fileBytes: ArrayBuffer): ParsedDeck {
     const doc = parseXml(files[path]);
     const spTree = doc && firstDescendant(wrap(doc), "p:spTree");
     if (!doc || !spTree) {
-      return { index: i + 1, hasMap: false, elements: [], mediaPaths: [] };
+      return {
+        index: i + 1,
+        hasMap: false,
+        background: null,
+        elements: [],
+        mediaPaths: [],
+      };
     }
 
     const rmap = relMap(parseXml(files[relsPathFor(path)]));
@@ -97,28 +103,13 @@ export function parsePptx(fileBytes: ArrayBuffer): ParsedDeck {
     });
     unsupported += parsed.unsupported;
 
-    // The map is the slide background — import it as the bottom layer so every
-    // overlay lines up automatically.
+    // The map is the slide background — it becomes the page's fixed board
+    // background (not a draggable element), so the overlays line up on it.
     const bgId = attrOf(
       firstDescendant(firstDescendant(wrap(doc), "p:bg"), "a:blip"),
       "r:embed",
     );
     const bgPath = bgId ? mediaFor(bgId) : null;
-    const elements: PptxElement[] = bgPath
-      ? [
-          {
-            kind: "image",
-            mediaPath: bgPath,
-            name: null,
-            x: 0,
-            y: 0,
-            width: BOARD_W,
-            height: BOARD_H,
-            rotation: 0,
-          },
-          ...parsed.elements,
-        ]
-      : parsed.elements;
 
     if (bgPath) parsed.mediaPaths.add(bgPath);
     parsed.mediaPaths.forEach((m) => usedMedia.add(m));
@@ -126,7 +117,8 @@ export function parsePptx(fileBytes: ArrayBuffer): ParsedDeck {
     return {
       index: i + 1,
       hasMap: Boolean(bgPath),
-      elements,
+      background: bgPath,
+      elements: parsed.elements,
       mediaPaths: [...parsed.mediaPaths],
     };
   });

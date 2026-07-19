@@ -1,4 +1,12 @@
-import { newId, type BoardElement, type BoardPage } from "@/lib/strategy";
+import { listOperatorIcons } from "@/lib/operator-icons";
+import {
+  emptyLineup,
+  LINEUP_SIZE,
+  newId,
+  type BoardElement,
+  type BoardPage,
+  type LineupSlot,
+} from "@/lib/strategy";
 
 import type { ParsedSlide, PptxElement } from "./types";
 
@@ -30,8 +38,10 @@ export function elementToBoard(
         width: element.width,
         height: element.height,
         rotation: element.rotation,
-        color: ICON_COLOR,
-        borderEnabled: false,
+        color: element.stroke?.color ?? ICON_COLOR,
+        borderEnabled: !!element.stroke,
+        borderColor: element.stroke?.color,
+        strokeWidth: element.stroke?.width,
       };
     case "text":
       return {
@@ -54,7 +64,9 @@ export function elementToBoard(
         rotation: element.rotation,
         color: element.color ?? SHAPE_FALLBACK,
         filled: true,
-        borderEnabled: false,
+        borderEnabled: !!element.stroke,
+        borderColor: element.stroke?.color,
+        strokeWidth: element.stroke?.width,
       };
     case "ellipse":
       // The board anchors an ellipse at its centre; the parser gives top-left.
@@ -68,7 +80,9 @@ export function elementToBoard(
         rotation: element.rotation,
         color: element.color ?? SHAPE_FALLBACK,
         filled: true,
-        borderEnabled: false,
+        borderEnabled: !!element.stroke,
+        borderColor: element.stroke?.color,
+        strokeWidth: element.stroke?.width,
       };
     case "line":
     case "arrow":
@@ -93,6 +107,40 @@ export function slidesToPages(
   return slides.map((slide) => ({
     id: newId(),
     floor,
+    background: slide.background ? srcFor(slide.background) : undefined,
     elements: slide.elements.map((element) => elementToBoard(element, srcFor)),
   }));
+}
+
+/**
+ * Best-effort lineup: the most-used operators of the strat's side, matched from
+ * image titles (e.g. `goyo.png`) to the bundled operator icons, into the five
+ * slots. Wrong guesses are easy to fix on the board.
+ */
+export function lineupFromSlides(
+  slides: ParsedSlide[],
+  side: "attack" | "defense",
+): LineupSlot[] {
+  const byId = new Map(listOperatorIcons().map((op) => [op.id, op]));
+  const wantSide = side === "defense" ? "Defender" : "Attacker";
+  const counts = new Map<string, number>();
+  for (const slide of slides) {
+    for (const element of slide.elements) {
+      if (element.kind !== "image" || !element.name) continue;
+      const id = element.name.replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+      const op = byId.get(id);
+      if (op && op.side === wantSide) {
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      }
+    }
+  }
+  const lineup = emptyLineup();
+  [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, LINEUP_SIZE)
+    .forEach(([id], index) => {
+      const op = byId.get(id);
+      if (op) lineup[index] = { operator: { src: op.src, name: op.name } };
+    });
+  return lineup;
 }

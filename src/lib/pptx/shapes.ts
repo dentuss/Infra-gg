@@ -64,6 +64,20 @@ function fillColor(node: PONode, ctx: ParseCtx): string | null {
   return colorFrom(firstDescendant(spPr, "a:solidFill"), ctx.resolve);
 }
 
+/** The shape/picture outline (`<a:ln>`), scaled to board px, or null. */
+function strokeOf(
+  node: PONode,
+  ctx: ParseCtx,
+): { color: string; width: number } | null {
+  const ln = firstDescendant(firstDescendant(node, "p:spPr"), "a:ln");
+  const color = colorFrom(ln, ctx.resolve);
+  if (!color) return null;
+  return {
+    color,
+    width: Math.max(1, Math.round((numAttr(ln, "w") || 9525) * ctx.sx)),
+  };
+}
+
 function pushShape(
   node: PONode,
   gt: GroupXf,
@@ -75,6 +89,7 @@ function pushShape(
   const prst = attrOf(firstDescendant(node, "a:prstGeom"), "prst");
   const shapeKind = prst === "ellipse" ? "ellipse" : "rect";
   const fill = fillColor(node, ctx);
+  const stroke = strokeOf(node, ctx);
 
   if (text) {
     if (fill) {
@@ -84,6 +99,7 @@ function pushShape(
         rotation: g.rot,
         color: fill,
         filled: true,
+        stroke,
       });
     }
     const rPr = firstDescendant(node, "a:rPr");
@@ -103,6 +119,7 @@ function pushShape(
       rotation: g.rot,
       color: fill,
       filled: true,
+      stroke,
     });
   }
 }
@@ -129,6 +146,7 @@ function pushPic(
     name: attrOf(firstDescendant(node, "p:cNvPr"), "title"),
     ...box(g),
     rotation: g.rot,
+    stroke: strokeOf(node, ctx),
   });
 }
 
