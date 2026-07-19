@@ -60,25 +60,41 @@ export function ImportDialog({
   const [strats, setStrats] = useState<Strat[]>([]);
   const [assign, setAssign] = useState<Record<number, string | null>>({});
 
-  // Parse the picked deck, then seed one strat (content slides on, titles off).
+  // Parse the deck, then pre-split it: content slides are grouped into sections
+  // separated by title slides (no map), one strat per section, named from the
+  // preceding title slide.
   const onFile = async (file: File) => {
     const parsed = await parseFile(file);
     if (!parsed) return;
-    const first: Strat = {
-      id: newId(),
-      name: baseName(file.name),
-      map: maps?.[0]?.slug ?? "",
-      side: "attack",
-    };
-    setStrats([first]);
-    setAssign(
-      Object.fromEntries(
-        parsed.slides.map((slide) => [
-          slide.index,
-          slide.hasMap ? first.id : null,
-        ]),
-      ),
-    );
+    const map = maps?.[0]?.slug ?? "";
+    const side: StrategySide = /def/i.test(file.name) ? "defense" : "attack";
+
+    const seeded: Strat[] = [];
+    const assignment: Record<number, string | null> = {};
+    let current: Strat | null = null;
+    let pendingName = baseName(file.name);
+    for (const slide of parsed.slides) {
+      if (slide.hasMap) {
+        if (!current) {
+          current = { id: newId(), name: pendingName, map, side };
+          seeded.push(current);
+        }
+        assignment[slide.index] = current.id;
+      } else {
+        assignment[slide.index] = null;
+        const title = slide.elements
+          .map((element) => (element.kind === "text" ? element.text : ""))
+          .join(" ")
+          .trim();
+        if (title) pendingName = title.slice(0, 60);
+        current = null;
+      }
+    }
+    if (seeded.length === 0) {
+      seeded.push({ id: newId(), name: baseName(file.name), map, side });
+    }
+    setStrats(seeded);
+    setAssign(assignment);
   };
 
   const handleOpenChange = (next: boolean) => {

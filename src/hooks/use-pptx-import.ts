@@ -7,6 +7,7 @@ import {
   useSaveStrategy,
   type StrategySide,
 } from "@/hooks/use-strategies";
+import { imageSize } from "@/lib/pptx/image-size";
 import { parsePptx } from "@/lib/pptx/parse";
 import { lineupFromSlides, slidesToPages } from "@/lib/pptx/scene";
 import type { ParsedDeck, ParsedSlide } from "@/lib/pptx/types";
@@ -99,6 +100,10 @@ export function usePptxImport() {
             plan.slides,
             plan.firstFloor,
             (path) => srcMap[path] ?? "",
+            (path) => {
+              const bytes = source.media[path];
+              return bytes ? imageSize(bytes) : null;
+            },
           );
           await saveStrategy.mutateAsync({
             id: created.id,

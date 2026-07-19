@@ -59,12 +59,27 @@ const NUDGE_STEP_LARGE = 10;
 // One undo entry per burst of arrow presses, not one per pixel.
 const NUDGE_COMMIT_DELAY_MS = 400;
 
+/** Fit an image inside the board preserving aspect ratio (letterboxed). */
+function containFit(width: number, height: number) {
+  const scale = Math.min(BOARD_WIDTH / width, BOARD_HEIGHT / height);
+  const w = width * scale;
+  const h = height * scale;
+  return {
+    x: (BOARD_WIDTH - w) / 2,
+    y: (BOARD_HEIGHT - h) / 2,
+    width: w,
+    height: h,
+  };
+}
+
 export default function BoardCanvas({
   canEdit,
   floorUrl,
+  containBackground,
 }: {
   canEdit: boolean;
   floorUrl: string | null;
+  containBackground: boolean;
 }) {
   const t = useTranslations("strategy");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +131,11 @@ export default function BoardCanvas({
 
   const page = pages[activePage];
   const background = useHtmlImage(floorUrl);
+  // Imported maps keep their real aspect (letterboxed); blueprints fill the board.
+  const bgRect =
+    containBackground && background?.naturalWidth && background.naturalHeight
+      ? containFit(background.naturalWidth, background.naturalHeight)
+      : { x: 0, y: 0, width: BOARD_WIDTH, height: BOARD_HEIGHT };
   const analysis = useBlueprintAnalysis(
     background,
     floorUrl,
@@ -675,10 +695,10 @@ export default function BoardCanvas({
                 {background ? (
                   <KonvaImage
                     image={background}
-                    x={0}
-                    y={0}
-                    width={BOARD_WIDTH}
-                    height={BOARD_HEIGHT}
+                    x={bgRect.x}
+                    y={bgRect.y}
+                    width={bgRect.width}
+                    height={bgRect.height}
                     listening={false}
                   />
                 ) : null}
