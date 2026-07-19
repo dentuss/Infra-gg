@@ -13,7 +13,10 @@ import type { ParsedSlide, PptxElement } from "./types";
 // Imported icons/text carry no board colour of their own; these are only used
 // where the board model requires a colour (e.g. an icon's optional border).
 const ICON_COLOR = "#fafafa";
-const TEXT_COLOR = "#fafafa";
+// A run with no explicit colour inherits the deck theme's text colour, which on
+// these light slides is black — the board's own white default would render the
+// text invisible against an imported map.
+const TEXT_COLOR = "#000000";
 const SHAPE_FALLBACK = "#ef4444";
 const LINE_FALLBACK = "#111111";
 

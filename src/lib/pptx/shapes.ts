@@ -90,32 +90,42 @@ function pushShape(
   const shapeKind = prst === "ellipse" ? "ellipse" : "rect";
   const fill = fillColor(node, ctx);
   const stroke = strokeOf(node, ctx);
+  // Ellipses keep the top-left here (the scene builder re-anchors them to their
+  // rotation-invariant centre); rect/text rotate around the corner.
+  const pos = shapeKind === "ellipse" ? { x: g.x, y: g.y } : rotatedTopLeft(g);
 
   if (text) {
     if (fill) {
       out.push({
         kind: shapeKind,
-        ...box(g),
+        x: pos.x,
+        y: pos.y,
+        width: g.w,
+        height: g.h,
         rotation: g.rot,
         color: fill,
         filled: true,
         stroke,
       });
     }
+    const corner = rotatedTopLeft(g);
     const rPr = firstDescendant(node, "a:rPr");
     const size = numAttr(rPr, "sz") || 1200; // hundredths of a point
     out.push({
       kind: "text",
       text,
-      x: g.x,
-      y: g.y,
+      x: corner.x,
+      y: corner.y,
       fontSize: Math.max(8, Math.round((size / 100) * ctx.ptToPx)),
       color: colorFrom(rPr, ctx.resolve),
     });
   } else if (prst && fill) {
     out.push({
       kind: shapeKind,
-      ...box(g),
+      x: pos.x,
+      y: pos.y,
+      width: g.w,
+      height: g.h,
       rotation: g.rot,
       color: fill,
       filled: true,
@@ -124,8 +134,22 @@ function pushShape(
   }
 }
 
-function box(g: Geom) {
-  return { x: g.x, y: g.y, width: g.w, height: g.h };
+/**
+ * PowerPoint rotates a shape around its centre; Konva rotates a top-left-
+ * anchored node (rect, image, text) around its corner. Return the corner
+ * position that makes a corner rotation land where the centred one does.
+ */
+function rotatedTopLeft(g: Geom): { x: number; y: number } {
+  if (!g.rot) return { x: g.x, y: g.y };
+  const cx = g.x + g.w / 2;
+  const cy = g.y + g.h / 2;
+  const rad = (g.rot * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    x: cx - (g.w / 2) * cos + (g.h / 2) * sin,
+    y: cy - (g.w / 2) * sin - (g.h / 2) * cos,
+  };
 }
 
 function pushPic(
@@ -140,11 +164,15 @@ function pushPic(
   if (!path) return;
   media.add(path);
   const g = geom(node, gt, ctx);
+  const tl = rotatedTopLeft(g);
   out.push({
     kind: "image",
     mediaPath: path,
     name: attrOf(firstDescendant(node, "p:cNvPr"), "title"),
-    ...box(g),
+    x: tl.x,
+    y: tl.y,
+    width: g.w,
+    height: g.h,
     rotation: g.rot,
     stroke: strokeOf(node, ctx),
   });
