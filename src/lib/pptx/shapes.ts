@@ -44,17 +44,22 @@ function composeGroup(parent: GroupXf, group: PONode): GroupXf {
 
 type Geom = { x: number; y: number; w: number; h: number; rot: number };
 
+/**
+ * PowerPoint's `a:off`/`a:ext` box, converted to board units. x/y is the box
+ * CENTRE — the board anchors and rotates box elements there too, so a shape's
+ * geometry copies straight across with no re-anchoring.
+ */
 function geom(node: PONode, gt: GroupXf, ctx: ParseCtx): Geom {
   const xf = firstDescendant(node, "a:xfrm");
   const off = firstDescendant(xf, "a:off");
   const ext = firstDescendant(xf, "a:ext");
-  const slideX = gt.ax + gt.bx * numAttr(off, "x");
-  const slideY = gt.ay + gt.by * numAttr(off, "y");
+  const w = gt.bx * numAttr(ext, "cx") * ctx.sx;
+  const h = gt.by * numAttr(ext, "cy") * ctx.sy;
   return {
-    x: slideX * ctx.sx,
-    y: slideY * ctx.sy,
-    w: gt.bx * numAttr(ext, "cx") * ctx.sx,
-    h: gt.by * numAttr(ext, "cy") * ctx.sy,
+    x: (gt.ax + gt.bx * numAttr(off, "x")) * ctx.sx + w / 2,
+    y: (gt.ay + gt.by * numAttr(off, "y")) * ctx.sy + h / 2,
+    w,
+    h,
     rot: numAttr(xf, "rot") / 60000,
   };
 }
@@ -90,66 +95,34 @@ function pushShape(
   const shapeKind = prst === "ellipse" ? "ellipse" : "rect";
   const fill = fillColor(node, ctx);
   const stroke = strokeOf(node, ctx);
-  // Ellipses keep the top-left here (the scene builder re-anchors them to their
-  // rotation-invariant centre); rect/text rotate around the corner.
-  const pos = shapeKind === "ellipse" ? { x: g.x, y: g.y } : rotatedTopLeft(g);
+  const box = {
+    kind: shapeKind,
+    x: g.x,
+    y: g.y,
+    width: g.w,
+    height: g.h,
+    rotation: g.rot,
+    color: fill ?? "",
+    filled: true,
+    stroke,
+  } as const;
 
   if (text) {
-    if (fill) {
-      out.push({
-        kind: shapeKind,
-        x: pos.x,
-        y: pos.y,
-        width: g.w,
-        height: g.h,
-        rotation: g.rot,
-        color: fill,
-        filled: true,
-        stroke,
-      });
-    }
-    const corner = rotatedTopLeft(g);
+    if (fill) out.push({ ...box, color: fill });
     const rPr = firstDescendant(node, "a:rPr");
     const size = numAttr(rPr, "sz") || 1200; // hundredths of a point
+    // The board anchors text at its corner (Konva sizes it from the glyphs).
     out.push({
       kind: "text",
       text,
-      x: corner.x,
-      y: corner.y,
+      x: g.x - g.w / 2,
+      y: g.y - g.h / 2,
       fontSize: Math.max(8, Math.round((size / 100) * ctx.ptToPx)),
       color: colorFrom(rPr, ctx.resolve),
     });
   } else if (prst && fill) {
-    out.push({
-      kind: shapeKind,
-      x: pos.x,
-      y: pos.y,
-      width: g.w,
-      height: g.h,
-      rotation: g.rot,
-      color: fill,
-      filled: true,
-      stroke,
-    });
+    out.push({ ...box, color: fill });
   }
-}
-
-/**
- * PowerPoint rotates a shape around its centre; Konva rotates a top-left-
- * anchored node (rect, image, text) around its corner. Return the corner
- * position that makes a corner rotation land where the centred one does.
- */
-function rotatedTopLeft(g: Geom): { x: number; y: number } {
-  if (!g.rot) return { x: g.x, y: g.y };
-  const cx = g.x + g.w / 2;
-  const cy = g.y + g.h / 2;
-  const rad = (g.rot * Math.PI) / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
-  return {
-    x: cx - (g.w / 2) * cos + (g.h / 2) * sin,
-    y: cy - (g.w / 2) * sin - (g.h / 2) * cos,
-  };
 }
 
 function pushPic(
@@ -164,13 +137,12 @@ function pushPic(
   if (!path) return;
   media.add(path);
   const g = geom(node, gt, ctx);
-  const tl = rotatedTopLeft(g);
   out.push({
     kind: "image",
     mediaPath: path,
     name: attrOf(firstDescendant(node, "p:cNvPr"), "title"),
-    x: tl.x,
-    y: tl.y,
+    x: g.x,
+    y: g.y,
     width: g.w,
     height: g.h,
     rotation: g.rot,
@@ -204,8 +176,9 @@ function pushConnector(
       : [0, 0, dx, dy];
   out.push({
     kind: hasArrow ? "arrow" : "line",
-    x: g.x,
-    y: g.y,
+    // Points hang off the box corner, not its centre.
+    x: g.x - g.w / 2,
+    y: g.y - g.h / 2,
     points,
     color: colorFrom(line, ctx.resolve),
     strokeWidth: 3,

@@ -72,12 +72,11 @@ export function elementToBoard(
         strokeWidth: element.stroke?.width,
       };
     case "ellipse":
-      // The board anchors an ellipse at its centre; the parser gives top-left.
       return {
         ...base,
         type: "ellipse",
-        x: element.x + element.width / 2,
-        y: element.y + element.height / 2,
+        x: element.x,
+        y: element.y,
         width: element.width,
         height: element.height,
         rotation: element.rotation,

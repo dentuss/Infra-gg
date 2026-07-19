@@ -11,10 +11,17 @@ export type BoardTool =
 
 export type BoardElement = {
   id: string;
-  /** "hole" is a rotation/hatch circle; x/y is its center like ellipse. */
+  /** "hole" is a rotation/hatch circle. */
   type: "icon" | "text" | "line" | "arrow" | "hole" | BoardShapeType;
+  /**
+   * The CENTRE of the element's bounding box, mirroring PowerPoint's shape
+   * model, so rotation pivots about the centre for every box element alike.
+   * Exceptions: text anchors at its corner (Konva sizes it from the glyphs, so
+   * it has no box), and line/arrow x/y is the origin their points hang off.
+   */
   x: number;
   y: number;
+  /** Degrees clockwise about the centre. */
   rotation: number;
   scaleX: number;
   scaleY: number;
@@ -24,7 +31,7 @@ export type BoardElement = {
   /** text */
   text?: string;
   fontSize?: number;
-  /** shapes: bounding box (ellipse x/y is the center) */
+  /** shapes / icons: bounding box size, centred on x/y */
   width?: number;
   height?: number;
   /** line / arrow, relative to x/y */
@@ -43,6 +50,23 @@ export type BoardElement = {
 };
 
 export const DEFAULT_STROKE_WIDTH = 3;
+
+/**
+ * Box elements store their centre, but Konva anchors Rect, Image and polygon
+ * Line nodes at their corner — those need a half-size render offset. Ellipse
+ * (and the hole group built around one) is already centre-anchored.
+ */
+const CORNER_ANCHORED_NODES = new Set<BoardElement["type"]>([
+  "icon",
+  "rect",
+  "triangle",
+  "diamond",
+  "star",
+]);
+
+export function isCornerAnchoredNode(type: BoardElement["type"]): boolean {
+  return CORNER_ANCHORED_NODES.has(type);
+}
 
 /** Closed polygon points within a w×h bounding box, per shape. */
 export function trianglePoints(width: number, height: number): number[] {
@@ -106,7 +130,28 @@ export type BoardScene = {
   lineup: LineupSlot[];
   /** Blueprint render style chosen for the strategy (e.g. "black", "bw"). */
   style?: string;
+  /** Format of the stored scene; absent means v1. See SCENE_VERSION. */
+  version?: number;
 };
+
+/** v2 moved box elements from corner anchoring to centre anchoring. */
+export const SCENE_VERSION = 2;
+
+/** Re-anchor a v1 page: corner-anchored boxes carried their top-left in x/y. */
+export function upgradePageToCentreAnchoring(page: BoardPage): BoardPage {
+  return {
+    ...page,
+    elements: page.elements.map((element) =>
+      isCornerAnchoredNode(element.type)
+        ? {
+            ...element,
+            x: element.x + (element.width ?? 0) / 2,
+            y: element.y + (element.height ?? 0) / 2,
+          }
+        : element,
+    ),
+  };
+}
 
 export const BOARD_COLORS = [
   "#fafafa",
@@ -153,9 +198,15 @@ export function parseScene(data: Json): BoardScene {
       pages: BoardPage[];
       lineup?: LineupSlot[];
       style?: string;
+      version?: number;
     };
+    const version = typeof raw.version === "number" ? raw.version : 1;
     return {
-      pages: raw.pages,
+      version: SCENE_VERSION,
+      pages:
+        version >= SCENE_VERSION
+          ? raw.pages
+          : raw.pages.map(upgradePageToCentreAnchoring),
       // Scenes saved before the lineup existed get five empty slots.
       lineup: emptyLineup().map((slot, index) => raw.lineup?.[index] ?? slot),
       style: typeof raw.style === "string" ? raw.style : undefined,

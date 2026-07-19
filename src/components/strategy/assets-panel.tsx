@@ -50,12 +50,7 @@ function AssetButton({ asset }: { asset: AssetItem }) {
       onClick={() =>
         useBoardStore
           .getState()
-          .insertIcon(
-            asset.src,
-            asset.name,
-            BOARD_WIDTH / 2 - 32,
-            BOARD_HEIGHT / 2 - 32,
-          )
+          .insertIcon(asset.src, asset.name, BOARD_WIDTH / 2, BOARD_HEIGHT / 2)
       }
       className="flex aspect-square items-center justify-center border border-border bg-muted/30 p-1 hover:bg-accent"
     >

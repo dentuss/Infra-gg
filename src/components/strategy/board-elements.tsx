@@ -17,6 +17,7 @@ import { resolveIconSrc } from "@/lib/operator-icons";
 import {
   DEFAULT_STROKE_WIDTH,
   diamondPoints,
+  isCornerAnchoredNode,
   starPoints,
   trianglePoints,
   type BoardElement,
@@ -121,10 +122,15 @@ export function ElementNode({
   onChange,
   onTextEdit,
 }: ElementNodeProps) {
+  // x/y is the element's centre; Konva anchors these node types at their
+  // corner, so shift the origin to make the centre the pivot.
+  const centred = isCornerAnchoredNode(element.type);
   const common = {
     id: element.id,
     x: element.x,
     y: element.y,
+    offsetX: centred ? (element.width ?? 0) / 2 : 0,
+    offsetY: centred ? (element.height ?? 0) / 2 : 0,
     rotation: element.rotation,
     scaleX: element.scaleX,
     scaleY: element.scaleY,
