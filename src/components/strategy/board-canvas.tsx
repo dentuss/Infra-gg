@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   Image as KonvaImage,
   Layer,
-  Line,
   Rect,
+  Shape,
   Stage,
   Transformer,
 } from "react-konva";
@@ -178,8 +178,8 @@ export default function BoardCanvas({
     };
   }, []);
 
-  // Repaint when guides appear or clear: react-konva can otherwise leave the
-  // previous dashes on the canvas after the Line nodes unmount mid-gesture.
+  // Repaint when guides appear or clear so the guide shape redraws with the
+  // current state (it draws nothing once guides are null).
   useEffect(() => {
     stage?.batchDraw();
   }, [guides, stage]);
@@ -729,26 +729,33 @@ export default function BoardCanvas({
                   />
                 ))}
                 <LineupStrip canEdit={canEdit} />
-                {guides?.v.map((x) => (
-                  <Line
-                    key={`v-${x}`}
-                    points={[x, 0, x, BOARD_HEIGHT]}
-                    stroke="#ef4444"
-                    strokeWidth={1 / Math.max(scale, 0.01)}
-                    dash={[6, 4]}
-                    listening={false}
-                  />
-                ))}
-                {guides?.h.map((y) => (
-                  <Line
-                    key={`h-${y}`}
-                    points={[0, y, BOARD_WIDTH, y]}
-                    stroke="#ef4444"
-                    strokeWidth={1 / Math.max(scale, 0.01)}
-                    dash={[6, 4]}
-                    listening={false}
-                  />
-                ))}
+                {/*
+                  One always-mounted shape draws every snap guide from state,
+                  rather than a Line node per guide. Per-node guides added and
+                  removed rapidly mid-drag could be left orphaned in the layer
+                  (react-konva not destroying them), so they stranded and piled
+                  up; a single shape that simply draws nothing when guides are
+                  cleared cannot strand.
+                */}
+                <Shape
+                  listening={false}
+                  stroke="#ef4444"
+                  strokeWidth={1 / Math.max(scale, 0.01)}
+                  dash={[6, 4]}
+                  sceneFunc={(context, shape) => {
+                    if (!guides) return;
+                    context.beginPath();
+                    for (const x of guides.v) {
+                      context.moveTo(x, 0);
+                      context.lineTo(x, BOARD_HEIGHT);
+                    }
+                    for (const y of guides.h) {
+                      context.moveTo(0, y);
+                      context.lineTo(BOARD_WIDTH, y);
+                    }
+                    context.strokeShape(shape);
+                  }}
+                />
                 {band ? (
                   <Rect
                     x={band.x}
