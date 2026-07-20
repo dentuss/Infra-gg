@@ -45,8 +45,9 @@ export function operatorIconDataUrl(id: string): string | null {
   if (typeof svg !== "string") return null;
 
   // Firefox rasterizes dimensionless SVGs as blank on canvas — inject the
-  // viewBox size explicitly.
-  const sized = svg.replace("<svg", '<svg width="350" height="350"');
+  // size explicitly. Rasterize large so the icon stays crisp when zoomed in
+  // or shown big, since it's a raster once drawn to the canvas.
+  const sized = svg.replace("<svg", '<svg width="512" height="512"');
   const url = `data:image/svg+xml;utf8,${encodeURIComponent(sized)}`;
   dataUrlCache.set(id, url);
   return url;
