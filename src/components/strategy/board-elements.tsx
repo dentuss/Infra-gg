@@ -266,6 +266,12 @@ export function ElementNode({
           fontSize={element.fontSize ?? 28}
           fontStyle="bold"
           fill={element.color}
+          // Imported aligned text carries a box to centre within (e.g. the
+          // numbers in marker circles); plain text has neither and flows freely.
+          width={element.width}
+          height={element.height}
+          align={element.align}
+          verticalAlign={element.verticalAlign}
           onDblClick={onTextEdit}
           onDblTap={onTextEdit}
         />

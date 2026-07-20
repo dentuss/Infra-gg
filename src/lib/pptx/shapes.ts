@@ -111,7 +111,15 @@ function pushShape(
     if (fill) out.push({ ...box, color: fill });
     const rPr = firstDescendant(node, "a:rPr");
     const size = numAttr(rPr, "sz") || 1200; // hundredths of a point
-    // The board anchors text at its corner (Konva sizes it from the glyphs).
+    // PowerPoint aligns text within the shape box (e.g. the centred numbers in
+    // marker circles). The board anchors text at its corner, so carry the box
+    // size and alignment through and let the board centre within it.
+    const algn = attrOf(firstDescendant(node, "a:pPr"), "algn");
+    const anchor = attrOf(firstDescendant(node, "a:bodyPr"), "anchor");
+    const align = algn === "ctr" ? "center" : algn === "r" ? "right" : "left";
+    const verticalAlign =
+      anchor === "ctr" ? "middle" : anchor === "b" ? "bottom" : "top";
+    const boxed = align !== "left" || verticalAlign !== "top";
     out.push({
       kind: "text",
       text,
@@ -119,6 +127,9 @@ function pushShape(
       y: g.y - g.h / 2,
       fontSize: Math.max(8, Math.round((size / 100) * ctx.ptToPx)),
       color: colorFrom(rPr, ctx.resolve),
+      // Only carry a box when the text is actually aligned, so plain left/top
+      // labels keep their natural (un-wrapped) width.
+      ...(boxed ? { width: g.w, height: g.h, align, verticalAlign } : {}),
     });
   } else if (prst && fill) {
     out.push({ ...box, color: fill });
@@ -167,19 +178,31 @@ function pushConnector(
   });
   const dx = g.w;
   const dy = g.h;
-  const points: [number, number, number, number] = flipH
+  const local: [number, number, number, number] = flipH
     ? flipV
       ? [dx, dy, 0, 0]
       : [dx, 0, 0, dy]
     : flipV
       ? [0, dy, dx, 0]
       : [0, 0, dx, dy];
+  // The endpoints are box-local (top-left origin); rotate them about the box
+  // centre so a rotated connector (e.g. rot=180° to flip an arrow) points the
+  // right way. Points are then stored relative to the centre (x/y).
+  const rad = (g.rot * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const rotate = (px: number, py: number): [number, number] => {
+    const cx = px - g.w / 2;
+    const cy = py - g.h / 2;
+    return [cx * cos - cy * sin, cx * sin + cy * cos];
+  };
+  const [ax, ay] = rotate(local[0], local[1]);
+  const [bx, by] = rotate(local[2], local[3]);
   out.push({
     kind: hasArrow ? "arrow" : "line",
-    // Points hang off the box corner, not its centre.
-    x: g.x - g.w / 2,
-    y: g.y - g.h / 2,
-    points,
+    x: g.x,
+    y: g.y,
+    points: [ax, ay, bx, by],
     color: colorFrom(line, ctx.resolve),
     strokeWidth: 3,
   });

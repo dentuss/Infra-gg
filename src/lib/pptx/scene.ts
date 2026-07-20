@@ -55,6 +55,10 @@ export function elementToBoard(
         y: element.y,
         fontSize: element.fontSize,
         color: element.color ?? TEXT_COLOR,
+        width: element.width,
+        height: element.height,
+        align: element.align,
+        verticalAlign: element.verticalAlign,
       };
     case "rect":
       return {

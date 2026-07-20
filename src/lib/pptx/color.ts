@@ -49,8 +49,19 @@ export function buildColorResolver(
     clrMap[key.replace("@_", "")] = String(attrs[key]);
   }
 
+  // Google Slides exports invert the secondary map (bg2→dk2, tx2→lt2) and then
+  // reference the bare `dk2`/`lt2` slots directly — where dk2 is often a
+  // non-neutral colour. PowerPoint renders those bare references with the
+  // primary dark/light colour, so fold them onto dk1/lt1 for such decks.
+  const inverted = clrMap["bg2"] === "dk2";
+  const slotAlias: Record<string, string> = inverted
+    ? { dk2: "dk1", lt2: "lt1" }
+    : {};
+
   return (val) => {
-    const target = clrMap[val] ?? val; // tx1 → dk1, bg1 → lt1, …
+    // Mapped names (tx1, bg2…) resolve through the map; bare theme slots
+    // (dk2…) fall to the alias when the deck is an inverted Google export.
+    const target = clrMap[val] ?? slotAlias[val] ?? val;
     return scheme[target] ?? FALLBACK[target] ?? FALLBACK[val] ?? "#111827";
   };
 }
