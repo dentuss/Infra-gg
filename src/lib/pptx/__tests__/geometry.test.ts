@@ -85,11 +85,32 @@ describe("PowerPoint box → board element", () => {
       ),
       ctx,
     );
+    // off=(10,20) ext=(30,40): centre (25,40); points are centre-relative.
     expect(elements[0]).toMatchObject({
       kind: "line",
-      x: 10,
-      y: 20,
-      points: [0, 0, 30, 40],
+      x: 25,
+      y: 40,
+      points: [-15, -20, 15, 20],
     });
+  });
+
+  it("rotates connector endpoints so 180° flips the arrow's direction", () => {
+    // The arrowhead sits at the end point; its vertical side of the start is
+    // the connector's direction. 180° must flip it.
+    const endVsStart = (rot: number): number => {
+      const el = extractElements(
+        spTree(
+          `<p:cxnSp><p:spPr>${xfrm(0, 0, 0, 40, rot)}` +
+            `<a:prstGeom prst="straightConnector1"/>` +
+            `<a:ln><a:tailEnd type="triangle"/></a:ln></p:spPr></p:cxnSp>`,
+        ),
+        ctx,
+      ).elements[0];
+      if (el?.kind !== "arrow") throw new Error("expected an arrow");
+      return Math.sign(Math.round(el.points[3] - el.points[1]));
+    };
+
+    expect(endVsStart(0)).toBe(1); // ends below start → points down
+    expect(endVsStart(180)).toBe(-1); // ends above start → points up
   });
 });

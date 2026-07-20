@@ -21,6 +21,11 @@ export type PptxElement =
       y: number;
       fontSize: number;
       color: string | null;
+      /** Box + alignment, present only when the text is aligned within it. */
+      width?: number;
+      height?: number;
+      align?: "left" | "center" | "right";
+      verticalAlign?: "top" | "middle" | "bottom";
     }
   | {
       kind: "rect" | "ellipse";

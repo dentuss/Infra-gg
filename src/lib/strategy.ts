@@ -31,6 +31,9 @@ export type BoardElement = {
   /** text */
   text?: string;
   fontSize?: number;
+  /** text: align within an optional width/height box (imported aligned text) */
+  align?: "left" | "center" | "right";
+  verticalAlign?: "top" | "middle" | "bottom";
   /** shapes / icons: bounding box size, centred on x/y */
   width?: number;
   height?: number;
