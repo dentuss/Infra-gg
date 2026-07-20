@@ -155,6 +155,24 @@ export default function BoardCanvas({
     transformer.nodes(nodes);
   }, [selectedIds, stage, pages, activePage]);
 
+  // Snap guides are drawn during a drag and cleared on its drag-end. If that
+  // event is ever missed — an interrupting re-render, or a release outside the
+  // canvas — the guides would strand on the board, so always clear them when
+  // the pointer is released, whatever happened to the drag.
+  useEffect(() => {
+    const clearGuides = () => {
+      if (useBoardStore.getState().guides) {
+        useBoardStore.getState().setGuides(null);
+      }
+    };
+    window.addEventListener("pointerup", clearGuides);
+    window.addEventListener("pointercancel", clearGuides);
+    return () => {
+      window.removeEventListener("pointerup", clearGuides);
+      window.removeEventListener("pointercancel", clearGuides);
+    };
+  }, []);
+
   // Ctrl+wheel zoom needs a non-passive listener: React attaches wheel
   // handlers passively, so preventDefault there cannot stop the
   // browser's own page zoom.
@@ -704,9 +722,9 @@ export default function BoardCanvas({
                   <Line
                     key={`v-${x}`}
                     points={[x, 0, x, BOARD_HEIGHT]}
-                    stroke="#d946ef"
+                    stroke="#ef4444"
                     strokeWidth={1 / Math.max(scale, 0.01)}
-                    dash={[8, 6]}
+                    dash={[6, 4]}
                     listening={false}
                   />
                 ))}
@@ -714,9 +732,9 @@ export default function BoardCanvas({
                   <Line
                     key={`h-${y}`}
                     points={[0, y, BOARD_WIDTH, y]}
-                    stroke="#d946ef"
+                    stroke="#ef4444"
                     strokeWidth={1 / Math.max(scale, 0.01)}
-                    dash={[8, 6]}
+                    dash={[6, 4]}
                     listening={false}
                   />
                 ))}
@@ -740,6 +758,16 @@ export default function BoardCanvas({
                     flipEnabled={false}
                     rotationSnaps={shiftDown ? ROTATION_SNAPS : []}
                     rotationSnapTolerance={8}
+                    // PowerPoint-style handles: a solid blue frame with round
+                    // white anchors and a rotation handle lifted above.
+                    borderStroke="#3b82f6"
+                    borderStrokeWidth={1.5}
+                    anchorStroke="#3b82f6"
+                    anchorFill="#ffffff"
+                    anchorSize={11}
+                    anchorCornerRadius={5.5}
+                    anchorStrokeWidth={1.5}
+                    rotateAnchorOffset={26}
                   />
                 ) : null}
               </Layer>
