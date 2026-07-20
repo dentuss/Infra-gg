@@ -185,6 +185,22 @@ export function ElementNode({
       }
       onChange({ x: konvaEvent.target.x(), y: konvaEvent.target.y() }, true);
     },
+    onTransform: (konvaEvent: Konva.KonvaEventObject<Event>) => {
+      // Mirror the live transform into state (without a history entry) so a
+      // re-render mid-gesture can't snap the node back to its pre-drag scale —
+      // and so a missed transform-end can't strand it half-resized.
+      const node = konvaEvent.target;
+      onChange(
+        {
+          x: node.x(),
+          y: node.y(),
+          rotation: node.rotation(),
+          scaleX: node.scaleX(),
+          scaleY: node.scaleY(),
+        },
+        false,
+      );
+    },
     onTransformEnd: (konvaEvent: Konva.KonvaEventObject<Event>) => {
       const node = konvaEvent.target;
       const boxBased = [

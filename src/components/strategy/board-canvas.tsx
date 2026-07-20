@@ -153,7 +153,10 @@ export default function BoardCanvas({
       return node ? [node] : [];
     });
     transformer.nodes(nodes);
-  }, [selectedIds, stage, pages, activePage]);
+    // Intentionally not keyed on `pages`: element edits (including the live
+    // per-frame sync during a drag/resize) must not re-attach the transformer
+    // mid-gesture, which drops Konva's transform/drag-end event.
+  }, [selectedIds, stage, activePage]);
 
   // Snap guides are drawn during a drag and cleared on its drag-end. If that
   // event is ever missed — an interrupting re-render, or a release outside the
@@ -166,12 +169,20 @@ export default function BoardCanvas({
       }
     };
     window.addEventListener("pointerup", clearGuides);
+    window.addEventListener("mouseup", clearGuides);
     window.addEventListener("pointercancel", clearGuides);
     return () => {
       window.removeEventListener("pointerup", clearGuides);
+      window.removeEventListener("mouseup", clearGuides);
       window.removeEventListener("pointercancel", clearGuides);
     };
   }, []);
+
+  // Repaint when guides appear or clear: react-konva can otherwise leave the
+  // previous dashes on the canvas after the Line nodes unmount mid-gesture.
+  useEffect(() => {
+    stage?.batchDraw();
+  }, [guides, stage]);
 
   // Ctrl+wheel zoom needs a non-passive listener: React attaches wheel
   // handlers passively, so preventDefault there cannot stop the
