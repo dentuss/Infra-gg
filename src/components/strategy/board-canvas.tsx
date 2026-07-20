@@ -45,10 +45,11 @@ import {
 } from "@/lib/strategy";
 import { useBoardStore } from "@/store/board-store";
 
-// Supersample the canvas so edges stay crisp on standard-density
-// displays; browsers cap the cost at one board.
+// Render at the display's native density. (An earlier >=2x supersample
+// smoothed the old low-res JPG blueprints; the PNG blueprints are sharp on
+// their own, and forcing 2x only upscaled them past their source.)
 if (typeof window !== "undefined") {
-  Konva.pixelRatio = Math.max(2, window.devicePixelRatio || 1);
+  Konva.pixelRatio = window.devicePixelRatio || 1;
 }
 
 // Shift while rotating snaps to these angles, Google Slides style.
@@ -143,6 +144,20 @@ export default function BoardCanvas({
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  // Imported art (operator/gadget images) is high-res and drawn small, so ask
+  // for high-quality resampling. Konva doesn't set this; it persists across
+  // redraws but a canvas resize (zoom/layout) resets it, so re-apply on scale.
+  useEffect(() => {
+    if (!stage) return;
+    for (const layer of stage.getLayers()) {
+      const context = (
+        layer.getContext() as unknown as { _context: CanvasRenderingContext2D }
+      )._context;
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+    }
+  }, [stage, scale]);
 
   // Attach the transformer to all selected nodes.
   useEffect(() => {
