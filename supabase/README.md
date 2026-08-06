@@ -16,7 +16,10 @@ database by hand.
 - Every table must enable Row Level Security in the same migration that
   creates it.
 
-The first schema migration lands in Phase 1 (authentication).
+Storage buckets are created and policed by migrations too: `avatars` and
+`strategy` (blueprints, icons, thumbnails, and `imports/<strategy id>/` for
+uploaded `.pptx` media). The public `tools` bucket, which serves the Match
+Replay WebAssembly decoder, was created through the dashboard.
 
 ## Auth providers (OAuth)
 

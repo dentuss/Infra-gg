@@ -122,12 +122,6 @@ Realtime Collaboration
 
 ## Phase 8
 
-Statistics
-
----
-
-## Phase 9
-
 VOD Review
 
 Started early with a **Match Replay** report (r6tv-inspired): Siege `.rec` files
@@ -136,6 +130,24 @@ post-match report — rosters, per-round bomb site, timestamped kill feed, and
 per-player stats — at `/matches`. Replay files contain events but not player
 positions, so this is a report, not a spatial (top-down movement) replay. In
 development.
+
+---
+
+## Phase 9
+
+Statistics
+
+---
+
+## Phase 10
+
+Notifications
+
+---
+
+## Phase 11
+
+Polish
 
 ---
 
@@ -261,6 +273,8 @@ src/
 
     hooks/
 
+    i18n/
+
     lib/
 
     services/
@@ -269,9 +283,8 @@ src/
 
     types/
 
-    utils/
-
-    styles/
+Shared helpers live in lib/ (there is no separate utils/). Global styles
+are a single app/globals.css — Tailwind handles the rest.
 
 ---
 
@@ -490,6 +503,8 @@ Every Pull Request must automatically run:
 - npm install
 - TypeScript compilation
 - ESLint
+- Prettier check
+- Unit tests (Vitest)
 - Production build
 
 The PR should fail if any step fails.
