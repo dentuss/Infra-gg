@@ -1,0 +1,44 @@
+name: Labeler
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  label:
+    name: Label by area
+    runs-on: ubuntu-latest
+    steps:
+      # actions/labeler fails on a label that does not exist yet, so keep the
+      # repository's labels in sync with the manifest first. `--force` makes
+      # this idempotent: it creates what is missing and updates the rest.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          sparse-checkout-cone-mode: false
+
+      - name: Sync labels from manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 -c "
+          import yaml, json
+          for l in yaml.safe_load(open('.github/labels.yml')):
+              print(json.dumps([l['name'], l['color'], l.get('description', '')]))
+          " | while read -r line; do
+            name=$(echo "$line" | python3 -c "import sys,json; print(json.load(sys.stdin)[0])")
+            color=$(echo "$line" | python3 -c "import sys,json; print(json.load(sys.stdin)[1])")
+            desc=$(echo "$line" | python3 -c "import sys,json; print(json.load(sys.stdin)[2])")
+            gh label create "$name" --repo "$REPO" --color "$color" --description "$desc" --force
+          done
+
+      - uses: actions/labeler@v5
+        with:
+          configuration-path: .github/labeler.yml
+          sync-labels: true

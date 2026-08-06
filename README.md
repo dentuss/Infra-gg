@@ -5,7 +5,8 @@ One app instead of Discord scheduling, Google Slides strategy boards,
 Google Docs, shared folders, and manual VOD notes.
 
 See [PRODUCT.md](PRODUCT.md) for the product vision, [TASKS.md](TASKS.md)
-for the roadmap, and [CLAUDE.md](CLAUDE.md) for engineering rules.
+for the roadmap, [CONTRIBUTING.md](CONTRIBUTING.md) for the branch and
+release workflow, and [CLAUDE.md](CLAUDE.md) for engineering rules.
 
 ## Stack
 
@@ -84,16 +85,34 @@ Business logic belongs in services, hooks, and server actions — not in
 components. Unit tests sit next to what they cover in `__tests__/`
 directories and run under Vitest.
 
+## Environments
+
+| Environment | Branch   | URL                                       | Database      |
+| ----------- | -------- | ----------------------------------------- | ------------- |
+| Production  | `master` | `infra-gg.vercel.app`                     | `infragg`     |
+| Staging     | `dev`    | `infra-gg-git-dev-team-ventus.vercel.app` | `infragg-dev` |
+| Preview     | any PR   | per-PR Vercel URL                         | `infragg-dev` |
+
+Staging and PR previews run against a **separate Supabase project**, so
+testing can never write to real team data. Every non-production build
+shows an amber badge next to the team name in the sidebar.
+
+Work flows `feat/*` → `dev` → `master`; nothing else merges into
+`master`. Full rules in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## CI / CD
 
 Every push and pull request runs GitHub Actions
 ([ci.yml](.github/workflows/ci.yml)): install → typecheck → lint →
 format check → unit tests → build, with npm and Next.js build caching.
+A second workflow ([pr-guard.yml](.github/workflows/pr-guard.yml))
+validates the branch model and PR title — it stands in for branch
+protection, which needs a paid GitHub plan on private repositories.
 
-Deployment is handled by the **Vercel Git integration**: every push to
-`master` deploys to production at
-<https://infra-gg.vercel.app>. Since `master` only moves through
-CI-green pull requests, deploys are effectively gated on CI.
+Deployment is handled by the **Vercel Git integration**: pushes to
+`master` deploy production, pushes to `dev` update staging, and every
+pull request gets its own preview URL. Since both long-lived branches
+only move through CI-green pull requests, deploys are gated on CI.
 
 ## Internationalization
 

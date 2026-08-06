@@ -1,0 +1,52 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Updates are integration work, so they go to dev like any other change.
+    target-branch: dev
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    labels: [dependencies]
+    groups:
+      # One PR per ecosystem instead of a dozen — these move in lockstep and
+      # are painful to review or roll back individually.
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      supabase:
+        patterns: ["@supabase/*"]
+      tiptap:
+        patterns: ["@tiptap/*"]
+      fullcalendar:
+        patterns: ["@fullcalendar/*"]
+      konva:
+        patterns: ["konva", "react-konva"]
+      tooling:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+          - "@commitlint/*"
+          - "husky"
+          - "lint-staged"
+          - "vitest"
+          - "typescript"
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: dev
+    commit-message:
+      prefix: ci
+    labels: [dependencies, ci]

@@ -1,0 +1,23 @@
+# Every path falls to @dentuss today. The point of listing areas separately is
+# that adding a teammate later means changing one line, not discovering that
+# review routing was never set up.
+
+*                           @dentuss
+
+# Infrastructure and anything that can break a deploy
+/.github/                   @dentuss
+/supabase/migrations/       @dentuss
+/next.config.ts             @dentuss
+/vercel.json                @dentuss
+
+# Feature areas
+/src/components/strategy/   @dentuss
+/src/lib/pptx/              @dentuss
+/src/lib/dissect/           @dentuss
+/src/components/calendar/   @dentuss
+
+# Docs that define how we work
+/CLAUDE.md                  @dentuss
+/AGENTS.md                  @dentuss
+/CONTRIBUTING.md            @dentuss
+/TASKS.md                   @dentuss

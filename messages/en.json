@@ -59,6 +59,11 @@
     "light": "Switch to light theme",
     "dark": "Switch to dark theme"
   },
+  "environment": {
+    "preview": "Staging",
+    "development": "Local",
+    "warning": "You are not on production. Data here is test data and may be wiped."
+  },
   "ingameRoles": {
     "classic": "Classic",
     "expanded": "Expanded",

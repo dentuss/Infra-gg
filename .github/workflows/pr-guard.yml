@@ -1,0 +1,65 @@
+name: PR guard
+
+# Stands in for GitHub branch protection, which needs a paid plan on private
+# repositories. These checks cannot physically block a direct push to master,
+# but they do fail any pull request that breaks the branch model.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+
+jobs:
+  guard:
+    name: Branch model and PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch flow
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'override-flow') }}
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          types='feat|fix|chore|refactor|docs|test|perf|ci|build|style'
+
+          case "$BASE" in
+            master)
+              # Production only ever advances through dev, or an emergency hotfix.
+              if [ "$HEAD" = "dev" ] || echo "$HEAD" | grep -Eq "^hotfix/[a-z0-9._-]+$"; then
+                echo "OK: $HEAD -> master"
+              else
+                echo "::error::'$HEAD' cannot target master. Merge into dev first, or open a hotfix/<name> branch."
+                exit 1
+              fi
+              ;;
+            dev)
+              if echo "$HEAD" | grep -Eq "^($types)/[a-z0-9._-]+(/[a-z0-9._-]+)*$"; then
+                echo "OK: $HEAD -> dev"
+              else
+                echo "::error::Branch '$HEAD' must be named <type>/<slug>, where type is one of: $types"
+                echo "::error::Sub-branches are allowed, e.g. feat/board-layers/lock-toggle"
+                exit 1
+              fi
+              ;;
+            *)
+              # Sub-branch merging back into its parent feature branch.
+              if echo "$BASE" | grep -Eq "^($types)/"; then
+                echo "OK: $HEAD -> $BASE (sub-branch)"
+              else
+                echo "::error::Unexpected base branch '$BASE'."
+                exit 1
+              fi
+              ;;
+          esac
+
+      - name: Check PR title is a Conventional Commit
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|chore|refactor|docs|test|perf|ci|build|style|revert)(\([a-z0-9._/-]+\))?!?: .+'
+          if echo "$TITLE" | grep -Eq "$pattern"; then
+            echo "OK: $TITLE"
+          else
+            echo "::error::PR title must follow Conventional Commits, e.g. 'feat(board): add layer list'."
+            echo "::error::Got: $TITLE"
+            exit 1
+          fi

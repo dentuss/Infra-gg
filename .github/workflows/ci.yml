@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
   pull_request:
+    branches: [master, dev]
 
 jobs:
   ci:
@@ -45,9 +46,14 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Publishable values — safe to commit; Row Level Security guards the data.
+          # Publishable values — safe to commit; Row Level Security guards the
+          # data. CI only proves the build compiles; the deployed builds get
+          # their own per-environment values from Vercel.
           NEXT_PUBLIC_SUPABASE_URL: https://mlpvwaxedcjqvjxtzfss.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_JopNs71pTrFjZu_89h9_Qg_8bYzBcY4
+          NEXT_PUBLIC_APP_ENV: development
 
-# Deployment is handled by the Vercel Git integration: every push to
-# master deploys to production, and master only moves via CI-green PRs.
+# Deployment is handled by the Vercel Git integration:
+#   master → production  (infra-gg.vercel.app)
+#   dev    → staging     (infra-gg-git-dev-team-ventus.vercel.app)
+# Both branches only move through CI-green pull requests.

@@ -102,9 +102,11 @@ Documents (Phase 5) is the next untouched phase.
 
 ## Environment
 
-- [x] Create .env.example
+- [x] Create .env.example (documents the per-environment matrix)
 - [x] Configure .env.local
-- [x] Configure environment validation
+- [x] Configure environment validation (Zod, fails the build)
+- [x] Environment identity — `NEXT_PUBLIC_APP_ENV` plus a sidebar badge on
+      every non-production deployment
 
 ---
 
@@ -119,9 +121,14 @@ Documents (Phase 5) is the next untouched phase.
 ## GitHub
 
 - [x] Push repository
-- [ ] Protect master branch ⏸ (requires GitHub Pro for private repositories)
+- [ ] Protect master branch ⏸ (needs GitHub Pro on a private repository —
+      the PR guard workflow enforces the branch model instead)
 - [x] Configure Issue Templates
 - [x] Configure Pull Request Template
+- [x] Branch model: `feat/*` → `dev` → `master`, enforced by CI
+- [x] Conventional Commits enforced (commitlint hook + PR title check)
+- [x] CODEOWNERS and automatic PR labels by area
+- [x] Dependabot (grouped weekly npm + actions updates into `dev`)
 
 ---
 
@@ -140,6 +147,10 @@ Documents (Phase 5) is the next untouched phase.
 - [x] Configure Vercel deployment (Git integration)
 - [x] Deploy on merge to master
 - [x] Verify deployment status (production live at infra-gg.vercel.app)
+- [ ] Staging environment — `dev` branch deploys to
+      infra-gg-git-dev-team-ventus.vercel.app against a separate
+      `infragg-dev` Supabase project (code ready; needs the Supabase
+      project created and Vercel Preview env vars set)
 
 ---
 

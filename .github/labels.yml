@@ -1,0 +1,46 @@
+# Label manifest, synced to the repository by .github/workflows/labeler.yml.
+# Area labels are applied automatically from .github/labeler.yml; the rest are
+# applied by hand or by Dependabot.
+
+# Areas — mirror the globs in labeler.yml
+- name: strategy-board
+  color: "5865F2"
+  description: Konva board, tools, blueprints, markers
+- name: pptx-import
+  color: "7289DA"
+  description: PowerPoint / Google Slides deck importer
+- name: match-replay
+  color: "9B59B6"
+  description: .rec decoding and the match report
+- name: calendar
+  color: "3498DB"
+  description: Schedule, events, chill days
+- name: auth
+  color: "E67E22"
+  description: Sign-in, invites, session handling
+- name: database
+  color: "1ABC9C"
+  description: Migrations, RLS, generated types
+- name: i18n
+  color: "16A085"
+  description: Translations and locale handling
+- name: infrastructure
+  color: "34495E"
+  description: CI, hooks, tooling, config
+- name: documentation
+  color: "95A5A6"
+  description: Markdown and docs only
+- name: tests
+  color: "27AE60"
+  description: Test files and test config
+
+# Workflow
+- name: dependencies
+  color: "0366D6"
+  description: Dependency updates
+- name: ci
+  color: "34495E"
+  description: Continuous integration changes
+- name: override-flow
+  color: "D73A4A"
+  description: Bypass the PR guard branch-model check

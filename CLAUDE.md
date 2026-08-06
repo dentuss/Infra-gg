@@ -456,6 +456,14 @@ for development.
 
 Never commit secrets.
 
+Every variable is validated by Zod in src/lib/env.ts and the build
+fails if one is missing or malformed — add new variables there and to
+.env.example, which documents the per-environment matrix.
+
+NEXT_PUBLIC_APP_ENV identifies the deployment (production / preview /
+development). Use `isProduction` from src/lib/env.ts to guard anything
+that must not run against real team data.
+
 ---
 
 # Git
@@ -482,17 +490,27 @@ chore:
 
 # GitHub
 
-Use feature branches.
+Branch flow — see CONTRIBUTING.md for the full rules:
 
-Never commit directly to master.
+    feat/* fix/* chore/* ─PR─► dev (staging) ─PR─► master (production)
+
+Never commit directly to master or dev. Branch off dev, open a pull
+request into dev, and promote to master as a separate release PR. Only
+`hotfix/*` may target master directly.
+
+Branch names are `<type>/<slug>`, where type is one of feat, fix,
+chore, refactor, docs, test, perf, ci, build, style.
 
 Example
 
-feature/calendar
+feat/calendar-recurrence
 
-feature/strategy-board
+fix/board-snap-guides
 
-feature/auth
+chore/dependency-bump
+
+A large feature may nest one level — `feat/board-layers/lock-toggle`
+merges into `feat/board-layers`, which merges into dev.
 
 ---
 
@@ -511,11 +529,24 @@ The PR should fail if any step fails.
 
 ---
 
+Pull request titles must also follow Conventional Commits — a squash
+merge takes its message from the title, not the commits.
+
+---
+
 # CD Pipeline
 
-Deploy automatically to Vercel after merging into master.
+Vercel deploys from Git:
+
+- master → production, infra-gg.vercel.app, `infragg` database
+- dev → staging, infra-gg-git-dev-team-ventus.vercel.app, `infragg-dev`
+- any PR → its own preview URL, `infragg-dev`
 
 Deployment should only happen if CI succeeds.
+
+Staging and previews use a SEPARATE Supabase project so test data can
+never reach real team data. Migrations are applied to `infragg-dev`
+first and to production only when dev is promoted to master.
 
 ---
 

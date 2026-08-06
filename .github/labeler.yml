@@ -1,0 +1,73 @@
+# Consumed by actions/labeler in .github/workflows/labeler.yml.
+# Labels describe *area touched*, so a PR can carry several.
+
+strategy-board:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/components/strategy/**
+          - src/store/board-store.ts
+          - src/lib/strategy.ts
+          - src/lib/board-*.ts
+          - src/lib/blueprint-*.ts
+          - src/lib/operator-icons.ts
+
+pptx-import:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/lib/pptx/**
+          - src/services/pptx-import.ts
+          - src/hooks/use-pptx-import.ts
+
+match-replay:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/lib/dissect/**
+          - src/components/matches/**
+          - src/hooks/use-match-decode.ts
+
+calendar:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/components/calendar/**
+
+auth:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/components/auth/**
+          - src/app/(auth)/**
+          - src/app/auth/**
+          - src/app/invite/**
+          - src/services/auth.ts
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - supabase/**
+          - src/types/database.ts
+
+i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - messages/**
+          - src/i18n/**
+
+infrastructure:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - .husky/**
+          - "*.config.*"
+          - Dockerfile.dev
+          - docker-compose.yml
+          - package.json
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/__tests__/**"
+          - vitest.config.ts
