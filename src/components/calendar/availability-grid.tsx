@@ -3,19 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
+import { STATUS_CLASS, type Marker } from "@/components/calendar/marker-picker";
 import {
   DAY_HOURS,
   hourLabel,
-  nextStatus,
   type AvailabilityStatus,
 } from "@/lib/availability";
 import { cn } from "@/lib/utils";
-
-export const STATUS_CLASS: Record<AvailabilityStatus, string> = {
-  available: "bg-emerald-500/80",
-  maybe: "bg-amber-400/80",
-  unavailable: "bg-rose-500/75",
-};
 
 const STATUS_HOVER: Record<AvailabilityStatus, string> = {
   available: "hover:bg-emerald-500",
@@ -39,13 +33,14 @@ export type CellAddress = { columnKey: string; hour: number };
 export type AvailabilityGridProps = {
   columns: readonly GridColumn[];
   editable: boolean;
+  /** The marker a click or drag paints. Ignored when not editable. */
+  marker?: Marker;
   statusAt: (columnKey: string, hour: number) => AvailabilityStatus | null;
   /** True when the value is inherited from the typical week rather than set. */
   isDefaulted?: (columnKey: string, hour: number) => boolean;
-  /** Every cell a gesture covered, and the status to write to all of them. */
-  onPaint?: (cells: CellAddress[], status: AvailabilityStatus | null) => void;
-  /** Clicking a column header sets that whole day at once. */
-  onCycleColumn?: (columnKey: string) => void;
+  onPaint?: (cells: CellAddress[], status: Marker) => void;
+  /** Clicking a column header paints the whole day with the current marker. */
+  onPaintColumn?: (columnKey: string) => void;
   /** Replaces the default cell — used by the team overlap view. */
   renderCell?: (columnKey: string, hour: number) => ReactNode;
 };
@@ -58,26 +53,24 @@ export type AvailabilityGridProps = {
 export function AvailabilityGrid({
   columns,
   editable,
+  marker = null,
   statusAt,
   isDefaulted,
   onPaint,
-  onCycleColumn,
+  onPaintColumn,
   renderCell,
 }: AvailabilityGridProps) {
   const t = useTranslations("availability");
-  const [drag, setDrag] = useState<{
-    status: AvailabilityStatus | null;
-    cells: CellAddress[];
-  } | null>(null);
+  const [dragCells, setDragCells] = useState<CellAddress[] | null>(null);
 
   // The gesture must finish even if the pointer leaves the grid, otherwise a
   // release outside would strand the drag and keep painting. Bound only while
   // a drag is live, so the listener always sees the current cells.
   useEffect(() => {
-    if (!drag || !onPaint) return;
+    if (!dragCells || !onPaint) return;
     const finish = () => {
-      onPaint(drag.cells, drag.status);
-      setDrag(null);
+      onPaint(dragCells, marker);
+      setDragCells(null);
     };
     window.addEventListener("pointerup", finish);
     window.addEventListener("pointercancel", finish);
@@ -85,86 +78,81 @@ export function AvailabilityGrid({
       window.removeEventListener("pointerup", finish);
       window.removeEventListener("pointercancel", finish);
     };
-  }, [drag, onPaint]);
+  }, [dragCells, marker, onPaint]);
 
   const beginDrag = useCallback(
     (columnKey: string, hour: number) => {
       if (!editable) return;
-      setDrag({
-        status: nextStatus(statusAt(columnKey, hour)),
-        cells: [{ columnKey, hour }],
-      });
+      setDragCells([{ columnKey, hour }]);
     },
-    [editable, statusAt],
+    [editable],
   );
 
   // Every cell belongs to the same player, so a drag may wander in both
   // directions — down an evening or across several days.
   const extendDrag = useCallback((columnKey: string, hour: number) => {
-    setDrag((current) => {
+    setDragCells((current) => {
       if (!current) return current;
-      const seen = current.cells.some(
+      const seen = current.some(
         (cell) => cell.columnKey === columnKey && cell.hour === hour,
       );
-      if (seen) return current;
-      return { ...current, cells: [...current.cells, { columnKey, hour }] };
+      return seen ? current : [...current, { columnKey, hour }];
     });
   }, []);
 
-  const pendingStatus = (columnKey: string, hour: number) =>
-    drag?.cells.some(
+  const isPending = (columnKey: string, hour: number) =>
+    dragCells?.some(
       (cell) => cell.columnKey === columnKey && cell.hour === hour,
-    )
-      ? drag.status
-      : undefined;
+    ) ?? false;
+
+  const headerInner = (column: GridColumn) => (
+    <>
+      <span className="block text-sm font-semibold">{column.label}</span>
+      {column.sublabel ? (
+        <span className="block text-xs font-normal text-muted-foreground tabular-nums">
+          {column.sublabel}
+        </span>
+      ) : null}
+    </>
+  );
 
   return (
     <div className="overflow-x-auto">
       <table
-        className="w-full min-w-[38rem] border-separate border-spacing-0.5 text-sm select-none"
+        className="w-full min-w-[42rem] border-separate border-spacing-1 text-sm select-none"
         onDragStart={(event) => event.preventDefault()}
       >
         <thead>
           <tr>
-            <th scope="col" className="w-14">
+            <th scope="col" className="w-16">
               <span className="sr-only">{t("time")}</span>
             </th>
             {columns.map((column) => (
               <th key={column.key} scope="col" className="pb-1">
-                {onCycleColumn && editable ? (
+                {onPaintColumn && editable ? (
                   <button
                     type="button"
-                    onClick={() => onCycleColumn(column.key)}
+                    onClick={() => onPaintColumn(column.key)}
                     title={t("wholeDayHint")}
                     className={cn(
-                      "w-full rounded-md px-1 py-1 leading-tight transition-colors hover:bg-muted",
-                      column.highlight && "bg-primary/10",
+                      "w-full rounded-md border px-1 py-2 leading-tight transition-colors hover:bg-muted",
+                      column.highlight
+                        ? "border-primary/60 bg-primary/10"
+                        : "border-border/60 bg-muted/40",
                     )}
                   >
-                    <span className="block text-xs font-semibold">
-                      {column.label}
-                    </span>
-                    {column.sublabel ? (
-                      <span className="block text-[0.65rem] font-normal text-muted-foreground tabular-nums">
-                        {column.sublabel}
-                      </span>
-                    ) : null}
+                    {headerInner(column)}
                   </button>
                 ) : (
                   <div
                     className={cn(
-                      "rounded-md px-1 py-1 leading-tight",
-                      column.highlight && "bg-primary/10",
+                      "rounded-md border px-1 py-2 leading-tight",
+                      column.highlight
+                        ? "border-primary/60 bg-primary/10"
+                        : "border-border/60 bg-muted/40",
                     )}
                   >
-                    <span className="block text-xs font-semibold">
-                      {column.label}
-                    </span>
-                    {column.sublabel ? (
-                      <span className="block text-[0.65rem] font-normal text-muted-foreground tabular-nums">
-                        {column.sublabel}
-                      </span>
-                    ) : null}
+                    {headerInner(column)}
                   </div>
                 )}
               </th>
@@ -176,7 +164,7 @@ export function AvailabilityGrid({
             <tr key={hour}>
               <th
                 scope="row"
-                className="pr-2 text-right align-middle text-[0.7rem] font-normal text-muted-foreground tabular-nums"
+                className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-1 text-right align-middle text-xs font-medium text-foreground/80 tabular-nums"
               >
                 {hourLabel(hour)}
               </th>
@@ -188,11 +176,10 @@ export function AvailabilityGrid({
                     </td>
                   );
                 }
-                const pending = pendingStatus(column.key, hour);
-                const status =
-                  pending !== undefined ? pending : statusAt(column.key, hour);
+                const pending = isPending(column.key, hour);
+                const status = pending ? marker : statusAt(column.key, hour);
                 const defaulted =
-                  pending === undefined && isDefaulted?.(column.key, hour);
+                  !pending && isDefaulted?.(column.key, hour) === true;
                 return (
                   <td key={column.key} className="p-0">
                     <button
@@ -202,12 +189,12 @@ export function AvailabilityGrid({
                         status ? t(`status.${status}`) : t("status.unset")
                       }`}
                       className={cn(
-                        "h-6 w-full rounded-[3px] transition-colors",
+                        "h-8 w-full rounded-[4px] transition-colors",
                         status ? STATUS_CLASS[status] : UNSET_CLASS,
                         editable &&
-                          (status ? STATUS_HOVER[status] : "hover:bg-muted"),
+                          (marker ? STATUS_HOVER[marker] : "hover:bg-muted"),
                         // A dimmed cell was never set for this date; it is
-                        // showing through from the typical week, and any click
+                        // showing through from the typical week, and any paint
                         // replaces it.
                         defaulted && "opacity-55",
                         editable ? "cursor-pointer" : "cursor-default",

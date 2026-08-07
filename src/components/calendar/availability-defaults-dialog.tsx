@@ -1,13 +1,14 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   AvailabilityGrid,
   type CellAddress,
   type GridColumn,
 } from "@/components/calendar/availability-grid";
+import { MarkerPicker, type Marker } from "@/components/calendar/marker-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,8 +23,8 @@ import { formattingLocale } from "@/i18n/config";
 import {
   addDays,
   DAY_HOURS,
-  nextStatus,
   startOfWeek,
+  STATUS_ORDER,
   type AvailabilityDefaultRow,
   type AvailabilityStatus,
 } from "@/lib/availability";
@@ -41,7 +42,8 @@ export function AvailabilityDefaultsDialog({
 }) {
   const t = useTranslations("availability");
   const locale = useLocale();
-  const setDefaults = useSetAvailabilityDefaults();
+  const setDefaults = useSetAvailabilityDefaults(userId);
+  const [marker, setMarker] = useState<Marker>(STATUS_ORDER[0] ?? null);
 
   // Any known Monday works as an anchor for naming the seven weekdays.
   const columns: GridColumn[] = useMemo(() => {
@@ -73,7 +75,7 @@ export function AvailabilityDefaultsDialog({
 
   const mutateDefaults = setDefaults.mutate;
   const onPaint = useCallback(
-    (cells: CellAddress[], status: AvailabilityStatus | null) =>
+    (cells: CellAddress[], status: Marker) =>
       mutateDefaults(
         cells.map((cell) => ({
           weekday: Number(cell.columnKey),
@@ -84,20 +86,16 @@ export function AvailabilityDefaultsDialog({
     [mutateDefaults],
   );
 
-  const onCycleColumn = useCallback(
-    (columnKey: string) => {
-      const first = DAY_HOURS[0];
-      if (first === undefined) return;
-      const target = nextStatus(statusAt(columnKey, first));
+  const onPaintColumn = useCallback(
+    (columnKey: string) =>
       mutateDefaults(
         DAY_HOURS.map((hour) => ({
           weekday: Number(columnKey),
           hour,
-          status: target,
+          status: marker,
         })),
-      );
-    },
-    [statusAt, mutateDefaults],
+      ),
+    [mutateDefaults, marker],
   );
 
   return (
@@ -108,12 +106,15 @@ export function AvailabilityDefaultsDialog({
           <DialogDescription>{t("defaultsDescription")}</DialogDescription>
         </DialogHeader>
 
+        <MarkerPicker value={marker} onChange={setMarker} />
+
         <AvailabilityGrid
           columns={columns}
           editable
+          marker={marker}
           statusAt={statusAt}
           onPaint={onPaint}
-          onCycleColumn={onCycleColumn}
+          onPaintColumn={onPaintColumn}
         />
 
         <DialogFooter>

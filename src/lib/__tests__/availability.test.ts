@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyAvailabilityEdits,
+  applyDefaultEdits,
   buildAvailabilityLookup,
   dateToKey,
   DAY_HOURS,
   hourLabel,
   isFullHouse,
-  nextStatus,
   startOfWeek,
   summariseSlot,
   weekdayIndex,
@@ -107,12 +108,87 @@ describe("week maths", () => {
   });
 });
 
-describe("status cycle", () => {
-  it("steps green to yellow to red, then back to unset", () => {
-    expect(nextStatus(null)).toBe("available");
-    expect(nextStatus("available")).toBe("maybe");
-    expect(nextStatus("maybe")).toBe("unavailable");
-    expect(nextStatus("unavailable")).toBeNull();
+// These back the optimistic cache write. Without it a painted cell reverted
+// to the stale server value the moment the gesture ended and only filled in
+// when the refetch landed — the flash back to grey.
+describe("applying edits to a cached page", () => {
+  const NOW = "2026-08-07T12:00:00Z";
+
+  it("adds a row for a slot that had none", () => {
+    const next = applyAvailabilityEdits(
+      [],
+      "u1",
+      [{ day: FRIDAY, hour: 20, status: "available" }],
+      NOW,
+    );
+    expect(next).toEqual([
+      {
+        user_id: "u1",
+        day: FRIDAY,
+        hour: 20,
+        status: "available",
+        updated_at: NOW,
+      },
+    ]);
+  });
+
+  it("replaces rather than duplicates an existing slot", () => {
+    const next = applyAvailabilityEdits(
+      [row("u1", FRIDAY, 20, "available")],
+      "u1",
+      [{ day: FRIDAY, hour: 20, status: "unavailable" }],
+      NOW,
+    );
+    expect(next).toHaveLength(1);
+    expect(next[0]?.status).toBe("unavailable");
+  });
+
+  it("removes the row when the eraser clears a slot", () => {
+    const next = applyAvailabilityEdits(
+      [row("u1", FRIDAY, 20, "available"), row("u1", FRIDAY, 21, "maybe")],
+      "u1",
+      [{ day: FRIDAY, hour: 20, status: null }],
+      NOW,
+    );
+    expect(next).toHaveLength(1);
+    expect(next[0]?.hour).toBe(21);
+  });
+
+  it("leaves other players' rows alone", () => {
+    const next = applyAvailabilityEdits(
+      [row("u2", FRIDAY, 20, "available")],
+      "u1",
+      [{ day: FRIDAY, hour: 20, status: "unavailable" }],
+      NOW,
+    );
+    expect(next).toHaveLength(2);
+    expect(next.find((r) => r.user_id === "u2")?.status).toBe("available");
+  });
+
+  it("applies a whole-day batch in one pass", () => {
+    const edits = DAY_HOURS.map((hour) => ({
+      day: FRIDAY,
+      hour,
+      status: "available" as const,
+    }));
+    const next = applyAvailabilityEdits([], "u1", edits, NOW);
+    expect(next).toHaveLength(DAY_HOURS.length);
+    expect(next.every((r) => r.status === "available")).toBe(true);
+  });
+
+  it("does the same for typical-week defaults, keyed by weekday", () => {
+    const next = applyDefaultEdits(
+      [fallback("u1", 4, 20, "available")],
+      "u1",
+      [
+        { weekday: 4, hour: 20, status: null },
+        { weekday: 5, hour: 20, status: "maybe" },
+      ],
+      NOW,
+    );
+    expect(next).toEqual([
+      { user_id: "u1", weekday: 5, hour: 20, status: "maybe", updated_at: NOW },
+    ]);
   });
 });
 

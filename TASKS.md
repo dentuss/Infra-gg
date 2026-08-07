@@ -241,10 +241,11 @@ Reached from the Schedule / Availability switch at the top of the page.
       available), plus an unset fourth state
 - [x] Full-size week grid per player — days across, hours down, matching
       the schedule's own week view and its 10:00 → 03:00 window
-- [x] Pick a player by nickname to read their week; only your own is
+- [x] Pick a player from a dropdown to read their week; only your own is
       editable
-- [x] Click a slot to cycle it, drag to paint, or click a day header to
-      set the whole day
+- [x] Pick a marker (available / ask me / not available / clear), then
+      click a slot, drag across several, or click a day header to fill
+      the whole day
 - [x] Typical week — a saved default per weekday that any unmarked date
       falls back to, resolved per hour
 - [x] "Everyone" view counting how many are free each hour, solid where
