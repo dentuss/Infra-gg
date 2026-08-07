@@ -47,16 +47,18 @@ reproducible local dev environment.
 
 ## Scripts
 
-| Script                 | What it does                          |
-| ---------------------- | ------------------------------------- |
-| `npm run dev`          | Dev server (Turbopack)                |
-| `npm run build`        | Production build                      |
-| `npm run start`        | Serve the production build            |
-| `npm run typecheck`    | TypeScript, no emit                   |
-| `npm run lint`         | ESLint                                |
-| `npm run lint:fix`     | ESLint with autofix                   |
-| `npm run format`       | Prettier write                        |
-| `npm run format:check` | Prettier check (CI uses this)         |
+| Script                 | What it does                  |
+| ---------------------- | ----------------------------- |
+| `npm run dev`          | Dev server (Turbopack)        |
+| `npm run build`        | Production build              |
+| `npm run start`        | Serve the production build    |
+| `npm run typecheck`    | TypeScript, no emit           |
+| `npm run lint`         | ESLint                        |
+| `npm run lint:fix`     | ESLint with autofix           |
+| `npm run format`       | Prettier write                |
+| `npm run format:check` | Prettier check (CI uses this) |
+| `npm test`             | Vitest, single run (CI)       |
+| `npm run test:watch`   | Vitest in watch mode          |
 
 A Husky pre-commit hook runs lint-staged (ESLint + Prettier on staged
 files).
@@ -65,21 +67,28 @@ files).
 
 ```
 src/
-  app/          # App Router routes and layouts
-  components/   # Reusable UI components (components/ui = shadcn/ui)
-  lib/          # Clients and shared utilities (supabase, env)
+  app/          # App Router routes and layouts (globals.css lives here)
+  components/   # UI components by feature (components/ui = shadcn/ui)
+  hooks/        # Custom React hooks
+  i18n/         # next-intl config and locale helpers
+  lib/          # Shared utilities and clients (supabase, strategy, pptx, dissect)
+  services/     # Data access — every Supabase read/write goes through here
+  store/        # Zustand client-state stores
+  types/        # Shared types, including generated database types
+messages/       # next-intl message catalogues (en.json, ru.json)
 supabase/
   migrations/   # SQL migration history (see supabase/README.md)
 ```
 
 Business logic belongs in services, hooks, and server actions — not in
-components.
+components. Unit tests sit next to what they cover in `__tests__/`
+directories and run under Vitest.
 
 ## CI / CD
 
 Every push and pull request runs GitHub Actions
 ([ci.yml](.github/workflows/ci.yml)): install → typecheck → lint →
-format check → build, with npm and Next.js build caching.
+format check → unit tests → build, with npm and Next.js build caching.
 
 Deployment is handled by the **Vercel Git integration**: every push to
 `master` deploys to production at

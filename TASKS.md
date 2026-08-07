@@ -16,8 +16,10 @@ Current Phase:
 
 Overall Progress:
 
-48% — Phases 0–4 complete; Strategy Board v1 shipped, refinement
-rounds ongoing; Documents follows afterwards
+~52% — Phases 0–4 complete. Strategy Board is feature-rich and in
+refinement (the `.pptx` importer shipped; layers, pan, and version
+history are the main gaps). Match Replay shipped early out of Phase 8.
+Documents (Phase 5) is the next untouched phase.
 
 ---
 
@@ -278,7 +280,8 @@ Status
 
 Status
 
-🟡 (in active development — a major feature is planned next)
+🟡 (v1 plus the `.pptx` importer shipped; remaining gaps are layers,
+pan/grid, version history, and PDF/JSON export)
 
 ---
 
@@ -517,7 +520,9 @@ Status
 
 ## Testing
 
-- [ ] Unit tests
+- [x] Test runner (Vitest, wired into CI as `npm test`)
+- [ ] Unit tests — partial: board/PPTX geometry, markers, and colour
+      resolution are covered; most modules are not
 - [ ] Integration tests
 - [ ] End-to-end tests
 
@@ -571,4 +576,6 @@ When completing tasks:
 
 # Current Objective
 
-🎯 Complete **Phase 0 — Project Infrastructure** before writing any application features.
+🎯 Finish **Phase 6 — Strategy Board**: layers (list/lock/hide), pan and
+grid, version history, and PDF/JSON export. Then start **Phase 5 —
+Documents**, the last unstarted phase before Realtime.
