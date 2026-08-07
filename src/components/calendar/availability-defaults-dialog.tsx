@@ -6,7 +6,7 @@ import { useCallback, useMemo } from "react";
 import {
   AvailabilityGrid,
   type CellAddress,
-  type GridRow,
+  type GridColumn,
 } from "@/components/calendar/availability-grid";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,20 +21,12 @@ import { useSetAvailabilityDefaults } from "@/hooks/use-availability";
 import { formattingLocale } from "@/i18n/config";
 import {
   addDays,
+  DAY_HOURS,
+  nextStatus,
   startOfWeek,
   type AvailabilityDefaultRow,
   type AvailabilityStatus,
 } from "@/lib/availability";
-
-function weekdayNames(locale: string): string[] {
-  // Any known Monday works as an anchor for naming the seven weekdays.
-  const monday = startOfWeek(new Date(2026, 7, 5));
-  return Array.from({ length: 7 }, (_, index) =>
-    addDays(monday, index).toLocaleDateString(formattingLocale(locale), {
-      weekday: "short",
-    }),
-  );
-}
 
 export function AvailabilityDefaultsDialog({
   open,
@@ -51,37 +43,40 @@ export function AvailabilityDefaultsDialog({
   const locale = useLocale();
   const setDefaults = useSetAvailabilityDefaults();
 
-  const names = useMemo(() => weekdayNames(locale), [locale]);
+  // Any known Monday works as an anchor for naming the seven weekdays.
+  const columns: GridColumn[] = useMemo(() => {
+    const monday = startOfWeek(new Date(2026, 7, 5));
+    return Array.from({ length: 7 }, (_, weekday) => ({
+      key: String(weekday),
+      label: addDays(monday, weekday).toLocaleDateString(
+        formattingLocale(locale),
+        { weekday: "short" },
+      ),
+    }));
+  }, [locale]);
 
   const mine = useMemo(() => {
     const map = new Map<string, AvailabilityStatus>();
     for (const row of defaults) {
-      if (row.user_id === userId)
+      if (row.user_id === userId) {
         map.set(`${row.weekday}|${row.hour}`, row.status);
+      }
     }
     return map;
   }, [defaults, userId]);
 
-  const rows: GridRow[] = useMemo(
-    () =>
-      names.map((label, weekday) => ({
-        id: String(weekday),
-        label,
-        editable: true,
-      })),
-    [names],
+  const statusAt = useCallback(
+    (columnKey: string, hour: number) =>
+      mine.get(`${columnKey}|${hour}`) ?? null,
+    [mine],
   );
 
-  const statusAt = (rowId: string, hour: number) =>
-    mine.get(`${rowId}|${hour}`) ?? null;
-
-  // Stable identity — the grid keys its pointerup listener on this.
   const mutateDefaults = setDefaults.mutate;
   const onPaint = useCallback(
     (cells: CellAddress[], status: AvailabilityStatus | null) =>
       mutateDefaults(
         cells.map((cell) => ({
-          weekday: Number(cell.rowId),
+          weekday: Number(cell.columnKey),
           hour: cell.hour,
           status,
         })),
@@ -89,15 +84,37 @@ export function AvailabilityDefaultsDialog({
     [mutateDefaults],
   );
 
+  const onCycleColumn = useCallback(
+    (columnKey: string) => {
+      const first = DAY_HOURS[0];
+      if (first === undefined) return;
+      const target = nextStatus(statusAt(columnKey, first));
+      mutateDefaults(
+        DAY_HOURS.map((hour) => ({
+          weekday: Number(columnKey),
+          hour,
+          status: target,
+        })),
+      );
+    },
+    [statusAt, mutateDefaults],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("defaultsTitle")}</DialogTitle>
           <DialogDescription>{t("defaultsDescription")}</DialogDescription>
         </DialogHeader>
 
-        <AvailabilityGrid rows={rows} statusAt={statusAt} onPaint={onPaint} />
+        <AvailabilityGrid
+          columns={columns}
+          editable
+          statusAt={statusAt}
+          onPaint={onPaint}
+          onCycleColumn={onCycleColumn}
+        />
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

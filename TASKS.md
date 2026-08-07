@@ -239,14 +239,16 @@ Reached from the Schedule / Availability switch at the top of the page.
 
 - [x] Red / yellow / green markers per hour (available, ask me, not
       available), plus an unset fourth state
-- [x] Whole roster visible; each player edits only their own row
-- [x] Click to cycle a slot, drag across to paint a run of hours
-- [x] Week navigation with a day chooser, matching the schedule's own
-      10:00 → 03:00 window
+- [x] Full-size week grid per player — days across, hours down, matching
+      the schedule's own week view and its 10:00 → 03:00 window
+- [x] Pick a player by nickname to read their week; only your own is
+      editable
+- [x] Click a slot to cycle it, drag to paint, or click a day header to
+      set the whole day
 - [x] Typical week — a saved default per weekday that any unmarked date
       falls back to, resolved per hour
-- [x] Team overlap strip counting how many are free each hour, and a
-      full-house marker on the day chooser
+- [x] "Everyone" view counting how many are free each hour, solid where
+      the whole roster is available
 - [ ] Suggest scrim slots from the overlap (create an event straight from
       a full-house hour)
 - [ ] Month summary view (one rolled-up colour per day)
