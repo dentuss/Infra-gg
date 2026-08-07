@@ -16,6 +16,70 @@ export type Database = {
   };
   public: {
     Tables: {
+      availability: {
+        Row: {
+          day: string;
+          hour: number;
+          status: Database["public"]["Enums"]["availability_status"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          day: string;
+          hour: number;
+          status: Database["public"]["Enums"]["availability_status"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          day?: string;
+          hour?: number;
+          status?: Database["public"]["Enums"]["availability_status"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      availability_defaults: {
+        Row: {
+          hour: number;
+          status: Database["public"]["Enums"]["availability_status"];
+          updated_at: string;
+          user_id: string;
+          weekday: number;
+        };
+        Insert: {
+          hour: number;
+          status: Database["public"]["Enums"]["availability_status"];
+          updated_at?: string;
+          user_id: string;
+          weekday: number;
+        };
+        Update: {
+          hour?: number;
+          status?: Database["public"]["Enums"]["availability_status"];
+          updated_at?: string;
+          user_id?: string;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_defaults_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       chill_days: {
         Row: {
           created_at: string;
@@ -261,6 +325,7 @@ export type Database = {
       };
     };
     Enums: {
+      availability_status: "available" | "maybe" | "unavailable";
       event_type: "theory" | "scrim" | "match" | "meeting" | "reminder";
       team_role:
         | "coach"
@@ -397,6 +462,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      availability_status: ["available", "maybe", "unavailable"],
       event_type: ["theory", "scrim", "match", "meeting", "reminder"],
       team_role: [
         "coach",
