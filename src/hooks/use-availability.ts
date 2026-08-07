@@ -2,23 +2,19 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type {
-  AvailabilityDefaultRow,
-  AvailabilityRow,
-  AvailabilityStatus,
+import {
+  applyAvailabilityEdits,
+  applyDefaultEdits,
+  type AvailabilityDefaultRow,
+  type AvailabilityRow,
+  type AvailabilityStatus,
+  type DefaultEdit,
+  type SlotEdit,
 } from "@/lib/availability";
 import { createClient } from "@/lib/supabase/client";
 
 const AVAILABILITY_KEY = "availability";
 const DEFAULTS_KEY = ["availability-defaults"] as const;
-
-async function currentUserId(): Promise<string> {
-  const supabase = createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
-  if (!userId) throw new Error("Not signed in.");
-  return userId;
-}
 
 /** Every player's rows for one week, keyed by the Monday. */
 export function useWeekAvailability(weekStart: string, weekEnd: string) {
@@ -52,26 +48,24 @@ export function useAvailabilityDefaults() {
   });
 }
 
-export type SlotEdit = {
-  day: string;
-  hour: number;
-  /** null clears the row, letting the typical week show through again. */
-  status: AvailabilityStatus | null;
-};
-
 /**
- * Writes a batch of the signed-in player's own slots. Setting and clearing
- * are separate statements because Supabase has no single upsert-or-delete;
- * both run before the cache is invalidated so the grid never shows a
- * half-applied day.
+ * Writes a batch of the signed-in player's own slots.
+ *
+ * Setting and clearing are separate statements because Supabase has no single
+ * upsert-or-delete. The cache is updated optimistically first: without that the
+ * cell reverts to the stale server value the moment the gesture ends and only
+ * fills in when the refetch lands, which shows up as a flash back to grey.
+ * `userId` is only used to address the cache — Row Level Security is what
+ * actually decides whose rows may be written.
  */
-export function useSetAvailability(weekStart: string) {
+export function useSetAvailability(weekStart: string, userId: string | null) {
   const queryClient = useQueryClient();
+  const key = [AVAILABILITY_KEY, weekStart];
+
   return useMutation({
     mutationFn: async (edits: SlotEdit[]) => {
-      if (edits.length === 0) return;
+      if (edits.length === 0 || !userId) return;
       const supabase = createClient();
-      const userId = await currentUserId();
 
       const cleared = edits.filter((edit) => edit.status === null);
       const set = edits.filter((edit) => edit.status !== null);
@@ -100,26 +94,34 @@ export function useSetAvailability(weekStart: string) {
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: [AVAILABILITY_KEY, weekStart],
-      }),
+    onMutate: async (edits: SlotEdit[]) => {
+      if (!userId) return;
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<AvailabilityRow[]>(key);
+      queryClient.setQueryData<AvailabilityRow[]>(key, (rows) =>
+        applyAvailabilityEdits(
+          rows ?? [],
+          userId,
+          edits,
+          new Date().toISOString(),
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _edits, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 }
 
-export type DefaultEdit = {
-  weekday: number;
-  hour: number;
-  status: AvailabilityStatus | null;
-};
-
-export function useSetAvailabilityDefaults() {
+export function useSetAvailabilityDefaults(userId: string | null) {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (edits: DefaultEdit[]) => {
-      if (edits.length === 0) return;
+      if (edits.length === 0 || !userId) return;
       const supabase = createClient();
-      const userId = await currentUserId();
 
       const cleared = edits.filter((edit) => edit.status === null);
       const set = edits.filter((edit) => edit.status !== null);
@@ -148,7 +150,22 @@ export function useSetAvailabilityDefaults() {
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () => {
+    onMutate: async (edits: DefaultEdit[]) => {
+      if (!userId) return;
+      await queryClient.cancelQueries({ queryKey: DEFAULTS_KEY });
+      const previous =
+        queryClient.getQueryData<AvailabilityDefaultRow[]>(DEFAULTS_KEY);
+      queryClient.setQueryData<AvailabilityDefaultRow[]>(DEFAULTS_KEY, (rows) =>
+        applyDefaultEdits(rows ?? [], userId, edits, new Date().toISOString()),
+      );
+      return { previous };
+    },
+    onError: (_error, _edits, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(DEFAULTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: DEFAULTS_KEY });
       // Cleared dates read through to the defaults, so every cached week is
       // now potentially stale.

@@ -5,8 +5,8 @@ export type AvailabilityStatus = Enums<"availability_status">;
 export type AvailabilityRow = Tables<"availability">;
 export type AvailabilityDefaultRow = Tables<"availability_defaults">;
 
-/** Cycled by clicking a cell; a fourth click clears back to unset. */
-export const STATUS_CYCLE: readonly AvailabilityStatus[] = [
+/** Order the markers are offered in, worst-to-best reading left to right. */
+export const STATUS_ORDER: readonly AvailabilityStatus[] = [
   "available",
   "maybe",
   "unavailable",
@@ -111,14 +111,75 @@ export function buildAvailabilityLookup(
 }
 
 /** Next status when a cell is clicked; wraps past `unavailable` to unset. */
-export function nextStatus(
-  current: AvailabilityStatus | null,
-): AvailabilityStatus | null {
-  if (!current) return STATUS_CYCLE[0] ?? null;
-  const index = STATUS_CYCLE.indexOf(current);
-  return index === STATUS_CYCLE.length - 1
-    ? null
-    : (STATUS_CYCLE[index + 1] ?? null);
+export type SlotEdit = {
+  day: string;
+  hour: number;
+  /** null clears the row, letting the typical week show through again. */
+  status: AvailabilityStatus | null;
+};
+
+export type DefaultEdit = {
+  weekday: number;
+  hour: number;
+  status: AvailabilityStatus | null;
+};
+
+/**
+ * Applies edits to a cached page of rows so the grid shows a change the
+ * instant it is made. Without this the cell falls back to the un-refetched
+ * server value between the click and the round trip, which reads as a flash
+ * back to grey.
+ */
+export function applyAvailabilityEdits(
+  rows: readonly AvailabilityRow[],
+  userId: string,
+  edits: readonly SlotEdit[],
+  now: string,
+): AvailabilityRow[] {
+  const next = new Map(
+    rows.map((row) => [`${row.user_id}|${row.day}|${row.hour}`, row]),
+  );
+  for (const edit of edits) {
+    const key = `${userId}|${edit.day}|${edit.hour}`;
+    if (edit.status === null) {
+      next.delete(key);
+    } else {
+      next.set(key, {
+        user_id: userId,
+        day: edit.day,
+        hour: edit.hour,
+        status: edit.status,
+        updated_at: now,
+      });
+    }
+  }
+  return [...next.values()];
+}
+
+export function applyDefaultEdits(
+  rows: readonly AvailabilityDefaultRow[],
+  userId: string,
+  edits: readonly DefaultEdit[],
+  now: string,
+): AvailabilityDefaultRow[] {
+  const next = new Map(
+    rows.map((row) => [`${row.user_id}|${row.weekday}|${row.hour}`, row]),
+  );
+  for (const edit of edits) {
+    const key = `${userId}|${edit.weekday}|${edit.hour}`;
+    if (edit.status === null) {
+      next.delete(key);
+    } else {
+      next.set(key, {
+        user_id: userId,
+        weekday: edit.weekday,
+        hour: edit.hour,
+        status: edit.status,
+        updated_at: now,
+      });
+    }
+  }
+  return [...next.values()];
 }
 
 export type TeamSlotSummary = {
