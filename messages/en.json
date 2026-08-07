@@ -155,7 +155,36 @@
     "chillNo": "No",
     "chillYes": "Hell Yeah",
     "chillRemoveConfirm": "Yes, remove",
-    "hintReadOnly": "Click an event to view its details. The schedule is managed by staff."
+    "hintReadOnly": "Click an event to view its details. The schedule is managed by staff.",
+    "sections": "Calendar sections",
+    "section": {
+      "schedule": "Schedule",
+      "availability": "Availability"
+    }
+  },
+  "availability": {
+    "player": "Player",
+    "you": "(you)",
+    "loading": "Loading availability…",
+    "loadError": "Could not load availability: {message}",
+    "noMembers": "No team members yet.",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "thisWeek": "This week",
+    "editDefaults": "Typical week",
+    "defaultsTitle": "Your typical week",
+    "defaultsDescription": "Set the hours you are usually free. Any date you have not marked explicitly falls back to this, so you only enter a regular schedule once.",
+    "done": "Done",
+    "teamOverlap": "Everyone free",
+    "overlapTooltip": "{hour} — {available} of {total} available",
+    "fullHouseHours": "{count, plural, one {# full hour} other {# full hours}}",
+    "paintHint": "Click a slot to cycle it, or drag across to paint a run.",
+    "status": {
+      "available": "Available",
+      "maybe": "Ask me",
+      "unavailable": "Not available",
+      "unset": "Not set"
+    }
   },
   "team": {
     "metaTitle": "Team",

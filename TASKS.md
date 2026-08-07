@@ -214,9 +214,12 @@ Status
 
 Status
 
-🟢
+🟡 (schedule complete; Availability shipped as a foundation and will be
+built on)
 
 ---
+
+## Schedule
 
 - [x] Month view
 - [x] Week view
@@ -227,6 +230,27 @@ Status
 - [x] Recurring events (weekly, optional end date)
 - [x] Drag and drop (single events; recurring series are edited via the dialog)
 - [x] Event editing
+
+---
+
+## Availability
+
+Reached from the Schedule / Availability switch at the top of the page.
+
+- [x] Red / yellow / green markers per hour (available, ask me, not
+      available), plus an unset fourth state
+- [x] Whole roster visible; each player edits only their own row
+- [x] Click to cycle a slot, drag across to paint a run of hours
+- [x] Week navigation with a day chooser, matching the schedule's own
+      10:00 → 03:00 window
+- [x] Typical week — a saved default per weekday that any unmarked date
+      falls back to, resolved per hour
+- [x] Team overlap strip counting how many are free each hour, and a
+      full-house marker on the day chooser
+- [ ] Suggest scrim slots from the overlap (create an event straight from
+      a full-house hour)
+- [ ] Month summary view (one rolled-up colour per day)
+- [ ] Notify staff when a player changes availability for a scheduled day
 
 ---
 
