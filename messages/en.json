@@ -190,7 +190,8 @@
     "overlapLegend": "Each cell counts how many players are available that hour; a solid cell means everyone is.",
     "markerPicker": "Marker",
     "clear": "Clear",
-    "eraserHint": "Clears a slot back to unset, so your typical week shows through again"
+    "eraserHint": "Clears a slot back to unset, so your typical week shows through again",
+    "pickPlayer": "Pick a player"
   },
   "team": {
     "metaTitle": "Team",

@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarCog, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarCog, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { AvailabilityDefaultsDialog } from "@/components/calendar/availability-defaults-dialog";
 import {
   AvailabilityGrid,
+  ROW_HEIGHT,
   type CellAddress,
   type GridColumn,
 } from "@/components/calendar/availability-grid";
@@ -73,6 +74,21 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
 
   const roster = useMemo(() => members ?? [], [members]);
   const rosterIds = useMemo(() => roster.map((member) => member.id), [roster]);
+
+  // id -> nickname, for both the dropdown's options and the label its trigger
+  // shows for the current selection.
+  const playerLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        roster.map((member) => [
+          member.id,
+          member.id === userId
+            ? `${member.username} ${t("you")}`
+            : member.username,
+        ]),
+      ),
+    [roster, userId, t],
+  );
 
   // Default to your own week; fall back to the first player for anyone who is
   // not on the roster (a signed-in account still awaiting an invite).
@@ -179,22 +195,32 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
         <div className="flex items-center gap-2">
           {/* Whose week is on screen. Only your own is editable. */}
           <Select
-            value={activeSubject}
+            // Select.Value renders the raw value unless Root can resolve a
+            // label for it — without this the trigger shows a bare user id.
+            items={playerLabels}
+            value={isOverlap ? null : activeSubject}
             onValueChange={(next) => next && setSubject(next)}
           >
             <SelectTrigger aria-label={t("whoseWeek")} className="min-w-44">
-              <SelectValue />
+              <SelectValue placeholder={t("pickPlayer")} />
             </SelectTrigger>
             <SelectContent>
               {roster.map((member) => (
                 <SelectItem key={member.id} value={member.id}>
-                  {member.username}
-                  {member.id === userId ? ` ${t("you")}` : ""}
+                  {playerLabels[member.id]}
                 </SelectItem>
               ))}
-              <SelectItem value={OVERLAP}>{t("everyone")}</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Kept out of the dropdown: it is the view staff reach for most. */}
+          <Button
+            variant={isOverlap ? "default" : "outline"}
+            aria-pressed={isOverlap}
+            onClick={() => setSubject(OVERLAP)}
+          >
+            <Users /> {t("everyone")}
+          </Button>
 
           <Button
             variant="secondary"
@@ -241,7 +267,8 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
                         total: rosterIds.length,
                       })}
                       className={cn(
-                        "flex h-8 w-full items-center justify-center rounded-[4px] text-xs font-semibold tabular-nums",
+                        ROW_HEIGHT,
+                        "flex w-full items-center justify-center rounded-[4px] text-xs font-semibold tabular-nums",
                         full
                           ? "bg-emerald-500 text-white"
                           : summary.available > 0
