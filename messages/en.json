@@ -195,7 +195,13 @@
     "markerPicker": "Marker",
     "clear": "Clear",
     "eraserHint": "Clears a slot back to unset, so your typical week shows through again",
-    "pickPlayer": "Pick a player"
+    "pickPlayer": "Pick a player",
+    "clearAll": "Clear all",
+    "cancel": "Cancel",
+    "clearWeekTitle": "Clear this week?",
+    "clearWeekDescription": "Removes every marker you set for {week}. Hours from your typical week will show through again.",
+    "clearDefaultsTitle": "Clear your typical week?",
+    "clearDefaultsDescription": "Removes every default hour. Dates you have marked explicitly are not affected."
   },
   "team": {
     "metaTitle": "Team",

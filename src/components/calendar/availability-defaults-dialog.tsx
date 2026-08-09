@@ -98,15 +98,35 @@ export function AvailabilityDefaultsDialog({
     [mutateDefaults, marker],
   );
 
+  const onClearAll = useCallback(
+    () =>
+      mutateDefaults(
+        columns.flatMap((column) =>
+          DAY_HOURS.map((hour) => ({
+            weekday: Number(column.key),
+            hour,
+            status: null,
+          })),
+        ),
+      ),
+    [mutateDefaults, columns],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t("defaultsTitle")}</DialogTitle>
           <DialogDescription>{t("defaultsDescription")}</DialogDescription>
         </DialogHeader>
 
-        <MarkerPicker value={marker} onChange={setMarker} />
+        <MarkerPicker
+          value={marker}
+          onChange={setMarker}
+          onClearAll={onClearAll}
+          clearAllTitle={t("clearDefaultsTitle")}
+          clearAllDescription={t("clearDefaultsDescription")}
+        />
 
         <AvailabilityGrid
           columns={columns}

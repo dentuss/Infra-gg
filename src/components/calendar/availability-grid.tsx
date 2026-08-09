@@ -122,7 +122,7 @@ export function AvailabilityGrid({
   return (
     <div className="overflow-x-auto">
       <table
-        className="w-full min-w-[42rem] border-separate border-spacing-1 text-sm select-none"
+        className="w-full min-w-[40rem] table-fixed border-separate border-spacing-1 text-sm select-none"
         onDragStart={(event) => event.preventDefault()}
       >
         <thead>
