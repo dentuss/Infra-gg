@@ -19,6 +19,9 @@ const STATUS_HOVER: Record<AvailabilityStatus, string> = {
 
 const UNSET_CLASS = "bg-muted/40";
 
+/** Shared by the hour label and every slot so the rows line up exactly. */
+export const ROW_HEIGHT = "h-8";
+
 /** One column of the grid — a date in the week view, a weekday in defaults. */
 export type GridColumn = {
   key: string;
@@ -162,16 +165,21 @@ export function AvailabilityGrid({
         <tbody>
           {DAY_HOURS.map((hour) => (
             <tr key={hour}>
+              {/* The label and the slots must be the same fixed height, or
+                  the two columns drift apart down the grid. */}
               <th
                 scope="row"
-                className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-1 text-right align-middle text-xs font-medium text-foreground/80 tabular-nums"
+                className={cn(
+                  ROW_HEIGHT,
+                  "rounded-md border border-border/60 bg-muted/40 px-2 text-right align-middle text-xs font-medium text-foreground/80 tabular-nums",
+                )}
               >
                 {hourLabel(hour)}
               </th>
               {columns.map((column) => {
                 if (renderCell) {
                   return (
-                    <td key={column.key} className="p-0">
+                    <td key={column.key} className="p-0 align-middle">
                       {renderCell(column.key, hour)}
                     </td>
                   );
@@ -181,7 +189,7 @@ export function AvailabilityGrid({
                 const defaulted =
                   !pending && isDefaulted?.(column.key, hour) === true;
                 return (
-                  <td key={column.key} className="p-0">
+                  <td key={column.key} className="p-0 align-middle">
                     <button
                       type="button"
                       disabled={!editable}
@@ -189,7 +197,12 @@ export function AvailabilityGrid({
                         status ? t(`status.${status}`) : t("status.unset")
                       }`}
                       className={cn(
-                        "h-8 w-full rounded-[4px] transition-colors",
+                        // `block`, not the default inline-block: an inline
+                        // button sits on the cell's text baseline, which adds
+                        // descender space below it and knocks the slots out of
+                        // line with the hour labels.
+                        ROW_HEIGHT,
+                        "block w-full rounded-[4px] transition-colors",
                         status ? STATUS_CLASS[status] : UNSET_CLASS,
                         editable &&
                           (marker ? STATUS_HOVER[marker] : "hover:bg-muted"),
