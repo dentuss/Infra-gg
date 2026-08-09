@@ -40,13 +40,46 @@ export function zoneCityName(zone: string): string {
 }
 
 /**
- * The zone's current short name — "CEST", "MSK", "GMT+3". Shown next to the
- * picker because that is how players actually talk about times.
+ * Short names for the curated zones. Intl returns "GMT+2" rather than "CEST"
+ * for European zones in an English locale, and these are the names players
+ * actually use, so the list is spelled out. `daylight` is omitted for zones
+ * that do not change clocks.
+ */
+const ZONE_ABBREVIATIONS: Record<
+  string,
+  { standard: string; daylight?: string }
+> = {
+  "Europe/Berlin": { standard: "CET", daylight: "CEST" },
+  "Europe/London": { standard: "GMT", daylight: "BST" },
+  "Europe/Lisbon": { standard: "WET", daylight: "WEST" },
+  "Europe/Kyiv": { standard: "EET", daylight: "EEST" },
+  "Europe/Moscow": { standard: "MSK" },
+  "Europe/Istanbul": { standard: "IST" },
+  UTC: { standard: "UTC" },
+};
+
+/**
+ * The zone's current short name — "CEST", "MSK". Falls back to whatever Intl
+ * offers for a zone outside the curated list.
  */
 export function zoneAbbreviation(zone: string, at: Date = new Date()): string {
   const dt = DateTime.fromJSDate(at, { zone });
   if (!dt.isValid) return zone;
+  const known = ZONE_ABBREVIATIONS[zone];
+  if (known) return (dt.isInDST && known.daylight) || known.standard;
   return dt.toFormat("ZZZZ");
+}
+
+/** The absolute offset from UTC — "GMT+2", or "UTC" at zero. */
+export function zoneGmtLabel(zone: string, at: Date = new Date()): string {
+  const dt = DateTime.fromJSDate(at, { zone });
+  if (!dt.isValid) return "";
+  const hours = dt.offset / 60;
+  if (hours === 0) return "UTC";
+  const whole = Math.trunc(hours);
+  const minutes = Math.abs(Math.round((hours - whole) * 60));
+  const sign = hours > 0 ? "+" : "-";
+  return `GMT${sign}${Math.abs(whole)}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""}`;
 }
 
 /**
@@ -84,20 +117,4 @@ export function slotLabelInZone(
   const instant = slotInstant(day, hour, teamZone);
   if (!instant) return `${String(hour % 24).padStart(2, "0")}:00`;
   return DateTime.fromJSDate(instant, { zone: viewZone }).toFormat("HH:mm");
-}
-
-/**
- * Whole hours between two zones at a given moment — positive when `viewZone` is
- * ahead. Used to caption the picker, not for conversion; real conversions go
- * through luxon so partial-hour zones and DST are handled properly.
- */
-export function zoneOffsetHours(
-  teamZone: string,
-  viewZone: string,
-  at: Date = new Date(),
-): number {
-  const team = DateTime.fromJSDate(at, { zone: teamZone });
-  const view = DateTime.fromJSDate(at, { zone: viewZone });
-  if (!team.isValid || !view.isValid) return 0;
-  return (view.offset - team.offset) / 60;
 }

@@ -6,8 +6,9 @@ import {
   resolveViewZone,
   slotInstant,
   slotLabelInZone,
+  zoneAbbreviation,
   zoneCityName,
-  zoneOffsetHours,
+  zoneGmtLabel,
 } from "@/lib/timezone";
 
 const BERLIN = "Europe/Berlin";
@@ -104,23 +105,49 @@ describe("labelling a slot in the viewer's zone", () => {
   });
 });
 
-describe("offset between zones", () => {
-  it("is positive when the viewer is ahead", () => {
-    expect(
-      zoneOffsetHours(BERLIN, MOSCOW, new Date(`${SUMMER}T12:00:00Z`)),
-    ).toBe(1);
-    expect(
-      zoneOffsetHours(BERLIN, MOSCOW, new Date(`${WINTER}T12:00:00Z`)),
-    ).toBe(2);
+describe("zone short names", () => {
+  const summerNoon = new Date(`${SUMMER}T12:00:00Z`);
+  const winterNoon = new Date(`${WINTER}T12:00:00Z`);
+
+  // Intl hands back "GMT+2" for European zones in an English locale, which is
+  // why these are spelled out rather than derived.
+  it("switches between standard and daylight names", () => {
+    expect(zoneAbbreviation(BERLIN, summerNoon)).toBe("CEST");
+    expect(zoneAbbreviation(BERLIN, winterNoon)).toBe("CET");
+    expect(zoneAbbreviation(LONDON, summerNoon)).toBe("BST");
+    expect(zoneAbbreviation(LONDON, winterNoon)).toBe("GMT");
   });
 
-  it("is negative when the viewer is behind, and zero for the same zone", () => {
+  it("keeps one name for zones that do not change clocks", () => {
+    expect(zoneAbbreviation(MOSCOW, summerNoon)).toBe("MSK");
+    expect(zoneAbbreviation(MOSCOW, winterNoon)).toBe("MSK");
+    expect(zoneAbbreviation("UTC", summerNoon)).toBe("UTC");
+  });
+
+  it("falls back to Intl for a zone outside the curated list", () => {
+    expect(zoneAbbreviation("America/New_York", summerNoon)).toBeTruthy();
+    expect(zoneAbbreviation("Mars/Olympus", summerNoon)).toBe("Mars/Olympus");
+  });
+});
+
+describe("GMT labels", () => {
+  it("shows the absolute offset, tracking DST", () => {
+    expect(zoneGmtLabel(BERLIN, new Date(`${SUMMER}T12:00:00Z`))).toBe("GMT+2");
+    expect(zoneGmtLabel(BERLIN, new Date(`${WINTER}T12:00:00Z`))).toBe("GMT+1");
+    expect(zoneGmtLabel(MOSCOW, new Date(`${SUMMER}T12:00:00Z`))).toBe("GMT+3");
+  });
+
+  it("says UTC rather than GMT+0", () => {
+    expect(zoneGmtLabel("UTC", new Date(`${SUMMER}T12:00:00Z`))).toBe("UTC");
+  });
+
+  it("handles a zone west of Greenwich and a half-hour zone", () => {
     expect(
-      zoneOffsetHours(BERLIN, LONDON, new Date(`${SUMMER}T12:00:00Z`)),
-    ).toBe(-1);
-    expect(
-      zoneOffsetHours(BERLIN, BERLIN, new Date(`${SUMMER}T12:00:00Z`)),
-    ).toBe(0);
+      zoneGmtLabel("America/New_York", new Date(`${SUMMER}T12:00:00Z`)),
+    ).toBe("GMT-4");
+    expect(zoneGmtLabel("Asia/Kolkata", new Date(`${SUMMER}T12:00:00Z`))).toBe(
+      "GMT+5:30",
+    );
   });
 });
 
