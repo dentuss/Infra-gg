@@ -230,6 +230,9 @@ built on)
 - [x] Recurring events (weekly, optional end date)
 - [x] Drag and drop (single events; recurring series are edited via the dialog)
 - [x] Event editing
+- [x] Substitutes / trials attached to an event, tagged on the calendar box
+- [x] Availability clash check — warns which playing members are unavailable
+      before an event is saved, and asks to confirm before scheduling anyway
 
 ---
 

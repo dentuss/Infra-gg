@@ -160,6 +160,10 @@
     "section": {
       "schedule": "Расписание",
       "availability": "Доступность"
+    },
+    "roleTag": {
+      "substitute": "Замена",
+      "trial": "Трайл"
     }
   },
   "availability": {
@@ -267,7 +271,21 @@
     },
     "viewTitle": "Детали события",
     "viewDescription": "Только просмотр — расписание ведёт стафф.",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "substitutesLabel": "Замена / Трайл",
+    "substitutesHint": "Запасные игроки на этом событии. Они учитываются при проверке доступности.",
+    "roleTag": {
+      "substitute": "Замена",
+      "trial": "Трайл"
+    },
+    "clashTitle": "{count, plural, one {# игрок недоступен} few {# игрока недоступны} many {# игроков недоступны} other {# игрока недоступны}}",
+    "clashMaybeTitle": "{count, plural, one {# игрок может быть недоступен} few {# игрока могут быть недоступны} many {# игроков могут быть недоступны} other {# игрока могут быть недоступны}}",
+    "clashStatus": {
+      "unavailable": "Занят",
+      "maybe": "Спросите меня"
+    },
+    "clashConfirmHint": "Нажмите ещё раз, чтобы всё равно запланировать.",
+    "scheduleAnyway": "Всё равно запланировать"
   },
   "profile": {
     "metaTitle": "Профиль",

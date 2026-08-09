@@ -15,6 +15,8 @@ export function createEventSchema(t: Translate) {
       description: z.string().max(2000).optional(),
       recursWeekly: z.boolean(),
       recurUntil: z.string().optional(),
+      /** Substitutes and trials standing in for this event. */
+      substituteIds: z.array(z.uuid()),
     })
     .refine((values) => values.startTime !== values.endTime, {
       message: t("sameTime"),

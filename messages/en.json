@@ -160,6 +160,10 @@
     "section": {
       "schedule": "Schedule",
       "availability": "Availability"
+    },
+    "roleTag": {
+      "substitute": "Sub",
+      "trial": "Trial"
     }
   },
   "availability": {
@@ -267,7 +271,21 @@
     },
     "viewTitle": "Event details",
     "viewDescription": "Viewing only — the schedule is managed by staff.",
-    "close": "Close"
+    "close": "Close",
+    "substitutesLabel": "Substitute / Trial",
+    "substitutesHint": "Bench players attending this event. They are included in the availability check.",
+    "roleTag": {
+      "substitute": "Sub",
+      "trial": "Trial"
+    },
+    "clashTitle": "{count, plural, one {# player is not available} other {# players are not available}}",
+    "clashMaybeTitle": "{count, plural, one {# player may not be available} other {# players may not be available}}",
+    "clashStatus": {
+      "unavailable": "Not available",
+      "maybe": "Ask me"
+    },
+    "clashConfirmHint": "Press again to schedule anyway.",
+    "scheduleAnyway": "Schedule anyway"
   },
   "profile": {
     "metaTitle": "Profile",

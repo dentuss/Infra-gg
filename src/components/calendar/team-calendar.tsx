@@ -40,6 +40,7 @@ import {
   useRemoveChillDay,
 } from "@/hooks/use-chill-days";
 import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
+import { useMembers } from "@/hooks/use-team";
 import { formattingLocale } from "@/i18n/config";
 import {
   buildClearPlan,
@@ -55,12 +56,37 @@ const CLOSED: EventDialogState = {
   range: null,
 };
 
-function renderEventContent(arg: EventContentArg) {
+function renderEventContent(
+  arg: EventContentArg,
+  roleOf: (id: string) => "substitute" | "trial" | null,
+  label: (role: "substitute" | "trial") => string,
+) {
   const description = arg.event.extendedProps.description as string | null;
   const showDescription = description && arg.view.type === "timeGridWeek";
 
+  // One tag per distinct bench role, so two subs read as a single "SUB".
+  const ids =
+    (arg.event.extendedProps.substituteIds as string[] | undefined) ?? [];
+  const tags = [...new Set(ids.map(roleOf).filter((role) => role !== null))];
+
   return (
     <div className="flex flex-col gap-0.5 overflow-hidden px-1 py-0.5">
+      {tags.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {tags.map((role) => (
+            <span
+              key={role}
+              className={
+                role === "trial"
+                  ? "rounded-[3px] bg-amber-400 px-1 text-[0.6rem] leading-tight font-bold tracking-wide text-amber-950 uppercase"
+                  : "rounded-[3px] bg-sky-400 px-1 text-[0.6rem] leading-tight font-bold tracking-wide text-sky-950 uppercase"
+              }
+            >
+              {label(role)}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="truncate font-semibold">
         {arg.timeText ? `${arg.timeText} ` : ""}
         {arg.event.title}
@@ -104,6 +130,19 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
   } | null>(null);
 
   const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
+
+  const { data: members } = useMembers();
+  // Ids that no longer resolve to a bench member are simply untagged — the
+  // column has no foreign key, so a removed player can leave one behind.
+  const benchRoleOf = useMemo(() => {
+    const roles = new Map<string, "substitute" | "trial">();
+    for (const member of members ?? []) {
+      if (member.role === "substitute" || member.role === "trial") {
+        roles.set(member.id, member.role);
+      }
+    }
+    return (id: string) => roles.get(id) ?? null;
+  }, [members]);
 
   // The chill wash covers the day's own visible column (10:00 → 03:00)
   // rather than the clock's 00:00–03:00, which would paint the bottom of
@@ -298,7 +337,9 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
           minute: "2-digit",
           hour12: false,
         }}
-        eventContent={renderEventContent}
+        eventContent={(arg) =>
+          renderEventContent(arg, benchRoleOf, (role) => t(`roleTag.${role}`))
+        }
         height="auto"
         select={onSelect}
         eventClick={onEventClick}
