@@ -16,6 +16,7 @@ import {
   STATUS_CLASS,
   type Marker,
 } from "@/components/calendar/marker-picker";
+import { TimezonePicker } from "@/components/calendar/timezone-picker";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -30,6 +31,7 @@ import {
   useWeekAvailability,
 } from "@/hooks/use-availability";
 import { useMembers } from "@/hooks/use-team";
+import { useSetOwnZone, useSetTeamZone, useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import {
   addDays,
@@ -44,12 +46,19 @@ import {
   weekdayIndex,
   weekDays,
 } from "@/lib/availability";
+import { slotLabelInZone } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 
 /** Pseudo-subject in the player picker: the whole roster at once. */
 const OVERLAP = "__overlap__";
 
-export function AvailabilityPanel({ userId }: { userId: string | null }) {
+export function AvailabilityPanel({
+  userId,
+  canManage,
+}: {
+  userId: string | null;
+  canManage: boolean;
+}) {
   const t = useTranslations("availability");
   const locale = useLocale();
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
@@ -71,6 +80,18 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
   } = useWeekAvailability(weekStart, weekEnd);
   const { data: defaults } = useAvailabilityDefaults();
   const setAvailability = useSetAvailability(weekStart, userId);
+
+  const { teamZone, viewZone } = useZones();
+  const setOwnZone = useSetOwnZone();
+  const setTeamZone = useSetTeamZone();
+
+  // Slots are stored against the team's zone; a viewer elsewhere sees the same
+  // slots relabelled rather than shifted onto a different night.
+  const hourLabelFor = useCallback(
+    (columnKey: string, hour: number) =>
+      slotLabelInZone(columnKey, hour, teamZone, viewZone),
+    [teamZone, viewZone],
+  );
 
   const roster = useMemo(() => members ?? [], [members]);
   const rosterIds = useMemo(() => roster.map((member) => member.id), [roster]);
@@ -272,6 +293,18 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
           }
           onPaint={editable ? onPaint : undefined}
           onPaintColumn={editable ? onPaintColumn : undefined}
+          hourLabelFor={hourLabelFor}
+          cornerSlot={
+            <TimezonePicker
+              teamZone={teamZone}
+              viewZone={viewZone}
+              onSelect={(zone) => setOwnZone.mutate(zone)}
+              onMakeTeamDefault={
+                canManage ? (zone) => setTeamZone.mutate(zone) : undefined
+              }
+              compact
+            />
+          }
           renderCell={
             isOverlap
               ? (columnKey, hour) => {
