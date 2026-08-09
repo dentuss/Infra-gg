@@ -19,15 +19,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSetAvailabilityDefaults } from "@/hooks/use-availability";
+import { useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import {
   addDays,
+  dateToKey,
   DAY_HOURS,
   startOfWeek,
   STATUS_ORDER,
   type AvailabilityDefaultRow,
   type AvailabilityStatus,
 } from "@/lib/availability";
+import { slotLabelInZone } from "@/lib/timezone";
 
 export function AvailabilityDefaultsDialog({
   open,
@@ -43,6 +46,16 @@ export function AvailabilityDefaultsDialog({
   const t = useTranslations("availability");
   const locale = useLocale();
   const setDefaults = useSetAvailabilityDefaults(userId);
+  const { teamZone, viewZone } = useZones();
+
+  // The typical week has no real dates, so labels are anchored to the current
+  // week. Across a DST switch that is an hour out for part of one week a year.
+  const labelAnchor = useMemo(() => dateToKey(startOfWeek(new Date())), []);
+  const hourLabelFor = useCallback(
+    (_columnKey: string, hour: number) =>
+      slotLabelInZone(labelAnchor, hour, teamZone, viewZone),
+    [labelAnchor, teamZone, viewZone],
+  );
   const [marker, setMarker] = useState<Marker>(STATUS_ORDER[0] ?? null);
 
   // Any known Monday works as an anchor for naming the seven weekdays.
@@ -135,6 +148,7 @@ export function AvailabilityDefaultsDialog({
           statusAt={statusAt}
           onPaint={onPaint}
           onPaintColumn={onPaintColumn}
+          hourLabelFor={hourLabelFor}
         />
 
         <DialogFooter>

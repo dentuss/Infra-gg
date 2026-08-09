@@ -220,6 +220,7 @@ export type Database = {
           ingame_role: string | null;
           is_member: boolean;
           role: Database["public"]["Enums"]["team_role"];
+          timezone: string | null;
           updated_at: string;
           username: string;
         };
@@ -232,6 +233,7 @@ export type Database = {
           ingame_role?: string | null;
           is_member?: boolean;
           role?: Database["public"]["Enums"]["team_role"];
+          timezone?: string | null;
           updated_at?: string;
           username: string;
         };
@@ -244,6 +246,7 @@ export type Database = {
           ingame_role?: string | null;
           is_member?: boolean;
           role?: Database["public"]["Enums"]["team_role"];
+          timezone?: string | null;
           updated_at?: string;
           username?: string;
         };
@@ -294,16 +297,19 @@ export type Database = {
         Row: {
           id: boolean;
           name: string;
+          timezone: string;
           updated_at: string;
         };
         Insert: {
           id?: boolean;
           name?: string;
+          timezone?: string;
           updated_at?: string;
         };
         Update: {
           id?: boolean;
           name?: string;
+          timezone?: string;
           updated_at?: string;
         };
         Relationships: [];

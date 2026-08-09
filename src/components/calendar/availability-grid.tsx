@@ -46,6 +46,14 @@ export type AvailabilityGridProps = {
   onPaintColumn?: (columnKey: string) => void;
   /** Replaces the default cell — used by the team overlap view. */
   renderCell?: (columnKey: string, hour: number) => ReactNode;
+  /**
+   * How a row is labelled. Slots are stored against the team's zone, so a
+   * viewer elsewhere sees the same rows under shifted labels; defaults to
+   * team time when no zone is in play.
+   */
+  hourLabelFor?: (columnKey: string, hour: number) => string;
+  /** Rendered in the empty corner above the hour labels. */
+  cornerSlot?: ReactNode;
 };
 
 /**
@@ -62,6 +70,8 @@ export function AvailabilityGrid({
   onPaint,
   onPaintColumn,
   renderCell,
+  hourLabelFor,
+  cornerSlot,
 }: AvailabilityGridProps) {
   const t = useTranslations("availability");
   const [dragCells, setDragCells] = useState<CellAddress[] | null>(null);
@@ -127,8 +137,8 @@ export function AvailabilityGrid({
       >
         <thead>
           <tr>
-            <th scope="col" className="w-16">
-              <span className="sr-only">{t("time")}</span>
+            <th scope="col" className="w-16 align-bottom">
+              {cornerSlot ?? <span className="sr-only">{t("time")}</span>}
             </th>
             {columns.map((column) => (
               <th key={column.key} scope="col" className="pb-1">
@@ -163,63 +173,73 @@ export function AvailabilityGrid({
           </tr>
         </thead>
         <tbody>
-          {DAY_HOURS.map((hour) => (
-            <tr key={hour}>
-              {/* The label and the slots must be the same fixed height, or
+          {DAY_HOURS.map((hour) => {
+            const anchorKey = columns[0]?.key ?? "";
+            const rowLabel = hourLabelFor
+              ? hourLabelFor(anchorKey, hour)
+              : hourLabel(hour);
+            return (
+              <tr key={hour}>
+                {/* The label and the slots must be the same fixed height, or
                   the two columns drift apart down the grid. */}
-              <th
-                scope="row"
-                className={cn(
-                  ROW_HEIGHT,
-                  "rounded-md border border-border/60 bg-muted/40 px-2 text-right align-middle text-xs font-medium text-foreground/80 tabular-nums",
-                )}
-              >
-                {hourLabel(hour)}
-              </th>
-              {columns.map((column) => {
-                if (renderCell) {
+                <th
+                  scope="row"
+                  className={cn(
+                    ROW_HEIGHT,
+                    "rounded-md border border-border/60 bg-muted/40 px-2 text-right align-middle text-xs font-medium text-foreground/80 tabular-nums",
+                  )}
+                >
+                  {rowLabel}
+                </th>
+                {columns.map((column) => {
+                  if (renderCell) {
+                    return (
+                      <td key={column.key} className="p-0 align-middle">
+                        {renderCell(column.key, hour)}
+                      </td>
+                    );
+                  }
+                  const pending = isPending(column.key, hour);
+                  const status = pending ? marker : statusAt(column.key, hour);
+                  const defaulted =
+                    !pending && isDefaulted?.(column.key, hour) === true;
                   return (
                     <td key={column.key} className="p-0 align-middle">
-                      {renderCell(column.key, hour)}
+                      <button
+                        type="button"
+                        disabled={!editable}
+                        aria-label={`${column.label} ${
+                          hourLabelFor
+                            ? hourLabelFor(column.key, hour)
+                            : hourLabel(hour)
+                        } — ${
+                          status ? t(`status.${status}`) : t("status.unset")
+                        }`}
+                        className={cn(
+                          // `block`, not the default inline-block: an inline
+                          // button sits on the cell's text baseline, which adds
+                          // descender space below it and knocks the slots out of
+                          // line with the hour labels.
+                          ROW_HEIGHT,
+                          "block w-full rounded-[4px] transition-colors",
+                          status ? STATUS_CLASS[status] : UNSET_CLASS,
+                          editable &&
+                            (marker ? STATUS_HOVER[marker] : "hover:bg-muted"),
+                          // A dimmed cell was never set for this date; it is
+                          // showing through from the typical week, and any paint
+                          // replaces it.
+                          defaulted && "opacity-55",
+                          editable ? "cursor-pointer" : "cursor-default",
+                        )}
+                        onPointerDown={() => beginDrag(column.key, hour)}
+                        onPointerEnter={() => extendDrag(column.key, hour)}
+                      />
                     </td>
                   );
-                }
-                const pending = isPending(column.key, hour);
-                const status = pending ? marker : statusAt(column.key, hour);
-                const defaulted =
-                  !pending && isDefaulted?.(column.key, hour) === true;
-                return (
-                  <td key={column.key} className="p-0 align-middle">
-                    <button
-                      type="button"
-                      disabled={!editable}
-                      aria-label={`${column.label} ${hourLabel(hour)} — ${
-                        status ? t(`status.${status}`) : t("status.unset")
-                      }`}
-                      className={cn(
-                        // `block`, not the default inline-block: an inline
-                        // button sits on the cell's text baseline, which adds
-                        // descender space below it and knocks the slots out of
-                        // line with the hour labels.
-                        ROW_HEIGHT,
-                        "block w-full rounded-[4px] transition-colors",
-                        status ? STATUS_CLASS[status] : UNSET_CLASS,
-                        editable &&
-                          (marker ? STATUS_HOVER[marker] : "hover:bg-muted"),
-                        // A dimmed cell was never set for this date; it is
-                        // showing through from the typical week, and any paint
-                        // replaces it.
-                        defaulted && "opacity-55",
-                        editable ? "cursor-pointer" : "cursor-default",
-                      )}
-                      onPointerDown={() => beginDrag(column.key, hour)}
-                      onPointerEnter={() => extendDrag(column.key, hour)}
-                    />
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -59,6 +59,13 @@
     "light": "Switch to light theme",
     "dark": "Switch to dark theme"
   },
+  "timezone": {
+    "label": "Time zone",
+    "hint": "Change the zone times are shown in",
+    "description": "Times are shown in this zone. Availability stays anchored to the team's zone, so switching does not move anyone's markers.",
+    "teamTag": "Team",
+    "makeDefault": "Make {zone} the team default"
+  },
   "ingameRoles": {
     "classic": "Classic",
     "expanded": "Expanded",

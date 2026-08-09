@@ -253,6 +253,10 @@ Reached from the Schedule / Availability switch at the top of the page.
       falls back to, resolved per hour
 - [x] "Everyone" view counting how many are free each hour, solid where
       the whole roster is available
+- [x] Time zones — staff set the team's zone, anyone can view times in
+      another; availability stays anchored to the team's zone so nobody's
+      markers move. Applies to the schedule as well.
+- [x] Clear all, and a marker bar pinned to the top while you scroll
 - [ ] Suggest scrim slots from the overlap (create an event straight from
       a full-house hour)
 - [ ] Month summary view (one rolled-up colour per day)

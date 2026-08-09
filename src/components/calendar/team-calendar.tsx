@@ -13,6 +13,10 @@ import ruLocale from "@fullcalendar/core/locales/ru";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
+// FullCalendar only understands "local" and "UTC" on its own; named IANA zones
+// need a plugin. Luxon reads zone data from the browser's Intl rather than
+// shipping its own database.
+import luxonPlugin from "@fullcalendar/luxon3";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { Plus, Trash2 } from "lucide-react";
@@ -41,6 +45,7 @@ import {
 } from "@/hooks/use-chill-days";
 import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
 import { useMembers } from "@/hooks/use-team";
+import { useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import {
   buildClearPlan,
@@ -132,6 +137,7 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
   const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
 
   const { data: members } = useMembers();
+  const { viewZone } = useZones();
   // Ids that no longer resolve to a bench member are simply untagged — the
   // column has no foreign key, so a removed player can leave one behind.
   const benchRoleOf = useMemo(() => {
@@ -257,7 +263,13 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
 
       <FullCalendar
         ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        plugins={[
+          dayGridPlugin,
+          timeGridPlugin,
+          interactionPlugin,
+          luxonPlugin,
+        ]}
+        timeZone={viewZone}
         locale={locale === "ru" ? ruLocale : enGbLocale}
         initialView="timeGridWeek"
         headerToolbar={{

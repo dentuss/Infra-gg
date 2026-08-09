@@ -48,7 +48,7 @@ export function CalendarSections({
       {section === "schedule" ? (
         <TeamCalendar canManage={canManage} />
       ) : (
-        <AvailabilityPanel userId={userId} />
+        <AvailabilityPanel userId={userId} canManage={canManage} />
       )}
     </div>
   );
