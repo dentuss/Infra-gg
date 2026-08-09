@@ -197,6 +197,10 @@ export function AvailabilityPanel({
     );
   }
 
+  // A rejected zone write used to fail silently, which is exactly how the
+  // missing column grant went unnoticed.
+  const zoneError = setOwnZone.error ?? setTeamZone.error;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -365,6 +369,12 @@ export function AvailabilityPanel({
           </>
         )}
       </div>
+
+      {zoneError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {t("zoneError", { message: zoneError.message })}
+        </p>
+      ) : null}
 
       <AvailabilityDefaultsDialog
         open={defaultsOpen}

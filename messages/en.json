@@ -64,7 +64,9 @@
     "hint": "Change the zone times are shown in",
     "description": "Times are shown in this zone. Availability stays anchored to the team's zone, so switching does not move anyone's markers.",
     "teamTag": "Team",
-    "makeDefault": "Make {zone} the team default"
+    "makeDefault": "Make {zone} the team default",
+    "teamLabel": "Team time zone",
+    "teamDescription": "The zone the team schedules in. Availability hours are anchored to it, so changing this relabels everyone's grid — it does not move anyone's markers."
   },
   "ingameRoles": {
     "classic": "Classic",
@@ -208,7 +210,8 @@
     "clearWeekTitle": "Clear this week?",
     "clearWeekDescription": "Removes every marker you set for {week}. Hours from your typical week will show through again.",
     "clearDefaultsTitle": "Clear your typical week?",
-    "clearDefaultsDescription": "Removes every default hour. Dates you have marked explicitly are not affected."
+    "clearDefaultsDescription": "Removes every default hour. Dates you have marked explicitly are not affected.",
+    "zoneError": "Could not save the time zone: {message}"
   },
   "team": {
     "metaTitle": "Team",
