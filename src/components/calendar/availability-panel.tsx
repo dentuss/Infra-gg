@@ -146,6 +146,21 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
     [mutateAvailability, marker],
   );
 
+  // Wipes only the week on screen, not the player's whole history.
+  const onClearAll = useCallback(
+    () =>
+      mutateAvailability(
+        days.flatMap((date) =>
+          DAY_HOURS.map((hour) => ({
+            day: dateToKey(date),
+            hour,
+            status: null,
+          })),
+        ),
+      ),
+    [mutateAvailability, days],
+  );
+
   const shortDate = (date: Date) =>
     date.toLocaleDateString(formattingLocale(locale), {
       day: "numeric",
@@ -232,7 +247,15 @@ export function AvailabilityPanel({ userId }: { userId: string | null }) {
         </div>
       </div>
 
-      {editable ? <MarkerPicker value={marker} onChange={setMarker} /> : null}
+      {editable ? (
+        <MarkerPicker
+          value={marker}
+          onChange={setMarker}
+          onClearAll={onClearAll}
+          clearAllTitle={t("clearWeekTitle")}
+          clearAllDescription={t("clearWeekDescription", { week: weekLabel })}
+        />
+      ) : null}
 
       {isPending ? (
         <p className="text-sm text-muted-foreground">{t("loading")}</p>
