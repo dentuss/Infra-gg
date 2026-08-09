@@ -118,6 +118,7 @@ export type Database = {
           recur_until: string | null;
           recurs_weekly: boolean;
           starts_at: string;
+          substitute_ids: string[];
           title: string;
           type: Database["public"]["Enums"]["event_type"];
           updated_at: string;
@@ -133,6 +134,7 @@ export type Database = {
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at: string;
+          substitute_ids?: string[];
           title: string;
           type?: Database["public"]["Enums"]["event_type"];
           updated_at?: string;
@@ -148,6 +150,7 @@ export type Database = {
           recur_until?: string | null;
           recurs_weekly?: boolean;
           starts_at?: string;
+          substitute_ids?: string[];
           title?: string;
           type?: Database["public"]["Enums"]["event_type"];
           updated_at?: string;

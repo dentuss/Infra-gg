@@ -2,9 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
+import { ClashWarning } from "@/components/calendar/clash-warning";
+import { SubstitutePicker } from "@/components/calendar/substitute-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -26,13 +28,31 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useAvailabilityDefaults,
+  useWeekAvailability,
+} from "@/hooks/use-availability";
+import {
   useCreateEvent,
   useDeleteEvent,
   useExcludeOccurrence,
   useUpdateEventForm,
 } from "@/hooks/use-events";
+import { useMembers } from "@/hooks/use-team";
 import { formattingLocale } from "@/i18n/config";
-import { isoToDateValue, isoToTimeValue, type EventRow } from "@/lib/events";
+import {
+  addDays,
+  buildAvailabilityLookup,
+  dateToKey,
+  startOfWeek,
+  weekdayIndex,
+} from "@/lib/availability";
+import { findClashes, hasBlockingClash } from "@/lib/event-clashes";
+import {
+  combineDateAndTimes,
+  isoToDateValue,
+  isoToTimeValue,
+  type EventRow,
+} from "@/lib/events";
 import {
   createEventSchema,
   type EventFormValues,
@@ -72,6 +92,7 @@ function initialValues(state: EventDialogState): EventFormValues {
       description: state.event.description ?? "",
       recursWeekly: state.event.recurs_weekly,
       recurUntil: state.event.recur_until ?? "",
+      substituteIds: state.event.substitute_ids,
     };
   }
 
@@ -95,6 +116,7 @@ function initialValues(state: EventDialogState): EventFormValues {
     description: "",
     recursWeekly: false,
     recurUntil: "",
+    substituteIds: [],
   };
 }
 
@@ -133,6 +155,58 @@ export function EventDialog({
     control: form.control,
     name: "recursWeekly",
   });
+
+  // The clash check reads these as they change, so the warning tracks the form.
+  const [date, startTime, endTime, substituteIds] = useWatch({
+    control: form.control,
+    name: ["date", "startTime", "endTime", "substituteIds"],
+  });
+
+  const { data: members } = useMembers();
+  // Availability is stored per night, and a late event rolls onto the previous
+  // day's column, so fetch the whole week the date falls in.
+  const weekStart = date
+    ? dateToKey(startOfWeek(new Date(`${date}T00:00:00`)))
+    : null;
+  const { data: availabilityRows } = useWeekAvailability(
+    weekStart ?? "",
+    weekStart ? dateToKey(addDays(new Date(`${weekStart}T00:00:00`), 6)) : "",
+  );
+  const { data: availabilityDefaults } = useAvailabilityDefaults();
+
+  const clashes = useMemo(() => {
+    if (!date || !startTime || !endTime || !members) return [];
+    const { start, end } = combineDateAndTimes(date, startTime, endTime);
+    const lookup = buildAvailabilityLookup(
+      availabilityRows ?? [],
+      availabilityDefaults ?? [],
+      (day) => weekdayIndex(new Date(`${day}T00:00:00`)),
+    );
+    return findClashes({
+      starts: start,
+      ends: end,
+      members,
+      substituteIds: substituteIds ?? [],
+      lookup,
+    });
+  }, [
+    date,
+    startTime,
+    endTime,
+    members,
+    substituteIds,
+    availabilityRows,
+    availabilityDefaults,
+  ]);
+
+  const blocked = hasBlockingClash(clashes);
+  // Re-arm the confirmation whenever the clash set changes, so moving the time
+  // and hitting a *different* clash cannot slip through an earlier override.
+  const clashKey = clashes
+    .map((clash) => `${clash.userId}:${clash.status}:${clash.hours.join(",")}`)
+    .join("|");
+  const [overriddenKey, setOverriddenKey] = useState<string | null>(null);
+  const needsConfirm = blocked && overriddenKey !== clashKey;
   const pending =
     createEvent.isPending ||
     updateEvent.isPending ||
@@ -145,6 +219,10 @@ export function EventDialog({
     excludeOccurrence.error;
 
   const onSubmit = form.handleSubmit(async (values) => {
+    if (needsConfirm) {
+      setOverriddenKey(clashKey);
+      return;
+    }
     if (state.event) {
       await updateEvent.mutateForm(state.event.id, values);
     } else {
@@ -329,7 +407,21 @@ export function EventDialog({
                 {...form.register("description")}
               />
             </div>
+            <Controller
+              control={form.control}
+              name="substituteIds"
+              render={({ field }) => (
+                <SubstitutePicker
+                  members={members ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={readOnly || pending}
+                />
+              )}
+            />
           </fieldset>
+
+          {clashes.length > 0 ? <ClashWarning clashes={clashes} /> : null}
 
           {mutationError ? (
             <p role="alert" className="text-sm text-destructive">
@@ -376,8 +468,18 @@ export function EventDialog({
               {readOnly ? t("close") : t("cancel")}
             </Button>
             {!readOnly ? (
-              <Button type="submit" disabled={pending}>
-                {pending ? t("saving") : state.event ? t("save") : t("create")}
+              <Button
+                type="submit"
+                disabled={pending}
+                variant={needsConfirm ? "destructive" : "default"}
+              >
+                {pending
+                  ? t("saving")
+                  : needsConfirm
+                    ? t("scheduleAnyway")
+                    : state.event
+                      ? t("save")
+                      : t("create")}
               </Button>
             ) : null}
           </DialogFooter>

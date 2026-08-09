@@ -46,6 +46,7 @@ function toEventColumns(values: EventFormValues) {
     recurs_weekly: values.recursWeekly,
     recur_until:
       values.recursWeekly && values.recurUntil ? values.recurUntil : null,
+    substitute_ids: values.substituteIds,
   };
 }
 

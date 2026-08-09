@@ -115,7 +115,10 @@ export function expandEventsForRange(
     const base: EventInput = {
       title: event.title,
       classNames: [`event-${event.type}`],
-      extendedProps: { description: event.description },
+      extendedProps: {
+        description: event.description,
+        substituteIds: event.substitute_ids,
+      },
     };
 
     if (!event.recurs_weekly) {
