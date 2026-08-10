@@ -66,7 +66,8 @@
     "teamTag": "Team",
     "makeDefault": "Make {zone} the team default",
     "teamLabel": "Team time zone",
-    "teamDescription": "The zone the team schedules in. Availability hours are anchored to it, so changing this relabels everyone's grid — it does not move anyone's markers."
+    "teamDescription": "The zone the team schedules in. Availability hours are anchored to it, so changing this relabels everyone's grid — it does not move anyone's markers.",
+    "teamTime": "Team time"
   },
   "ingameRoles": {
     "classic": "Classic",
