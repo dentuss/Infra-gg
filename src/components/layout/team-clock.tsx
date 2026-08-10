@@ -4,6 +4,11 @@ import { DateTime } from "luxon";
 import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTeamZone } from "@/hooks/use-timezone";
 import { FALLBACK_ZONE, zoneAbbreviation } from "@/lib/timezone";
 
@@ -57,17 +62,30 @@ export function TeamClock() {
   );
   const now = minute === null ? null : new Date(minute * 60_000);
 
+  const time = now
+    ? DateTime.fromJSDate(now, { zone }).toFormat("HH:mm")
+    : "--:--";
+  const abbreviation = zoneAbbreviation(zone, now ?? undefined);
+
   return (
-    <div className="flex items-baseline justify-between gap-2 px-2 py-1 text-xs">
-      <span className="text-muted-foreground">{t("teamTime")}</span>
-      <span className="flex items-baseline gap-1.5">
-        <span className="font-medium tabular-nums">
-          {now ? DateTime.fromJSDate(now, { zone }).toFormat("HH:mm") : "--:--"}
-        </span>
-        <span className="text-[0.65rem] font-semibold text-muted-foreground">
-          {zoneAbbreviation(zone, now ?? undefined)}
-        </span>
-      </span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          // tabIndex so the hint is reachable by keyboard, and aria-label so it
+          // is not the only way to learn whose time this is.
+          <span
+            tabIndex={0}
+            aria-label={`${t("teamTime")}: ${time} ${abbreviation}`}
+            className="flex w-fit items-baseline gap-1.5 rounded-md px-2 py-1 text-xs"
+          >
+            <span className="font-medium tabular-nums">{time}</span>
+            <span className="text-[0.65rem] font-semibold text-muted-foreground">
+              {abbreviation}
+            </span>
+          </span>
+        }
+      />
+      <TooltipContent side="right">{t("teamTime")}</TooltipContent>
+    </Tooltip>
   );
 }
