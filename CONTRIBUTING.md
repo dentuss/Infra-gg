@@ -169,6 +169,16 @@ Open a PR from `dev` into `master`. Title it like a release, e.g.
 `feat: availability, substitutes and time zones`. Merge it. Vercel deploys
 production.
 
+**Bump `version` in `package.json` in that PR.** Pushing to `master` with a
+version that has no tag yet makes the Release workflow tag it and write release
+notes from the merged pull requests — which is why PR titles have to be
+Conventional Commits. Promoting without bumping is a no-op, not an error, so a
+hotfix that does not deserve a release simply does not get one.
+
+Semver, loosely: `feat` in the release means a minor bump, only fixes means a
+patch, and `!` anywhere means major. The running version is shown at the bottom
+of the sidebar with its commit, so "what are you on?" has an answer.
+
 **If the release includes a migration, apply it to the production database
 before merging** — see [Migrations](#migrations).
 

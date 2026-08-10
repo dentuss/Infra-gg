@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import { AppVersion } from "@/components/layout/app-version";
 import { EnvironmentBadge } from "@/components/layout/environment-badge";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { NavMain } from "@/components/layout/nav-main";
@@ -48,6 +49,7 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
       </SidebarContent>
 
       <SidebarFooter>
+        <AppVersion />
         <TeamClock />
         <div className="flex items-center justify-between gap-2 px-2">
           <LocaleSwitcher />

@@ -59,6 +59,11 @@
     "light": "Светлая тема",
     "dark": "Тёмная тема"
   },
+  "version": {
+    "label": "Сборка {version}",
+    "local": "Версия {version}, локальный запуск",
+    "withCommit": "Версия {version}, сборка {commit}"
+  },
   "environment": {
     "preview": "Стейджинг",
     "development": "Локально",
