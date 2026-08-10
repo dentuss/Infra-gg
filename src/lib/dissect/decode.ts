@@ -4,7 +4,7 @@
 // browser. Replay bytes never leave the client.
 
 import type { RoundRaw } from "@/lib/dissect/report";
-import { createClient } from "@/lib/supabase/client";
+import { createAssetClient } from "@/lib/supabase/assets";
 
 declare global {
   interface Window {
@@ -35,7 +35,8 @@ async function init(): Promise<void> {
   await loadScript("/wasm/wasm_exec.js");
   if (!window.Go) throw new Error("WASM runtime did not load");
 
-  const { publicUrl } = createClient()
+  // The decoder is a shared read-only asset, like the blueprints.
+  const { publicUrl } = createAssetClient()
     .storage.from("tools")
     .getPublicUrl(WASM_OBJECT).data;
   const res = await fetch(publicUrl);
