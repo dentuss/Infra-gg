@@ -140,6 +140,12 @@ Documents (Phase 5) is the next untouched phase.
 - [x] Configure Vercel deployment (Git integration)
 - [x] Deploy on merge to master
 - [x] Verify deployment status (production live at infra-gg.vercel.app)
+- [x] Branch model: `<type>/<slug>` → `dev` → `master`, with epic branches
+      named for the feature when one is too big for a single review
+- [ ] Staging environment — `dev` deploys to
+      infra-gg-git-dev-team-ventus.vercel.app against a separate
+      `infragg-dev` Supabase project (code ready; needs the project
+      created and Vercel Preview env vars set — see CONTRIBUTING.md)
 
 ---
 

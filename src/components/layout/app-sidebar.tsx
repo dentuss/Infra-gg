@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import { EnvironmentBadge } from "@/components/layout/environment-badge";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { NavMain } from "@/components/layout/nav-main";
 import { TeamClock } from "@/components/layout/team-clock";
@@ -29,12 +30,15 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-3">
-        <Link
-          href="/dashboard"
-          className="truncate text-lg font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
-        >
-          {teamName}
-        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="truncate text-lg font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
+          >
+            {teamName}
+          </Link>
+          <EnvironmentBadge />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
