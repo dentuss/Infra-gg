@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { resolveAssetOrigin } from "@/lib/asset-origin";
+import { BARE_ORIGIN_MESSAGE, isBareOrigin } from "@/lib/supabase-url";
 
 /**
  * Which deployment this build is. Vercel sets VERCEL_ENV per environment but
@@ -15,7 +16,7 @@ export const APP_ENVS = ["production", "preview", "development"] as const;
 export type AppEnv = (typeof APP_ENVS)[number];
 
 const envSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url(),
+  NEXT_PUBLIC_SUPABASE_URL: z.url().refine(isBareOrigin, BARE_ORIGIN_MESSAGE),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_APP_ENV: z.enum(APP_ENVS).default("development"),
 
@@ -24,7 +25,10 @@ const envSchema = z.object({
   // everything else", which is what production and a normal local setup want.
   // Staging points these at production so it does not need its own 755 MB copy
   // of the blueprints, which would not fit in a free project anyway.
-  NEXT_PUBLIC_ASSET_SUPABASE_URL: z.url().optional(),
+  NEXT_PUBLIC_ASSET_SUPABASE_URL: z
+    .url()
+    .refine(isBareOrigin, BARE_ORIGIN_MESSAGE)
+    .optional(),
   NEXT_PUBLIC_ASSET_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
 });
 
