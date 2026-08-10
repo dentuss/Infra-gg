@@ -4,6 +4,7 @@ How work gets from your machine to the team.
 
 - [The short version](#the-short-version)
 - [The three branches](#the-three-branches)
+- [Branch protection](#branch-protection)
 - [Worked examples](#worked-examples)
 - [Naming things](#naming-things)
 - [Checks](#checks)
@@ -81,6 +82,29 @@ request nobody can review in one sitting.
 
 ---
 
+### Branch protection
+
+`master` and `dev` are protected by rulesets, so the model above is enforced
+rather than merely agreed:
+
+|                                            | `master`       | `dev`    |
+| ------------------------------------------ | -------------- | -------- |
+| Pull request required                       | yes            | no       |
+| Required approvals                          | 0 — see below  | —        |
+| Status check `Typecheck, lint, and build`   | required       | required |
+| Branch must be up to date before merging    | yes            | —        |
+| Force pushes                                | blocked        | blocked  |
+| Deletion                                    | blocked        | blocked  |
+
+**Required approvals is deliberately `0`.** GitHub will not let you approve your
+own pull request, so any higher number deadlocks a one-person team. Zero still
+gives the protection that matters: nothing reaches `master` except through a
+pull request with green CI. Raise it the day someone else can review.
+
+A repository admin sits on `master`'s bypass list as an escape hatch. That is a
+break-glass affordance, not a workflow — using it skips CI and review and
+deploys straight to the team.
+
 ## Worked examples
 
 ### A small fix
@@ -144,6 +168,16 @@ git checkout dev && git pull
 Open a PR from `dev` into `master`. Title it like a release, e.g.
 `feat: availability, substitutes and time zones`. Merge it. Vercel deploys
 production.
+
+**Bump `version` in `package.json` in that PR.** Pushing to `master` with a
+version that has no tag yet makes the Release workflow tag it and write release
+notes from the merged pull requests — which is why PR titles have to be
+Conventional Commits. Promoting without bumping is a no-op, not an error, so a
+hotfix that does not deserve a release simply does not get one.
+
+Semver, loosely: `feat` in the release means a minor bump, only fixes means a
+patch, and `!` anywhere means major. The running version is shown at the bottom
+of the sidebar with its commit, so "what are you on?" has an answer.
 
 **If the release includes a migration, apply it to the production database
 before merging** — see [Migrations](#migrations).
@@ -267,28 +301,34 @@ Staging is **not live yet**. Until it is, PR previews and the `dev` deployment
 still read and write the **production** database — so don't treat them as a
 sandbox.
 
-### The blocker worth knowing about first
+### How staging gets its blueprints
 
-The `strategy` bucket holds **662 objects, ~755 MB** — the blueprint renders,
-mostly. Supabase's free tier gives **1 GB per project**. So "copy the assets to
-staging" would consume three quarters of the free quota and mean re-uploading
-662 files by hand, since they were added through the dashboard originally.
+Staging does **not** hold its own copy. The `strategy` bucket is **662 objects,
+~755 MB** — mostly blueprint renders — and a free Supabase project gets **1 GB**
+in total, so copying it would eat three quarters of the quota and mean
+re-uploading 662 files by hand.
 
-Three ways out, in the order I'd consider them:
+Instead, staging reads the shared assets straight from production. Blueprints,
+gadget icons and `dissect.wasm` are public, read-only and byte-identical in
+every environment, so there is nothing to gain from duplicating them. Setting
 
-1. **Share the read-only assets with production** (needs a small code change,
-   not yet written). Blueprints, gadget icons and `dissect.wasm` are public,
-   read-only, and byte-identical in every environment — there is no reason for
-   staging to hold its own copy. An `NEXT_PUBLIC_ASSET_SUPABASE_URL` pointing at
-   production would let staging read them while writing its data to
-   `infragg-dev`. Per-environment content (`thumbnails/`, `imports/`, avatars)
-   would still live in the staging project.
-2. **Upload one map's blueprints only.** Staging works for that map; the rest
-   show broken images. Fine if you only ever test one map.
-3. **Skip storage entirely.** The database side of staging works; the board
-   shows no blueprints. Fine for testing the calendar, useless for the board.
+```
+NEXT_PUBLIC_ASSET_SUPABASE_URL=<production URL>
+NEXT_PUBLIC_ASSET_SUPABASE_PUBLISHABLE_KEY=<production publishable key>
+```
 
-Nothing below depends on which you choose — do the database first.
+points those reads at production while everything else — the database,
+thumbnails, `.pptx` import media, avatars — stays in `infragg-dev`.
+
+Leave both unset and assets come from the same project as the data, which is
+what production and a local setup want. They must be set **together**: a URL
+without its key would authenticate against the wrong project, so a half-set pair
+is ignored.
+
+The client used for these reads never carries a session, so it cannot act as the
+signed-in user against a project that is not this environment's. It does not
+need one: the `strategy` bucket's SELECT policy is granted to `public` and
+`tools` is a public bucket.
 
 ### 1. Create the project
 
@@ -317,6 +357,8 @@ to **Preview only** — leave the existing Production values alone:
 | `NEXT_PUBLIC_SUPABASE_URL`             | the `infragg-dev` URL    |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the `infragg-dev` key    |
 | `NEXT_PUBLIC_APP_ENV`                  | `preview`                |
+| `NEXT_PUBLIC_ASSET_SUPABASE_URL`             | the **production** URL |
+| `NEXT_PUBLIC_ASSET_SUPABASE_PUBLISHABLE_KEY` | the **production** key |
 
 Then add one scoped to **Production**:
 
@@ -375,11 +417,31 @@ Run `npm run format` and commit the result.
 **"Staging shows production data."** Step 3 above isn't done yet. That's
 expected until it is.
 
+**"Staging has no blueprints."** The two `NEXT_PUBLIC_ASSET_SUPABASE_*`
+variables are unset or only half set, so asset reads fall back to
+`infragg-dev`, which holds no blueprints. Both must be present.
+
+**"Sign-in on staging 404s."** A Supabase URL with a path. Both
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_ASSET_SUPABASE_URL` must be the
+**bare project URL** — `https://<ref>.supabase.co` — because the client appends
+its own `/auth/v1/…`, `/rest/v1/…` and `/storage/v1/…`. Paste the REST endpoint
+by mistake and you get `/rest/v1/auth/v1/token`, which answers 404 with no clue
+why. The build now refuses such a value outright, so a build failure naming
+`NEXT_PUBLIC_SUPABASE_URL` means exactly this.
+
 **"Staging returns connection errors."** The free project has paused. Open its
 dashboard.
 
 **"The amber badge says LOCAL but I'm on staging."** `NEXT_PUBLIC_APP_ENV` isn't
 set for the Preview environment in Vercel.
+
+**"GitHub refuses my push to `master` or `dev`."** Working as intended — see
+[Branch protection](#branch-protection). Open a pull request instead.
+
+**"My own pull request will not merge, it wants an approval."** Required
+approvals is above zero. GitHub does not let you approve your own pull request,
+so on a one-person team that is a deadlock: set it back to `0`, or add yourself
+to the ruleset's bypass list.
 
 ---
 
@@ -399,10 +461,11 @@ fix, a chore and a refactor, which would have split it across four parents. They
 also never die, so they drift from `dev` and need constant back-merging. The
 type is already stated by the branch name and the commit prefix.
 
-**Why is `master` not write-protected?** Branch protection needs a paid GitHub
-plan on a private repository. It's £-per-month cheap if you ever want it; until
-then the rule is convention, and a direct push to `master` skips CI, skips
-review and deploys straight to the team.
+**Why is the branch model enforced by GitHub now?** It used to be convention
+only — protection needs a paid plan on a *private* repository. The repo is
+public and the account is an organization on Team, so rulesets are available and
+active. Protection on a public repository is free on every plan; Team is what
+buys org-level rulesets, required reviewers and bypass lists.
 
 **Why a separate Supabase project rather than Supabase's branching?** Branching
 is a Pro feature. Two free projects cost nothing and give the same isolation,

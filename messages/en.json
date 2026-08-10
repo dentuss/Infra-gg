@@ -59,6 +59,11 @@
     "light": "Switch to light theme",
     "dark": "Switch to dark theme"
   },
+  "version": {
+    "label": "Build {version}",
+    "local": "Version {version}, running locally",
+    "withCommit": "Version {version}, build {commit}"
+  },
   "environment": {
     "preview": "Staging",
     "development": "Local",
