@@ -2,7 +2,7 @@
 
 import { Check, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +54,9 @@ export function TimezonePicker({
   compact?: boolean;
 }) {
   const t = useTranslations("timezone");
+  // Controlled, because a Popover is not a menu: picking an item does not
+  // dismiss it on its own the way a Select would.
+  const [open, setOpen] = useState(false);
 
   // Any zone already in use is offered even if it is not on the curated list,
   // so a hand-set value never disappears from the menu.
@@ -65,7 +68,7 @@ export function TimezonePicker({
   }, [teamZone, viewZone]);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
@@ -94,7 +97,10 @@ export function TimezonePicker({
               <li key={zone}>
                 <button
                   type="button"
-                  onClick={() => onSelect(zone === teamZone ? null : zone)}
+                  onClick={() => {
+                    onSelect(zone === teamZone ? null : zone);
+                    setOpen(false);
+                  }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
                     selected && "font-medium",
@@ -127,7 +133,10 @@ export function TimezonePicker({
               variant="ghost"
               size="sm"
               className="w-full justify-start text-xs"
-              onClick={() => onMakeTeamDefault(viewZone)}
+              onClick={() => {
+                onMakeTeamDefault(viewZone);
+                setOpen(false);
+              }}
             >
               {t("makeDefault", { zone: zoneCityName(viewZone) })}
             </Button>

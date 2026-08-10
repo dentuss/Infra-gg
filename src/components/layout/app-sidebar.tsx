@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { NavMain } from "@/components/layout/nav-main";
+import { TeamClock } from "@/components/layout/team-clock";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export async function AppSidebar({ profile }: { profile: Profile }) {
       </SidebarContent>
 
       <SidebarFooter>
+        <TeamClock />
         <div className="flex items-center justify-between gap-2 px-2">
           <LocaleSwitcher />
           <ThemeToggle initialTheme={theme} />

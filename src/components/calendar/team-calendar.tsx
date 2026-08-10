@@ -27,6 +27,7 @@ import {
   EventDialog,
   type EventDialogState,
 } from "@/components/calendar/event-dialog";
+import { TimezonePicker } from "@/components/calendar/timezone-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +46,7 @@ import {
 } from "@/hooks/use-chill-days";
 import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
 import { useMembers } from "@/hooks/use-team";
-import { useZones } from "@/hooks/use-timezone";
+import { useSetOwnZone, useSetTeamZone, useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import {
   buildClearPlan,
@@ -137,7 +138,9 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
   const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
 
   const { data: members } = useMembers();
-  const { viewZone } = useZones();
+  const { teamZone, viewZone } = useZones();
+  const setOwnZone = useSetOwnZone();
+  const setTeamZone = useSetTeamZone();
   // Ids that no longer resolve to a bench member are simply untagged — the
   // column has no foreign key, so a removed player can leave one behind.
   const benchRoleOf = useMemo(() => {
@@ -245,20 +248,30 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
         <p className="text-sm text-muted-foreground">
           {isPending ? t("loading") : canManage ? t("hint") : t("hintReadOnly")}
         </p>
-        {canManage ? (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="destructive"
-              disabled={clearPlan.totalCount === 0}
-              onClick={() => setClearOpen(true)}
-            >
-              <Trash2 /> {t("clearButton", { range: rangeNoun })}
-            </Button>
-            <Button onClick={() => openCreate(null)}>
-              <Plus /> {t("newEvent")}
-            </Button>
-          </div>
-        ) : null}
+        <div className="flex items-center gap-2">
+          <TimezonePicker
+            teamZone={teamZone}
+            viewZone={viewZone}
+            onSelect={(zone) => setOwnZone.mutate(zone)}
+            onMakeTeamDefault={
+              canManage ? (zone) => setTeamZone.mutate(zone) : undefined
+            }
+          />
+          {canManage ? (
+            <>
+              <Button
+                variant="destructive"
+                disabled={clearPlan.totalCount === 0}
+                onClick={() => setClearOpen(true)}
+              >
+                <Trash2 /> {t("clearButton", { range: rangeNoun })}
+              </Button>
+              <Button onClick={() => openCreate(null)}>
+                <Plus /> {t("newEvent")}
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
 
       <FullCalendar
