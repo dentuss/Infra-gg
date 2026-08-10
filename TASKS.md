@@ -119,7 +119,9 @@ Documents (Phase 5) is the next untouched phase.
 ## GitHub
 
 - [x] Push repository
-- [ ] Protect master branch ⏸ (requires GitHub Pro for private repositories)
+- [x] Protect master and dev with rulesets — pull request required into
+      master, CI status check required on both, force pushes and deletion
+      blocked (free on a public repository)
 - [x] Configure Issue Templates
 - [x] Configure Pull Request Template
 

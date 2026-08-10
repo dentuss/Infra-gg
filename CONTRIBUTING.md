@@ -4,6 +4,7 @@ How work gets from your machine to the team.
 
 - [The short version](#the-short-version)
 - [The three branches](#the-three-branches)
+- [Branch protection](#branch-protection)
 - [Worked examples](#worked-examples)
 - [Naming things](#naming-things)
 - [Checks](#checks)
@@ -80,6 +81,29 @@ Most work never needs this. Reach for it only when the alternative is a pull
 request nobody can review in one sitting.
 
 ---
+
+### Branch protection
+
+`master` and `dev` are protected by rulesets, so the model above is enforced
+rather than merely agreed:
+
+|                                            | `master`       | `dev`    |
+| ------------------------------------------ | -------------- | -------- |
+| Pull request required                       | yes            | no       |
+| Required approvals                          | 0 — see below  | —        |
+| Status check `Typecheck, lint, and build`   | required       | required |
+| Branch must be up to date before merging    | yes            | —        |
+| Force pushes                                | blocked        | blocked  |
+| Deletion                                    | blocked        | blocked  |
+
+**Required approvals is deliberately `0`.** GitHub will not let you approve your
+own pull request, so any higher number deadlocks a one-person team. Zero still
+gives the protection that matters: nothing reaches `master` except through a
+pull request with green CI. Raise it the day someone else can review.
+
+A repository admin sits on `master`'s bypass list as an escape hatch. That is a
+break-glass affordance, not a workflow — using it skips CI and review and
+deploys straight to the team.
 
 ## Worked examples
 
@@ -401,6 +425,14 @@ dashboard.
 **"The amber badge says LOCAL but I'm on staging."** `NEXT_PUBLIC_APP_ENV` isn't
 set for the Preview environment in Vercel.
 
+**"GitHub refuses my push to `master` or `dev`."** Working as intended — see
+[Branch protection](#branch-protection). Open a pull request instead.
+
+**"My own pull request will not merge, it wants an approval."** Required
+approvals is above zero. GitHub does not let you approve your own pull request,
+so on a one-person team that is a deadlock: set it back to `0`, or add yourself
+to the ruleset's bypass list.
+
 ---
 
 ## Why it is shaped this way
@@ -419,10 +451,11 @@ fix, a chore and a refactor, which would have split it across four parents. They
 also never die, so they drift from `dev` and need constant back-merging. The
 type is already stated by the branch name and the commit prefix.
 
-**Why is `master` not write-protected?** Branch protection needs a paid GitHub
-plan on a private repository. It's £-per-month cheap if you ever want it; until
-then the rule is convention, and a direct push to `master` skips CI, skips
-review and deploys straight to the team.
+**Why is the branch model enforced by GitHub now?** It used to be convention
+only — protection needs a paid plan on a *private* repository. The repo is
+public and the account is an organization on Team, so rulesets are available and
+active. Protection on a public repository is free on every plan; Team is what
+buys org-level rulesets, required reviewers and bypass lists.
 
 **Why a separate Supabase project rather than Supabase's branching?** Branching
 is a Pro feature. Two free projects cost nothing and give the same isolation,
