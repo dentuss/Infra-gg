@@ -7,7 +7,7 @@ import {
   titleize,
   type BlueprintMap,
 } from "@/lib/strategy";
-import { createClient } from "@/lib/supabase/client";
+import { createAssetClient } from "@/lib/supabase/assets";
 
 const IMAGE_EXTENSION = /\.(png|jpe?g|webp|svg)$/i;
 
@@ -18,7 +18,7 @@ export function useBoardIcons() {
     queryKey: ["board", "icons"],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<BoardIcon[]> => {
-      const supabase = createClient();
+      const supabase = createAssetClient();
       const { data, error } = await supabase.storage
         .from("strategy")
         .list("icons", {
@@ -40,7 +40,7 @@ export function useBoardIcons() {
 }
 
 type SupabaseStorage = ReturnType<
-  ReturnType<typeof createClient>["storage"]["from"]
+  ReturnType<typeof createAssetClient>["storage"]["from"]
 >;
 
 // Blueprints live under blueprints/<Map>/<Author>/<file>, so the flat list has
@@ -72,7 +72,7 @@ export function useBlueprintMaps() {
     queryKey: ["board", "blueprints"],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<BlueprintMap[]> => {
-      const supabase = createClient();
+      const supabase = createAssetClient();
       const storage = supabase.storage.from("strategy");
       const files = await listBlueprintFiles(storage, "blueprints");
 

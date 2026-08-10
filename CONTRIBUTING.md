@@ -267,28 +267,34 @@ Staging is **not live yet**. Until it is, PR previews and the `dev` deployment
 still read and write the **production** database — so don't treat them as a
 sandbox.
 
-### The blocker worth knowing about first
+### How staging gets its blueprints
 
-The `strategy` bucket holds **662 objects, ~755 MB** — the blueprint renders,
-mostly. Supabase's free tier gives **1 GB per project**. So "copy the assets to
-staging" would consume three quarters of the free quota and mean re-uploading
-662 files by hand, since they were added through the dashboard originally.
+Staging does **not** hold its own copy. The `strategy` bucket is **662 objects,
+~755 MB** — mostly blueprint renders — and a free Supabase project gets **1 GB**
+in total, so copying it would eat three quarters of the quota and mean
+re-uploading 662 files by hand.
 
-Three ways out, in the order I'd consider them:
+Instead, staging reads the shared assets straight from production. Blueprints,
+gadget icons and `dissect.wasm` are public, read-only and byte-identical in
+every environment, so there is nothing to gain from duplicating them. Setting
 
-1. **Share the read-only assets with production** (needs a small code change,
-   not yet written). Blueprints, gadget icons and `dissect.wasm` are public,
-   read-only, and byte-identical in every environment — there is no reason for
-   staging to hold its own copy. An `NEXT_PUBLIC_ASSET_SUPABASE_URL` pointing at
-   production would let staging read them while writing its data to
-   `infragg-dev`. Per-environment content (`thumbnails/`, `imports/`, avatars)
-   would still live in the staging project.
-2. **Upload one map's blueprints only.** Staging works for that map; the rest
-   show broken images. Fine if you only ever test one map.
-3. **Skip storage entirely.** The database side of staging works; the board
-   shows no blueprints. Fine for testing the calendar, useless for the board.
+```
+NEXT_PUBLIC_ASSET_SUPABASE_URL=<production URL>
+NEXT_PUBLIC_ASSET_SUPABASE_PUBLISHABLE_KEY=<production publishable key>
+```
 
-Nothing below depends on which you choose — do the database first.
+points those reads at production while everything else — the database,
+thumbnails, `.pptx` import media, avatars — stays in `infragg-dev`.
+
+Leave both unset and assets come from the same project as the data, which is
+what production and a local setup want. They must be set **together**: a URL
+without its key would authenticate against the wrong project, so a half-set pair
+is ignored.
+
+The client used for these reads never carries a session, so it cannot act as the
+signed-in user against a project that is not this environment's. It does not
+need one: the `strategy` bucket's SELECT policy is granted to `public` and
+`tools` is a public bucket.
 
 ### 1. Create the project
 
@@ -317,6 +323,8 @@ to **Preview only** — leave the existing Production values alone:
 | `NEXT_PUBLIC_SUPABASE_URL`             | the `infragg-dev` URL    |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the `infragg-dev` key    |
 | `NEXT_PUBLIC_APP_ENV`                  | `preview`                |
+| `NEXT_PUBLIC_ASSET_SUPABASE_URL`             | the **production** URL |
+| `NEXT_PUBLIC_ASSET_SUPABASE_PUBLISHABLE_KEY` | the **production** key |
 
 Then add one scoped to **Production**:
 
@@ -374,6 +382,10 @@ Run `npm run format` and commit the result.
 
 **"Staging shows production data."** Step 3 above isn't done yet. That's
 expected until it is.
+
+**"Staging has no blueprints."** The two `NEXT_PUBLIC_ASSET_SUPABASE_*`
+variables are unset or only half set, so asset reads fall back to
+`infragg-dev`, which holds no blueprints. Both must be present.
 
 **"Staging returns connection errors."** The free project has paused. Open its
 dashboard.
