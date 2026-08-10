@@ -387,6 +387,14 @@ expected until it is.
 variables are unset or only half set, so asset reads fall back to
 `infragg-dev`, which holds no blueprints. Both must be present.
 
+**"Sign-in on staging 404s."** A Supabase URL with a path. Both
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_ASSET_SUPABASE_URL` must be the
+**bare project URL** — `https://<ref>.supabase.co` — because the client appends
+its own `/auth/v1/…`, `/rest/v1/…` and `/storage/v1/…`. Paste the REST endpoint
+by mistake and you get `/rest/v1/auth/v1/token`, which answers 404 with no clue
+why. The build now refuses such a value outright, so a build failure naming
+`NEXT_PUBLIC_SUPABASE_URL` means exactly this.
+
 **"Staging returns connection errors."** The free project has paused. Open its
 dashboard.
 
