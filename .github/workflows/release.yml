@@ -1,0 +1,52 @@
+name: Release
+
+# Tags production and writes release notes whenever master moves to a version
+# that has not been tagged yet. The version in package.json is the trigger, so
+# releasing is one line changed in the dev -> master pull request; a promotion
+# that does not bump it is a no-op rather than an error.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Tag and release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, so release notes can reach back to the previous tag.
+          fetch-depth: 0
+
+      - name: Read the version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Has this version already been tagged?
+        id: check
+        env:
+          TAG: v${{ steps.version.outputs.value }}
+        run: |
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Already released as $TAG — nothing to do."
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create the release
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.value }}
+        run: |
+          # --generate-notes builds the changelog from merged pull requests,
+          # which is why PR titles have to be Conventional Commits.
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes
