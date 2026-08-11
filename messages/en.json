@@ -222,7 +222,9 @@
     "clearWeekDescription": "Removes every marker you set for {week}. Hours from your typical week will show through again.",
     "clearDefaultsTitle": "Clear your typical week?",
     "clearDefaultsDescription": "Removes every default hour. Dates you have marked explicitly are not affected.",
-    "zoneError": "Could not save the time zone: {message}"
+    "zoneError": "Could not save the time zone: {message}",
+    "scheduleSlot": "Everyone is free at {hour} — schedule something",
+    "overlapLegendBookable": "Solid cells are hours the whole roster is free; click one to schedule."
   },
   "team": {
     "metaTitle": "Team",

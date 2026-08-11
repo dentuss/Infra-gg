@@ -265,8 +265,8 @@ Reached from the Schedule / Availability switch at the top of the page.
       another; availability stays anchored to the team's zone so nobody's
       markers move. Applies to the schedule as well.
 - [x] Clear all, and a marker bar pinned to the top while you scroll
-- [ ] Suggest scrim slots from the overlap (create an event straight from
-      a full-house hour)
+- [x] Suggest scrim slots from the overlap — a full-house hour is a button
+      that opens New Event pre-filled with that slot (staff only)
 - [ ] Month summary view (one rolled-up colour per day)
 - [ ] Notify staff when a player changes availability for a scheduled day
 

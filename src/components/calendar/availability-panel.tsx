@@ -12,6 +12,10 @@ import {
   type GridColumn,
 } from "@/components/calendar/availability-grid";
 import {
+  EventDialog,
+  type EventDialogState,
+} from "@/components/calendar/event-dialog";
+import {
   MarkerPicker,
   STATUS_CLASS,
   type Marker,
@@ -38,7 +42,6 @@ import {
   buildAvailabilityLookup,
   dateToKey,
   DAY_HOURS,
-  hourLabel,
   isFullHouse,
   startOfWeek,
   STATUS_ORDER,
@@ -46,7 +49,7 @@ import {
   weekdayIndex,
   weekDays,
 } from "@/lib/availability";
-import { slotLabelInZone } from "@/lib/timezone";
+import { slotInstant, slotLabelInZone } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 
 /** Pseudo-subject in the player picker: the whole roster at once. */
@@ -65,6 +68,7 @@ export function AvailabilityPanel({
   const [subject, setSubject] = useState<string | null>(null);
   const [marker, setMarker] = useState<Marker>(STATUS_ORDER[0] ?? null);
   const [defaultsOpen, setDefaultsOpen] = useState(false);
+  const [eventDialog, setEventDialog] = useState<EventDialogState | null>(null);
 
   const days = useMemo(() => weekDays(anchor), [anchor]);
   const lastDay = useMemo(() => addDays(anchor, 6), [anchor]);
@@ -180,6 +184,23 @@ export function AvailabilityPanel({
         ),
       ),
     [mutateAvailability, days],
+  );
+
+  // slotInstant resolves the slot against the TEAM zone, so the event lands on
+  // the hour the grid is showing rather than the browser's idea of it.
+  const scheduleSlot = useCallback(
+    (day: string, hour: number) => {
+      const start = slotInstant(day, hour, teamZone);
+      const end = slotInstant(day, hour + 1, teamZone);
+      if (!start || !end) return;
+      setEventDialog({
+        open: true,
+        event: null,
+        occurrenceDate: null,
+        range: { start, end },
+      });
+    },
+    [teamZone],
   );
 
   const shortDate = (date: Date) =>
@@ -319,24 +340,45 @@ export function AvailabilityPanel({
                     lookup,
                   );
                   const full = isFullHouse(summary, rosterIds.length);
+                  const bookable = full && canManage;
+                  const shared = cn(
+                    ROW_HEIGHT,
+                    "flex w-full items-center justify-center rounded-[4px] text-xs font-semibold tabular-nums",
+                    full
+                      ? "bg-emerald-500 text-white"
+                      : summary.available > 0
+                        ? "bg-emerald-500/25 text-foreground"
+                        : "bg-muted/40 text-muted-foreground",
+                  );
+                  const count = summary.available > 0 ? summary.available : "";
+
+                  if (bookable) {
+                    return (
+                      <button
+                        type="button"
+                        title={t("scheduleSlot", {
+                          hour: hourLabelFor(columnKey, hour),
+                        })}
+                        onClick={() => scheduleSlot(columnKey, hour)}
+                        className={cn(
+                          shared,
+                          "cursor-pointer transition-colors hover:bg-emerald-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                        )}
+                      >
+                        {count}
+                      </button>
+                    );
+                  }
                   return (
                     <div
                       title={t("overlapTooltip", {
-                        hour: hourLabel(hour),
+                        hour: hourLabelFor(columnKey, hour),
                         available: summary.available,
                         total: rosterIds.length,
                       })}
-                      className={cn(
-                        ROW_HEIGHT,
-                        "flex w-full items-center justify-center rounded-[4px] text-xs font-semibold tabular-nums",
-                        full
-                          ? "bg-emerald-500 text-white"
-                          : summary.available > 0
-                            ? "bg-emerald-500/25 text-foreground"
-                            : "bg-muted/40 text-muted-foreground",
-                      )}
+                      className={shared}
                     >
-                      {summary.available > 0 ? summary.available : ""}
+                      {count}
                     </div>
                   );
                 }
@@ -347,7 +389,9 @@ export function AvailabilityPanel({
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
         {isOverlap ? (
-          <span>{t("overlapLegend")}</span>
+          <span>
+            {canManage ? t("overlapLegendBookable") : t("overlapLegend")}
+          </span>
         ) : editable ? (
           <span>{t("paintHint")}</span>
         ) : (
@@ -374,6 +418,10 @@ export function AvailabilityPanel({
         <p role="alert" className="text-sm text-destructive">
           {t("zoneError", { message: zoneError.message })}
         </p>
+      ) : null}
+
+      {eventDialog ? (
+        <EventDialog state={eventDialog} onClose={() => setEventDialog(null)} />
       ) : null}
 
       <AvailabilityDefaultsDialog
