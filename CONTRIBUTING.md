@@ -274,7 +274,7 @@ The order matters:
 That ordering is the whole reason staging exists: a migration that breaks
 something breaks staging, on your own time, instead of breaking the team.
 
-### Two gotchas that have already bitten
+### Three gotchas that have already bitten
 
 **`public.profiles` uses column-level UPDATE grants.** A member may only write
 `avatar_url`, `full_name`, `ingame_role`, `username`, `timezone`. That's
@@ -291,7 +291,16 @@ full round trip on `profiles.timezone`.
 
 **Enable RLS in the same migration that creates a table**, and add the policies
 there too. `get_advisors` will flag a table without them, but only after the
-fact.
+fact — and `infragg-dev` has an `rls_auto_enable` trigger that production lacks,
+so forgetting passes on staging and leaves production exposed.
+
+**Only the MCP applies migrations.** Not `supabase db push`, and not the
+Supabase GitHub integration. `apply_migration` stamps the ledger with its own
+timestamp rather than the filename's, so anything reconciling the two decides
+every migration is unapplied and replays all of them. That happened on
+2026-08-10 against *production*, and only failed harmlessly because the first
+statement hit "already exists" and aborted the run. See
+[supabase/README.md](supabase/README.md).
 
 ---
 
