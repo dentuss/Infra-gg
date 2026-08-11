@@ -48,12 +48,9 @@ import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
 import { useMembers } from "@/hooks/use-team";
 import { useSetOwnZone, useSetTeamZone, useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
-import {
-  buildClearPlan,
-  dateToKey,
-  dayAfter,
-  expandEventsForRange,
-} from "@/lib/events";
+import { DAY_END_HOUR, DAY_START_HOUR } from "@/lib/availability";
+import { buildClearPlan, dateToKey, expandEventsForRange } from "@/lib/events";
+import { slotInstant } from "@/lib/timezone";
 
 const CLOSED: EventDialogState = {
   open: false,
@@ -153,32 +150,43 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
     return (id: string) => roles.get(id) ?? null;
   }, [members]);
 
-  // The chill wash covers the day's own visible column (10:00 → 03:00)
-  // rather than the clock's 00:00–03:00, which would paint the bottom of
-  // the previous day's column.
-  const chillBackgroundEvents: EventInput[] = (chillDays ?? []).map((date) => ({
-    id: `chill-${date}`,
-    start: `${date}T10:00:00`,
-    end: `${dayAfter(date)}T03:00:00`,
-    display: "background",
-    classNames: ["chill-bg"],
-  }));
+  // The chill wash covers the day's own visible column (10:00 → 03:00) rather
+  // than the clock's 00:00–03:00, which would paint the bottom of the previous
+  // day's column. Resolved through slotInstant so the boundaries are absolute
+  // instants in the TEAM's zone — a bare "2026-08-14T10:00:00" would be read in
+  // whichever zone the viewer picked, sliding the wash off its own day.
+  const chillBackgroundEvents: EventInput[] = (chillDays ?? []).flatMap(
+    (date) => {
+      const start = slotInstant(date, DAY_START_HOUR, teamZone);
+      const end = slotInstant(date, DAY_END_HOUR, teamZone);
+      if (!start || !end) return [];
+      return [
+        {
+          id: `chill-${date}`,
+          start,
+          end,
+          display: "background",
+          classNames: ["chill-bg"],
+        },
+      ];
+    },
+  );
 
   const clearPlan = useMemo(
     () =>
       events && viewRange
-        ? buildClearPlan(events, viewRange.start, viewRange.end)
+        ? buildClearPlan(events, viewRange.start, viewRange.end, teamZone)
         : { deleteIds: [], exclusions: [], totalCount: 0 },
-    [events, viewRange],
+    [events, viewRange, teamZone],
   );
   const rangeNoun = viewRange?.type === "dayGridMonth" ? "month" : "week";
 
   const calendarInputs = useMemo(
     () =>
       events && viewRange
-        ? expandEventsForRange(events, viewRange.start, viewRange.end)
+        ? expandEventsForRange(events, viewRange.start, viewRange.end, teamZone)
         : [],
-    [events, viewRange],
+    [events, viewRange, teamZone],
   );
 
   // FullCalendar only re-measures on window resize, so collapsing or

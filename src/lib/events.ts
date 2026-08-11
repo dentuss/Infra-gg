@@ -1,4 +1,5 @@
 import type { EventInput } from "@fullcalendar/core";
+import { DateTime } from "luxon";
 
 import type { Tables } from "@/types/database";
 
@@ -56,12 +57,6 @@ export function combineDateAndTimes(
   return { start, end };
 }
 
-export function dayAfter(dateOnly: string): string {
-  const date = new Date(`${dateOnly}T00:00:00`);
-  date.setDate(date.getDate() + 1);
-  return dateToKey(date);
-}
-
 function eventDurationMs(event: EventRow): number {
   return (
     new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime()
@@ -69,14 +64,29 @@ function eventDurationMs(event: EventRow): number {
 }
 
 /**
- * Concrete occurrence start times of an event inside [rangeStart,
- * rangeEnd), honoring excluded dates. Weekly stepping uses calendar
- * days so wall-clock times survive DST changes.
+ * The date an occurrence belongs to, in the team's zone. Exclusions are stored
+ * as plain dates, so they have to be matched in the same zone the event was
+ * scheduled in — a 01:00 session is excluded on the night it belongs to, not on
+ * the calendar date the viewer's browser happens to be in.
+ */
+export function occurrenceKey(start: Date, zone: string): string {
+  return DateTime.fromJSDate(start, { zone }).toFormat("yyyy-MM-dd");
+}
+
+/**
+ * Weekly recurrence steps in the TEAM's zone, not the browser's.
+ *
+ * "Every Friday at 20:00" means 20:00 where the team plays. Stepping with
+ * `setDate(+7)` preserves the wall clock in whatever zone the *reader* is in,
+ * so once either zone crosses a DST boundary the series drifts an hour for
+ * anyone outside the team's zone. luxon's `plus({ weeks })` keeps the wall
+ * clock in the zone we ask for, which is the one that defines the event.
  */
 export function occurrenceStartsInRange(
   event: EventRow,
   rangeStart: Date,
   rangeEnd: Date,
+  zone: string,
 ): Date[] {
   if (!event.recurs_weekly) {
     const start = new Date(event.starts_at);
@@ -84,19 +94,35 @@ export function occurrenceStartsInRange(
     return start < rangeEnd && end > rangeStart ? [start] : [];
   }
 
+  // Inclusive to the end of the final day, in the team's zone.
   const until = event.recur_until
-    ? new Date(`${event.recur_until}T23:59:59`)
+    ? DateTime.fromISO(event.recur_until, { zone }).endOf("day")
     : null;
+
   const starts: Date[] = [];
-  const cursor = new Date(event.starts_at);
-  while (cursor < rangeStart) {
-    cursor.setDate(cursor.getDate() + 7);
+  let cursor = DateTime.fromISO(event.starts_at, { zone });
+  if (!cursor.isValid) return [];
+
+  // A malformed row must not spin forever; a weekly series cannot outrun this.
+  const MAX_OCCURRENCES = 520;
+  let guard = 0;
+
+  while (
+    cursor.toMillis() < rangeStart.getTime() &&
+    guard++ < MAX_OCCURRENCES
+  ) {
+    cursor = cursor.plus({ weeks: 1 });
   }
-  while ((until === null || cursor <= until) && cursor < rangeEnd) {
-    if (!event.excluded_dates.includes(dateToKey(cursor))) {
-      starts.push(new Date(cursor));
+  while (
+    (until === null || cursor <= until) &&
+    cursor.toMillis() < rangeEnd.getTime() &&
+    guard++ < MAX_OCCURRENCES
+  ) {
+    const start = cursor.toJSDate();
+    if (!event.excluded_dates.includes(occurrenceKey(start, zone))) {
+      starts.push(start);
     }
-    cursor.setDate(cursor.getDate() + 7);
+    cursor = cursor.plus({ weeks: 1 });
   }
   return starts;
 }
@@ -110,6 +136,7 @@ export function expandEventsForRange(
   events: EventRow[],
   rangeStart: Date,
   rangeEnd: Date,
+  zone: string,
 ): EventInput[] {
   return events.flatMap((event): EventInput[] => {
     const base: EventInput = {
@@ -128,10 +155,10 @@ export function expandEventsForRange(
     }
 
     const durationMs = eventDurationMs(event);
-    return occurrenceStartsInRange(event, rangeStart, rangeEnd).map(
+    return occurrenceStartsInRange(event, rangeStart, rangeEnd, zone).map(
       (start) => ({
         ...base,
-        id: `${event.id}::${dateToKey(start)}`,
+        id: `${event.id}::${occurrenceKey(start, zone)}`,
         start,
         end: new Date(start.getTime() + durationMs),
         // Series timing is edited through the dialog; dragging a single
@@ -150,6 +177,7 @@ export function buildClearPlan(
   events: EventRow[],
   rangeStart: Date,
   rangeEnd: Date,
+  zone: string,
 ): ClearPlan {
   const deleteIds: string[] = [];
   const exclusions: ClearPlan["exclusions"] = [];
@@ -160,12 +188,16 @@ export function buildClearPlan(
       event,
       rangeStart,
       rangeEnd,
+      zone,
     );
     if (occurrenceStarts.length === 0) {
       continue;
     }
     if (event.recurs_weekly) {
-      exclusions.push({ event, dates: occurrenceStarts.map(dateToKey) });
+      exclusions.push({
+        event,
+        dates: occurrenceStarts.map((start) => occurrenceKey(start, zone)),
+      });
     } else {
       deleteIds.push(event.id);
     }
@@ -184,6 +216,7 @@ export function upcomingOccurrences(
   events: EventRow[],
   from: Date,
   limit: number,
+  zone: string,
   horizonWeeks = 12,
 ): EventOccurrence[] {
   const horizon = new Date(from);
@@ -196,10 +229,12 @@ export function upcomingOccurrences(
       continue;
     }
     const durationMs = eventDurationMs(event);
-    for (const start of occurrenceStartsInRange(event, from, horizon).slice(
-      0,
-      limit,
-    )) {
+    for (const start of occurrenceStartsInRange(
+      event,
+      from,
+      horizon,
+      zone,
+    ).slice(0, limit)) {
       occurrences.push({
         event,
         start,
