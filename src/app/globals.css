@@ -149,10 +149,6 @@
   --fc-small-font-size: 0.8125rem;
 }
 
-.fc .fc-timegrid-event .fc-event-main {
-  font-size: 0.875rem;
-}
-
 .fc .fc-button {
   border-radius: var(--radius-sm);
   text-transform: capitalize;
@@ -172,19 +168,13 @@
   background: color-mix(in oklab, oklch(0.65 0.17 150) 16%, transparent);
 }
 
-/* Week-view day headers toggle chill days on click */
-.chill-header-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background-color 120ms ease;
+/* The week grid's equivalent, cell by cell rather than one background event. */
+.chill-cell {
+  background: color-mix(in oklab, oklch(0.65 0.17 150) 16%, transparent);
 }
 
-.chill-header-button:hover {
-  background: color-mix(in oklab, oklch(0.65 0.17 150) 30%, transparent);
+.chill-cell:hover {
+  background: color-mix(in oklab, oklch(0.65 0.17 150) 28%, transparent);
 }
 
 .chill-tag {
@@ -198,19 +188,48 @@
   border-radius: var(--radius-sm);
 }
 
-/* Muted per-type event colors on the dark theme */
-.fc-event.event-theory {
-  background-color: oklch(0.42 0.08 155);
+/* Muted per-type event colors on the dark theme. Declared once as a custom
+   property so the month calendar and our own week grid cannot drift apart. */
+.event-theory {
+  --event-color: oklch(0.42 0.08 155);
 }
-.fc-event.event-scrim {
-  background-color: oklch(0.42 0.08 250);
+.event-scrim {
+  --event-color: oklch(0.42 0.08 250);
 }
-.fc-event.event-match {
-  background-color: oklch(0.44 0.11 25);
+.event-match {
+  --event-color: oklch(0.44 0.11 25);
 }
-.fc-event.event-meeting {
-  background-color: oklch(0.44 0.06 90);
+.event-meeting {
+  --event-color: oklch(0.44 0.06 90);
 }
+.event-reminder {
+  --event-color: oklch(0.38 0.02 0);
+}
+
+/* Needs to out-specify FullCalendar's own .fc-event background. */
+.fc-event.event-theory,
+.fc-event.event-scrim,
+.fc-event.event-match,
+.fc-event.event-meeting,
 .fc-event.event-reminder {
-  background-color: oklch(0.38 0.02 0);
+  background-color: var(--event-color);
+}
+
+/* A block in the week grid. An unknown type still gets a visible surface. */
+.schedule-block {
+  background-color: var(--event-color, var(--muted));
+  border-color: color-mix(
+    in oklab,
+    var(--event-color, var(--muted)) 60%,
+    white
+  );
+  transition: background-color 120ms ease;
+}
+
+.schedule-block:hover {
+  background-color: color-mix(
+    in oklab,
+    var(--event-color, var(--muted)) 85%,
+    white
+  );
 }

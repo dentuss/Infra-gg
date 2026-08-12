@@ -1,9 +1,10 @@
-import {
-  dateToKey,
-  DAY_START_HOUR,
-  type AvailabilityLookup,
-  type AvailabilityStatus,
+import { DateTime } from "luxon";
+
+import type {
+  AvailabilityLookup,
+  AvailabilityStatus,
 } from "@/lib/availability";
+import { slotForInstant, type WindowSlot } from "@/lib/schedule-window";
 import type { Profile } from "@/lib/team";
 
 /**
@@ -13,39 +14,31 @@ import type { Profile } from "@/lib/team";
  */
 const PLAYING_ROLES: ReadonlySet<Profile["role"]> = new Set(["igl", "player"]);
 
-export type AvailabilitySlot = { day: string; hour: number };
-
-/**
- * Which availability cell a moment in time falls in.
- *
- * The board day runs 10:00 → 03:00, so anything before 10:00 belongs to the
- * previous day's column as hour 24+ — the same rule FullCalendar applies via
- * `nextDayThreshold`. Without this a 01:00 scrim would be checked against
- * Saturday morning rather than the Friday night it is displayed under.
- */
-export function slotForDate(date: Date): AvailabilitySlot {
-  const hour = date.getHours();
-  if (hour >= DAY_START_HOUR) {
-    return { day: dateToKey(date), hour };
-  }
-  const previous = new Date(date);
-  previous.setDate(previous.getDate() - 1);
-  return { day: dateToKey(previous), hour: hour + 24 };
-}
+export type AvailabilitySlot = WindowSlot;
 
 // A sanity bound: an event spanning longer than this is not something the
 // availability grid can meaningfully describe, and we refuse to loop forever.
 const MAX_SLOTS = 24 * 14;
 
-/** Every hourly cell the interval touches, including a partial final hour. */
-export function slotsBetween(starts: Date, ends: Date): AvailabilitySlot[] {
+/**
+ * Every hourly cell the interval touches, including a partial final hour.
+ *
+ * Hours are walked in the TEAM's zone, because that is the zone the cells were
+ * painted in. Walking them in the reader's zone checked a Moscow viewer's
+ * bookings against the wrong row.
+ */
+export function slotsBetween(
+  starts: Date,
+  ends: Date,
+  zone: string,
+): AvailabilitySlot[] {
   if (!(starts < ends)) return [];
   const slots: AvailabilitySlot[] = [];
-  const cursor = new Date(starts);
-  cursor.setMinutes(0, 0, 0);
-  while (cursor < ends && slots.length < MAX_SLOTS) {
-    slots.push(slotForDate(cursor));
-    cursor.setHours(cursor.getHours() + 1);
+  let cursor = DateTime.fromJSDate(starts, { zone }).startOf("hour");
+  if (!cursor.isValid) return [];
+  while (cursor.toMillis() < ends.getTime() && slots.length < MAX_SLOTS) {
+    slots.push(slotForInstant(cursor.toJSDate(), zone));
+    cursor = cursor.plus({ hours: 1 });
   }
   return slots;
 }
@@ -72,14 +65,17 @@ export function findClashes({
   members,
   substituteIds,
   lookup,
+  zone,
 }: {
   starts: Date;
   ends: Date;
   members: readonly Profile[];
   substituteIds: readonly string[];
   lookup: AvailabilityLookup;
+  /** The team's zone — the one the availability cells were painted in. */
+  zone: string;
 }): Clash[] {
-  const slots = slotsBetween(starts, ends);
+  const slots = slotsBetween(starts, ends, zone);
   if (slots.length === 0) return [];
 
   const attached = new Set(substituteIds);

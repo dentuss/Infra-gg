@@ -1,56 +1,29 @@
 "use client";
 
-import type {
-  DateSelectArg,
-  DatesSetArg,
-  EventClickArg,
-  EventContentArg,
-  EventDropArg,
-  EventInput,
-} from "@fullcalendar/core";
-import enGbLocale from "@fullcalendar/core/locales/en-gb";
-import ruLocale from "@fullcalendar/core/locales/ru";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import type { EventResizeDoneArg } from "@fullcalendar/interaction";
-// FullCalendar only understands "local" and "UTC" on its own; named IANA zones
-// need a plugin. Luxon reads zone data from the browser's Intl rather than
-// shipping its own database.
-import luxonPlugin from "@fullcalendar/luxon3";
-import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import { Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   EventDialog,
   type EventDialogState,
 } from "@/components/calendar/event-dialog";
+import { ScheduleGrid } from "@/components/calendar/schedule-grid";
+import { ScheduleMonth } from "@/components/calendar/schedule-month";
+import {
+  ScheduleToolbar,
+  type ScheduleView,
+} from "@/components/calendar/schedule-toolbar";
 import { TimezonePicker } from "@/components/calendar/timezone-picker";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  useAddChillDay,
-  useChillDays,
-  useRemoveChillDay,
-} from "@/hooks/use-chill-days";
-import { useClearRange, useEvents, useUpdateEvent } from "@/hooks/use-events";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAddChillDay, useRemoveChillDay } from "@/hooks/use-chill-days";
+import { useClearRange } from "@/hooks/use-events";
+import { useSchedule, type DateRange } from "@/hooks/use-schedule";
 import { useMembers } from "@/hooks/use-team";
 import { useSetOwnZone, useSetTeamZone, useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
-import { DAY_END_HOUR, DAY_START_HOUR } from "@/lib/availability";
-import { buildClearPlan, dateToKey, expandEventsForRange } from "@/lib/events";
-import { slotInstant } from "@/lib/timezone";
+import { addDays, startOfWeek } from "@/lib/availability";
+import { occurrenceKey, type EventOccurrence } from "@/lib/events";
+import { slotInstant, slotLabelInZone } from "@/lib/timezone";
 
 const CLOSED: EventDialogState = {
   open: false,
@@ -59,50 +32,6 @@ const CLOSED: EventDialogState = {
   range: null,
 };
 
-function renderEventContent(
-  arg: EventContentArg,
-  roleOf: (id: string) => "substitute" | "trial" | null,
-  label: (role: "substitute" | "trial") => string,
-) {
-  const description = arg.event.extendedProps.description as string | null;
-  const showDescription = description && arg.view.type === "timeGridWeek";
-
-  // One tag per distinct bench role, so two subs read as a single "SUB".
-  const ids =
-    (arg.event.extendedProps.substituteIds as string[] | undefined) ?? [];
-  const tags = [...new Set(ids.map(roleOf).filter((role) => role !== null))];
-
-  return (
-    <div className="flex flex-col gap-0.5 overflow-hidden px-1 py-0.5">
-      {tags.length > 0 ? (
-        <div className="flex flex-wrap gap-1">
-          {tags.map((role) => (
-            <span
-              key={role}
-              className={
-                role === "trial"
-                  ? "rounded-[3px] bg-amber-400 px-1 text-[0.6rem] leading-tight font-bold tracking-wide text-amber-950 uppercase"
-                  : "rounded-[3px] bg-sky-400 px-1 text-[0.6rem] leading-tight font-bold tracking-wide text-sky-950 uppercase"
-              }
-            >
-              {label(role)}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      <div className="truncate font-semibold">
-        {arg.timeText ? `${arg.timeText} ` : ""}
-        {arg.event.title}
-      </div>
-      {showDescription ? (
-        <div className="line-clamp-3 text-[0.75rem] leading-tight opacity-80">
-          {description}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
@@ -110,137 +39,85 @@ function capitalize(value: string) {
 export function TeamCalendar({ canManage }: { canManage: boolean }) {
   const t = useTranslations("calendar");
   const locale = useLocale();
-  const { data: events, isPending, error } = useEvents();
-  const updateEvent = useUpdateEvent();
-  const clearRange = useClearRange();
-  const [dialog, setDialog] = useState<EventDialogState>(CLOSED);
-  const [clearOpen, setClearOpen] = useState(false);
-  const [viewRange, setViewRange] = useState<{
-    type: string;
-    start: Date;
-    end: Date;
-  } | null>(null);
-  const calendarRef = useRef<FullCalendar>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { data: chillDays } = useChillDays();
+  const [view, setView] = useState<ScheduleView>("week");
+  const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
+  const [monthRange, setMonthRange] = useState<DateRange | null>(null);
+
+  const {
+    events,
+    isPending,
+    error,
+    now,
+    teamZone,
+    clearPlan,
+    occurrences,
+    monthInputs,
+    chillBackground,
+    scheduleDays,
+  } = useSchedule({ anchor, view, monthRange, locale });
+
+  const { data: members } = useMembers();
+  const clearRange = useClearRange();
   const addChillDay = useAddChillDay();
   const removeChillDay = useRemoveChillDay();
+  const { viewZone } = useZones();
+  const setOwnZone = useSetOwnZone();
+  const setTeamZone = useSetTeamZone();
+  const [dialog, setDialog] = useState<EventDialogState>(CLOSED);
+  const [clearOpen, setClearOpen] = useState(false);
   const [chillPrompt, setChillPrompt] = useState<{
     day: string;
     weekday: string;
     isChill: boolean;
   } | null>(null);
 
-  const chillSet = useMemo(() => new Set(chillDays ?? []), [chillDays]);
-
-  const { data: members } = useMembers();
-  const { teamZone, viewZone } = useZones();
-  const setOwnZone = useSetOwnZone();
-  const setTeamZone = useSetTeamZone();
   // Ids that no longer resolve to a bench member are simply untagged — the
   // column has no foreign key, so a removed player can leave one behind.
-  const benchRoleOf = useMemo(() => {
+  const benchTagsFor = useMemo(() => {
     const roles = new Map<string, "substitute" | "trial">();
     for (const member of members ?? []) {
       if (member.role === "substitute" || member.role === "trial") {
         roles.set(member.id, member.role);
       }
     }
-    return (id: string) => roles.get(id) ?? null;
-  }, [members]);
+    return (occurrence: EventOccurrence) => {
+      const found = occurrence.event.substitute_ids
+        .map((id) => roles.get(id))
+        .filter((role) => role !== undefined);
+      // One tag per distinct bench role, so two subs read as a single "SUB".
+      return [...new Set(found)].map((role) => t(`roleTag.${role}`));
+    };
+  }, [members, t]);
 
-  // The chill wash covers the day's own visible column (10:00 → 03:00) rather
-  // than the clock's 00:00–03:00, which would paint the bottom of the previous
-  // day's column. Resolved through slotInstant so the boundaries are absolute
-  // instants in the TEAM's zone — a bare "2026-08-14T10:00:00" would be read in
-  // whichever zone the viewer picked, sliding the wash off its own day.
-  const chillBackgroundEvents: EventInput[] = (chillDays ?? []).flatMap(
-    (date) => {
-      const start = slotInstant(date, DAY_START_HOUR, teamZone);
-      const end = slotInstant(date, DAY_END_HOUR, teamZone);
-      if (!start || !end) return [];
-      return [
-        {
-          id: `chill-${date}`,
-          start,
-          end,
-          display: "background",
-          classNames: ["chill-bg"],
-        },
-      ];
-    },
-  );
+  const openCreate = (draft: EventDialogState["range"]) =>
+    setDialog({ open: true, event: null, occurrenceDate: null, range: draft });
 
-  const clearPlan = useMemo(
-    () =>
-      events && viewRange
-        ? buildClearPlan(events, viewRange.start, viewRange.end, teamZone)
-        : { deleteIds: [], exclusions: [], totalCount: 0 },
-    [events, viewRange, teamZone],
-  );
-  const rangeNoun = viewRange?.type === "dayGridMonth" ? "month" : "week";
-
-  const calendarInputs = useMemo(
-    () =>
-      events && viewRange
-        ? expandEventsForRange(events, viewRange.start, viewRange.end, teamZone)
-        : [],
-    [events, viewRange, teamZone],
-  );
-
-  // FullCalendar only re-measures on window resize, so collapsing or
-  // expanding the sidebar (an animated width change of the content area)
-  // leaves the grid at a stale width — phantom columns or an overflowing
-  // Sunday. Track the container size directly.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const observer = new ResizeObserver(() => {
-      calendarRef.current?.getApi().updateSize();
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
-
-  const openCreate = (range: EventDialogState["range"]) =>
-    setDialog({ open: true, event: null, occurrenceDate: null, range });
-
-  const onSelect = (info: DateSelectArg) =>
-    openCreate({ start: info.start, end: info.end });
-
-  const onEventClick = (info: EventClickArg) => {
-    // Recurring occurrences carry ids of the form `<eventId>::<date>`.
-    const [eventId, occurrenceDate] = info.event.id.split("::");
+  const openEvent = (eventId: string, occurrenceDate: string | null) => {
     const row = events?.find((event) => event.id === eventId);
     if (row) {
-      setDialog({
-        open: true,
-        event: row,
-        occurrenceDate: occurrenceDate ?? null,
-        range: null,
-      });
+      setDialog({ open: true, event: row, occurrenceDate, range: null });
     }
   };
 
-  const onEventMoved = (info: EventDropArg | EventResizeDoneArg) => {
-    const start = info.event.start;
-    if (!start) {
-      info.revert();
-      return;
-    }
-    updateEvent.mutate(
-      {
-        id: info.event.id,
-        patch: {
-          starts_at: start.toISOString(),
-          ends_at: (info.event.end ?? start).toISOString(),
-          all_day: info.event.allDay,
-        },
-      },
-      { onError: () => info.revert() },
-    );
-  };
+  const shortDate = (date: Date) =>
+    date.toLocaleDateString(formattingLocale(locale), {
+      day: "numeric",
+      month: "short",
+    });
+  const weekLabel = `${shortDate(anchor)} – ${shortDate(addDays(anchor, 6))}`;
+
+  const picker = (compact: boolean) => (
+    <TimezonePicker
+      teamZone={teamZone}
+      viewZone={viewZone}
+      onSelect={(zone) => setOwnZone.mutate(zone)}
+      onMakeTeamDefault={
+        canManage ? (zone) => setTeamZone.mutate(zone) : undefined
+      }
+      compact={compact}
+    />
+  );
 
   if (error) {
     return (
@@ -251,134 +128,80 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {isPending ? t("loading") : canManage ? t("hint") : t("hintReadOnly")}
-        </p>
-        <div className="flex items-center gap-2">
-          <TimezonePicker
-            teamZone={teamZone}
-            viewZone={viewZone}
-            onSelect={(zone) => setOwnZone.mutate(zone)}
-            onMakeTeamDefault={
-              canManage ? (zone) => setTeamZone.mutate(zone) : undefined
-            }
-          />
-          {canManage ? (
-            <>
-              <Button
-                variant="destructive"
-                disabled={clearPlan.totalCount === 0}
-                onClick={() => setClearOpen(true)}
-              >
-                <Trash2 /> {t("clearButton", { range: rangeNoun })}
-              </Button>
-              <Button onClick={() => openCreate(null)}>
-                <Plus /> {t("newEvent")}
-              </Button>
-            </>
-          ) : null}
-        </div>
-      </div>
-
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[
-          dayGridPlugin,
-          timeGridPlugin,
-          interactionPlugin,
-          luxonPlugin,
-        ]}
-        timeZone={viewZone}
-        locale={locale === "ru" ? ruLocale : enGbLocale}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridWeek,dayGridMonth",
-        }}
-        views={{
-          timeGridWeek: { dayHeaderFormat: { weekday: "long" } },
-        }}
-        events={[...calendarInputs, ...chillBackgroundEvents]}
-        selectable={canManage}
-        editable={canManage}
-        nextDayThreshold="10:00:00"
-        datesSet={(arg: DatesSetArg) =>
-          setViewRange({
-            type: arg.view.type,
-            start: arg.view.activeStart,
-            end: arg.view.activeEnd,
-          })
-        }
-        dayHeaderContent={(arg) => {
-          if (arg.view.type !== "timeGridWeek") {
-            return arg.text;
-          }
-          const day = dateToKey(arg.date);
-          const isChill = chillSet.has(day);
-          if (!canManage) {
-            return (
-              <span className="inline-flex items-center gap-1.5">
-                {arg.text}
-                {isChill ? (
-                  <span className="chill-tag">{t("chillTag")}</span>
-                ) : null}
-              </span>
-            );
-          }
-          return (
-            <button
-              type="button"
-              className="chill-header-button"
-              title={isChill ? t("chillHeaderRemove") : t("chillHeaderAdd")}
-              onClick={() =>
-                setChillPrompt({
-                  day,
-                  weekday: capitalize(
-                    arg.date.toLocaleDateString(formattingLocale(locale), {
-                      weekday: "long",
-                    }),
-                  ),
-                  isChill,
-                })
-              }
-            >
-              {arg.text}
-              {isChill ? (
-                <span className="chill-tag">{t("chillTag")}</span>
-              ) : null}
-            </button>
-          );
-        }}
-        selectMirror
-        nowIndicator
-        allDaySlot={false}
-        // The team is active from morning until well past midnight, so
-        // the visible day runs 10:00 → 03:00 with the small hours at the
-        // bottom of the previous day's column.
-        slotMinTime="10:00:00"
-        slotMaxTime="27:00:00"
-        slotLabelFormat={{
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }}
-        eventTimeFormat={{
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }}
-        eventContent={(arg) =>
-          renderEventContent(arg, benchRoleOf, (role) => t(`roleTag.${role}`))
-        }
-        height="auto"
-        select={onSelect}
-        eventClick={onEventClick}
-        eventDrop={onEventMoved}
-        eventResize={onEventMoved}
+    <div className="flex flex-col gap-4">
+      <ScheduleToolbar
+        view={view}
+        onViewChange={setView}
+        weekLabel={weekLabel}
+        onShiftWeek={(days) => setAnchor((current) => addDays(current, days))}
+        onThisWeek={() => setAnchor(startOfWeek(new Date()))}
+        canManage={canManage}
+        clearDisabled={clearPlan.totalCount === 0}
+        onClear={() => setClearOpen(true)}
+        onNew={() => openCreate(null)}
+        monthPicker={picker(false)}
       />
+
+      <p className="text-sm text-muted-foreground">
+        {isPending ? t("loading") : canManage ? t("hint") : t("hintReadOnly")}
+      </p>
+
+      {view === "week" ? (
+        <ScheduleGrid
+          days={scheduleDays}
+          occurrences={occurrences}
+          teamZone={teamZone}
+          now={now}
+          hourLabelFor={(dayKey, hour) =>
+            slotLabelInZone(dayKey, hour, teamZone, viewZone)
+          }
+          onOpenOccurrence={(occurrence) =>
+            openEvent(
+              occurrence.event.id,
+              occurrence.event.recurs_weekly
+                ? occurrenceKey(occurrence.start, teamZone)
+                : null,
+            )
+          }
+          onCreateAt={
+            canManage
+              ? (dayKey, hour) => {
+                  const start = slotInstant(dayKey, hour, teamZone);
+                  const end = slotInstant(dayKey, hour + 1, teamZone);
+                  if (start && end) openCreate({ start, end });
+                }
+              : undefined
+          }
+          onToggleChill={
+            canManage
+              ? (day) =>
+                  setChillPrompt({
+                    day: day.key,
+                    weekday: capitalize(
+                      new Date(`${day.key}T12:00:00`).toLocaleDateString(
+                        formattingLocale(locale),
+                        { weekday: "long" },
+                      ),
+                    ),
+                    isChill: day.isChill,
+                  })
+              : undefined
+          }
+          tagsFor={benchTagsFor}
+          cornerSlot={picker(true)}
+        />
+      ) : (
+        <ScheduleMonth
+          events={[...monthInputs, ...chillBackground]}
+          viewZone={viewZone}
+          onDatesSet={setMonthRange}
+          // Recurring occurrences carry ids of the form `<eventId>::<date>`.
+          onEventClick={(id) => {
+            const [eventId, occurrenceDate] = id.split("::");
+            if (eventId) openEvent(eventId, occurrenceDate ?? null);
+          }}
+        />
+      )}
 
       <EventDialog
         state={dialog}
@@ -386,66 +209,45 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
         onClose={() => setDialog(CLOSED)}
       />
 
-      <AlertDialog
+      <ConfirmDialog
         open={chillPrompt !== null}
         onOpenChange={(open) => !open && setChillPrompt(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {chillPrompt?.isChill
-                ? t("chillRemoveTitle", { weekday: chillPrompt.weekday })
-                : t("chillMakeTitle", { weekday: chillPrompt?.weekday ?? "" })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {chillPrompt?.isChill
-                ? t("chillRemoveDescription")
-                : t("chillMakeDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("chillNo")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={addChillDay.isPending || removeChillDay.isPending}
-              onClick={() => {
-                if (!chillPrompt) return;
-                const toggle = chillPrompt.isChill
-                  ? removeChillDay
-                  : addChillDay;
-                toggle.mutate(chillPrompt.day);
-                setChillPrompt(null);
-              }}
-            >
-              {chillPrompt?.isChill ? t("chillRemoveConfirm") : t("chillYes")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={
+          chillPrompt?.isChill
+            ? t("chillRemoveTitle", { weekday: chillPrompt.weekday })
+            : t("chillMakeTitle", { weekday: chillPrompt?.weekday ?? "" })
+        }
+        description={
+          chillPrompt?.isChill
+            ? t("chillRemoveDescription")
+            : t("chillMakeDescription")
+        }
+        cancelLabel={t("chillNo")}
+        confirmLabel={
+          chillPrompt?.isChill ? t("chillRemoveConfirm") : t("chillYes")
+        }
+        disabled={addChillDay.isPending || removeChillDay.isPending}
+        onConfirm={() => {
+          if (!chillPrompt) return;
+          const toggle = chillPrompt.isChill ? removeChillDay : addChillDay;
+          toggle.mutate(chillPrompt.day);
+          setChillPrompt(null);
+        }}
+      />
 
-      <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("clearTitle", { range: rangeNoun })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("clearDescription", { count: clearPlan.totalCount })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={clearRange.isPending}
-              onClick={() => {
-                clearRange.mutate(clearPlan);
-                setClearOpen(false);
-              }}
-            >
-              {t("clearConfirm", { count: clearPlan.totalCount })}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        title={t("clearTitle", { range: view })}
+        description={t("clearDescription", { count: clearPlan.totalCount })}
+        cancelLabel={t("cancel")}
+        confirmLabel={t("clearConfirm", { count: clearPlan.totalCount })}
+        disabled={clearRange.isPending}
+        onConfirm={() => {
+          clearRange.mutate(clearPlan);
+          setClearOpen(false);
+        }}
+      />
     </div>
   );
 }

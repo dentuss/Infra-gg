@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Pinned so date logic behaves identically here and in CI. Tests that care
+    // about a zone name it explicitly rather than inheriting the machine's.
+    env: { TZ: "UTC" },
     include: ["src/**/*.test.ts"],
   },
 });

@@ -241,6 +241,14 @@ built on)
 - [x] Substitutes / trials attached to an event, tagged on the calendar box
 - [x] Availability clash check — warns which playing members are unavailable
       before an event is saved, and asks to confirm before scheduling anyway
+- [x] Week view rebuilt on the availability grid — our own component rather
+      than FullCalendar, positioned entirely in the team's zone so changing
+      your time zone relabels the hours instead of moving the events. Month
+      view is still FullCalendar's.
+- [x] Overlapping events share a column's width, reusing a slot once the
+      event holding it has finished
+- [ ] Drag to move, resize and drag to create (desktop first; touch once the
+      mobile app exists)
 
 ---
 
