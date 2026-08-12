@@ -38,6 +38,7 @@ import {
   useUpdateEventForm,
 } from "@/hooks/use-events";
 import { useMembers } from "@/hooks/use-team";
+import { useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import {
   addDays,
@@ -174,6 +175,8 @@ export function EventDialog({
   );
   const { data: availabilityDefaults } = useAvailabilityDefaults();
 
+  const { teamZone } = useZones();
+
   const clashes = useMemo(() => {
     if (!date || !startTime || !endTime || !members) return [];
     const { start, end } = combineDateAndTimes(date, startTime, endTime);
@@ -188,6 +191,7 @@ export function EventDialog({
       members,
       substituteIds: substituteIds ?? [],
       lookup,
+      zone: teamZone,
     });
   }, [
     date,
@@ -197,6 +201,7 @@ export function EventDialog({
     substituteIds,
     availabilityRows,
     availabilityDefaults,
+    teamZone,
   ]);
 
   const blocked = hasBlockingClash(clashes);

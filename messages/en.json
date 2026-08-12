@@ -154,37 +154,43 @@
     "editCard": "Edit player card"
   },
   "calendar": {
-    "metaTitle": "Calendar",
-    "title": "Calendar",
-    "hint": "Drag to create, click to edit.",
-    "loading": "Loading events…",
-    "loadError": "Could not load the calendar: {message}",
-    "newEvent": "New event",
-    "clearButton": "Clear {range, select, week {week} month {month} other {view}}",
-    "clearTitle": "{range, select, week {Clear this week?} month {Clear this month?} other {Clear this view?}}",
-    "clearDescription": "This permanently removes {count, plural, one {# event} other {# events}} from the current view. Recurring events only lose the occurrences shown here — future weeks stay scheduled. This cannot be undone.",
-    "clearConfirm": "Delete {count, plural, one {# event} other {# events}}",
     "cancel": "Cancel",
-    "chillTag": "chill day",
     "chillHeaderAdd": "Make this a chill day",
     "chillHeaderRemove": "Remove chill day",
-    "chillMakeTitle": "Make {weekday} chill day?",
     "chillMakeDescription": "The whole day turns green and the header gets a chill day tag.",
-    "chillRemoveTitle": "{weekday}: remove chill day?",
-    "chillRemoveDescription": "Back to the grind — the green goes away.",
+    "chillMakeTitle": "Make {weekday} chill day?",
     "chillNo": "No",
-    "chillYes": "Hell Yeah",
     "chillRemoveConfirm": "Yes, remove",
+    "chillRemoveDescription": "Back to the grind — the green goes away.",
+    "chillRemoveTitle": "{weekday}: remove chill day?",
+    "chillTag": "chill day",
+    "chillYes": "Hell Yeah",
+    "clearButton": "Clear {range, select, week {week} month {month} other {view}}",
+    "clearConfirm": "Delete {count, plural, one {# event} other {# events}}",
+    "clearDescription": "This permanently removes {count, plural, one {# event} other {# events}} from the current view. Recurring events only lose the occurrences shown here — future weeks stay scheduled. This cannot be undone.",
+    "clearTitle": "{range, select, week {Clear this week?} month {Clear this month?} other {Clear this view?}}",
+    "createAt": "New event on {day} at {hour}",
+    "hint": "Drag to create, click to edit.",
     "hintReadOnly": "Click an event to view its details. The schedule is managed by staff.",
-    "sections": "Calendar sections",
+    "loadError": "Could not load the calendar: {message}",
+    "loading": "Loading events…",
+    "metaTitle": "Calendar",
+    "monthView": "Month",
+    "newEvent": "New event",
+    "nextWeek": "Next week",
+    "previousWeek": "Previous week",
+    "roleTag": {
+      "substitute": "Sub",
+      "trial": "Trial"
+    },
     "section": {
       "schedule": "Schedule",
       "availability": "Availability"
     },
-    "roleTag": {
-      "substitute": "Sub",
-      "trial": "Trial"
-    }
+    "sections": "Calendar sections",
+    "thisWeek": "This week",
+    "title": "Calendar",
+    "weekView": "Week"
   },
   "availability": {
     "you": "(you)",

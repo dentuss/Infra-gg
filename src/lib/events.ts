@@ -128,6 +128,28 @@ export function occurrenceStartsInRange(
 }
 
 /**
+ * Concrete occurrences inside a range, as typed values rather than calendar
+ * inputs — what our own week grid renders from.
+ */
+export function occurrencesInRange(
+  events: EventRow[],
+  rangeStart: Date,
+  rangeEnd: Date,
+  zone: string,
+): EventOccurrence[] {
+  return events.flatMap((event) => {
+    const durationMs = eventDurationMs(event);
+    return occurrenceStartsInRange(event, rangeStart, rangeEnd, zone).map(
+      (start) => ({
+        event,
+        start,
+        end: new Date(start.getTime() + durationMs),
+      }),
+    );
+  });
+}
+
+/**
  * FullCalendar inputs for the visible range. Recurring events are
  * expanded into individual occurrences (id `<eventId>::<date>`) so a
  * single occurrence can be deleted without touching the series.

@@ -2,48 +2,15 @@
 
 import { DateTime } from "luxon";
 import { useTranslations } from "next-intl";
-import { useSyncExternalStore } from "react";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCurrentMinute } from "@/hooks/use-current-minute";
 import { useTeamZone } from "@/hooks/use-timezone";
 import { FALLBACK_ZONE, zoneAbbreviation } from "@/lib/timezone";
-
-// One ticker for every clock on the page, aligned to the minute boundary so
-// the display never sits a stale minute behind. Kept outside React because a
-// clock is an external source, not derived state.
-const listeners = new Set<() => void>();
-let timer: ReturnType<typeof setTimeout> | undefined;
-
-function scheduleNextMinute() {
-  timer = setTimeout(
-    () => {
-      listeners.forEach((listener) => listener());
-      scheduleNextMinute();
-    },
-    60_000 - (Date.now() % 60_000),
-  );
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  if (listeners.size === 1) scheduleNextMinute();
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0 && timer) {
-      clearTimeout(timer);
-      timer = undefined;
-    }
-  };
-}
-
-/** Stable within a minute, so re-renders only happen when the display changes. */
-const currentMinute = (): number | null => Math.floor(Date.now() / 60_000);
-/** Null on the server: the two clocks would disagree and hydration would warn. */
-const noMinuteOnServer = (): number | null => null;
 
 /**
  * The current time where the team schedules, so someone in Moscow can see at a
@@ -55,12 +22,7 @@ export function TeamClock() {
   const { data: teamZone } = useTeamZone();
   const zone = teamZone ?? FALLBACK_ZONE;
 
-  const minute = useSyncExternalStore(
-    subscribe,
-    currentMinute,
-    noMinuteOnServer,
-  );
-  const now = minute === null ? null : new Date(minute * 60_000);
+  const now = useCurrentMinute();
 
   const time = now
     ? DateTime.fromJSDate(now, { zone }).toFormat("HH:mm")

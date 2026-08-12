@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,12 +9,13 @@ import {
 import {
   findClashes,
   hasBlockingClash,
-  slotForDate,
   slotsBetween,
 } from "@/lib/event-clashes";
 import type { Profile } from "@/lib/team";
 
 const FRIDAY = "2026-08-07";
+/** Availability cells are painted in the team's zone, so tests use one. */
+const TEAM = "Europe/Berlin";
 const weekdayFor = (day: string) => weekdayIndex(new Date(`${day}T00:00:00`));
 
 const row = (
@@ -43,40 +45,23 @@ const member = (id: string, username: string, role: Profile["role"]): Profile =>
     updated_at: "2026-01-01T00:00:00Z",
   }) as Profile;
 
-const at = (day: string, time: string) => new Date(`${day}T${time}:00`);
-
-describe("mapping a moment to an availability cell", () => {
-  it("uses the clock hour during the day", () => {
-    expect(slotForDate(at(FRIDAY, "20:00"))).toEqual({
-      day: FRIDAY,
-      hour: 20,
-    });
-  });
-
-  // The board day runs 10:00 -> 03:00, so a 01:00 scrim belongs to the night
-  // before, not to the morning its calendar date falls on.
-  it("files the small hours under the previous day", () => {
-    expect(slotForDate(at("2026-08-08", "01:00"))).toEqual({
-      day: FRIDAY,
-      hour: 25,
-    });
-    expect(slotForDate(at("2026-08-08", "00:30"))).toEqual({
-      day: FRIDAY,
-      hour: 24,
-    });
-  });
-});
+const at = (day: string, time: string) =>
+  DateTime.fromISO(`${day}T${time}`, { zone: TEAM }).toJSDate();
 
 describe("enumerating the hours an event covers", () => {
   it("covers every whole hour touched", () => {
-    expect(slotsBetween(at(FRIDAY, "20:00"), at(FRIDAY, "22:00"))).toEqual([
+    expect(
+      slotsBetween(at(FRIDAY, "20:00"), at(FRIDAY, "22:00"), TEAM),
+    ).toEqual([
       { day: FRIDAY, hour: 20 },
       { day: FRIDAY, hour: 21 },
     ]);
   });
 
   it("includes a partial hour at either end", () => {
-    expect(slotsBetween(at(FRIDAY, "20:30"), at(FRIDAY, "21:30"))).toEqual([
+    expect(
+      slotsBetween(at(FRIDAY, "20:30"), at(FRIDAY, "21:30"), TEAM),
+    ).toEqual([
       { day: FRIDAY, hour: 20 },
       { day: FRIDAY, hour: 21 },
     ]);
@@ -84,7 +69,7 @@ describe("enumerating the hours an event covers", () => {
 
   it("rolls past midnight onto the same night", () => {
     expect(
-      slotsBetween(at(FRIDAY, "23:00"), at("2026-08-08", "01:00")),
+      slotsBetween(at(FRIDAY, "23:00"), at("2026-08-08", "01:00"), TEAM),
     ).toEqual([
       { day: FRIDAY, hour: 23 },
       { day: FRIDAY, hour: 24 },
@@ -92,8 +77,12 @@ describe("enumerating the hours an event covers", () => {
   });
 
   it("returns nothing for an empty or reversed range", () => {
-    expect(slotsBetween(at(FRIDAY, "20:00"), at(FRIDAY, "20:00"))).toEqual([]);
-    expect(slotsBetween(at(FRIDAY, "22:00"), at(FRIDAY, "20:00"))).toEqual([]);
+    expect(
+      slotsBetween(at(FRIDAY, "20:00"), at(FRIDAY, "20:00"), TEAM),
+    ).toEqual([]);
+    expect(
+      slotsBetween(at(FRIDAY, "22:00"), at(FRIDAY, "20:00"), TEAM),
+    ).toEqual([]);
   });
 });
 
@@ -118,6 +107,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes).toEqual([
       { userId: "p1", username: "Sam", status: "unavailable", hours: [20] },
@@ -137,6 +127,7 @@ describe("finding clashes", () => {
         members: roster,
         substituteIds: [],
         lookup,
+        zone: TEAM,
       }),
     ).toEqual([]);
   });
@@ -148,7 +139,13 @@ describe("finding clashes", () => {
       weekdayFor,
     );
     expect(
-      findClashes({ ...evening, members: roster, substituteIds: [], lookup }),
+      findClashes({
+        ...evening,
+        members: roster,
+        substituteIds: [],
+        lookup,
+        zone: TEAM,
+      }),
     ).toEqual([]);
 
     const attached = findClashes({
@@ -156,6 +153,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: ["sub"],
       lookup,
+      zone: TEAM,
     });
     expect(attached).toHaveLength(1);
     expect(attached[0]?.username).toBe("Leo");
@@ -172,6 +170,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes).toHaveLength(1);
     expect(clashes[0]?.status).toBe("maybe");
@@ -181,7 +180,13 @@ describe("finding clashes", () => {
   it("treats silence as no objection", () => {
     const lookup = buildAvailabilityLookup([], [], weekdayFor);
     expect(
-      findClashes({ ...evening, members: roster, substituteIds: [], lookup }),
+      findClashes({
+        ...evening,
+        members: roster,
+        substituteIds: [],
+        lookup,
+        zone: TEAM,
+      }),
     ).toEqual([]);
   });
 
@@ -204,6 +209,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes).toHaveLength(1);
     expect(clashes[0]?.username).toBe("Alex");
@@ -220,6 +226,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes.map((clash) => clash.status)).toEqual([
       "unavailable",
@@ -238,6 +245,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes).toEqual([
       { userId: "p1", username: "Sam", status: "unavailable", hours: [20] },
@@ -257,6 +265,7 @@ describe("finding clashes", () => {
       members: roster,
       substituteIds: [],
       lookup,
+      zone: TEAM,
     });
     expect(clashes).toHaveLength(1);
     expect(clashes[0]?.hours).toEqual([24]);

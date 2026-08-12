@@ -154,37 +154,43 @@
     "editCard": "Редактировать карточку игрока"
   },
   "calendar": {
-    "metaTitle": "Календарь",
-    "title": "Календарь",
-    "hint": "Потяните, чтобы создать; кликните, чтобы изменить.",
-    "loading": "Загружаем события…",
-    "loadError": "Не удалось загрузить календарь: {message}",
-    "newEvent": "Новое событие",
-    "clearButton": "Очистить {range, select, week {неделю} month {месяц} other {вид}}",
-    "clearTitle": "{range, select, week {Очистить эту неделю?} month {Очистить этот месяц?} other {Очистить?}}",
-    "clearDescription": "Навсегда удаляет {count, plural, one {# событие} few {# события} many {# событий} other {# события}} из текущего вида. Повторяющиеся события теряют только показанные здесь даты — следующие недели остаются в расписании. Это действие нельзя отменить.",
-    "clearConfirm": "Удалить {count, plural, one {# событие} few {# события} many {# событий} other {# события}}",
     "cancel": "Отмена",
-    "chillTag": "чилл",
     "chillHeaderAdd": "Сделать день чилл-днём",
     "chillHeaderRemove": "Убрать чилл-день",
-    "chillMakeTitle": "{weekday}: сделать чилл-днём?",
     "chillMakeDescription": "Весь день станет зелёным, а в заголовке появится метка «чилл».",
-    "chillRemoveTitle": "{weekday}: убрать чилл-день?",
-    "chillRemoveDescription": "Возвращаемся к работе — зелёный цвет исчезнет.",
+    "chillMakeTitle": "{weekday}: сделать чилл-днём?",
     "chillNo": "Нет",
-    "chillYes": "Погнали!",
     "chillRemoveConfirm": "Да, убрать",
+    "chillRemoveDescription": "Возвращаемся к работе — зелёный цвет исчезнет.",
+    "chillRemoveTitle": "{weekday}: убрать чилл-день?",
+    "chillTag": "чилл",
+    "chillYes": "Погнали!",
+    "clearButton": "Очистить {range, select, week {неделю} month {месяц} other {вид}}",
+    "clearConfirm": "Удалить {count, plural, one {# событие} few {# события} many {# событий} other {# события}}",
+    "clearDescription": "Навсегда удаляет {count, plural, one {# событие} few {# события} many {# событий} other {# события}} из текущего вида. Повторяющиеся события теряют только показанные здесь даты — следующие недели остаются в расписании. Это действие нельзя отменить.",
+    "clearTitle": "{range, select, week {Очистить эту неделю?} month {Очистить этот месяц?} other {Очистить?}}",
+    "createAt": "Новое событие в {day} в {hour}",
+    "hint": "Потяните, чтобы создать; кликните, чтобы изменить.",
     "hintReadOnly": "Кликните по событию, чтобы посмотреть детали. Расписание ведёт стафф.",
-    "sections": "Разделы календаря",
+    "loadError": "Не удалось загрузить календарь: {message}",
+    "loading": "Загружаем события…",
+    "metaTitle": "Календарь",
+    "monthView": "Месяц",
+    "newEvent": "Новое событие",
+    "nextWeek": "Следующая неделя",
+    "previousWeek": "Предыдущая неделя",
+    "roleTag": {
+      "substitute": "Замена",
+      "trial": "Трайл"
+    },
     "section": {
       "schedule": "Расписание",
       "availability": "Доступность"
     },
-    "roleTag": {
-      "substitute": "Замена",
-      "trial": "Трайл"
-    }
+    "sections": "Разделы календаря",
+    "thisWeek": "Эта неделя",
+    "title": "Календарь",
+    "weekView": "Неделя"
   },
   "availability": {
     "you": "(вы)",
