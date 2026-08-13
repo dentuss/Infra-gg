@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import { DAY_END_HOUR, DAY_START_HOUR } from "@/lib/availability";
+import { wallClockInstant } from "@/lib/timezone";
 
 /**
  * The schedule and the availability grid share one window: 10:00 → 03:00 in the
@@ -41,11 +42,94 @@ export function minutesIntoWindow(
   day: string,
   zone: string,
 ): number | null {
-  const top = DateTime.fromISO(day, { zone })
-    .startOf("day")
-    .plus({ hours: DAY_START_HOUR });
-  if (!top.isValid) return null;
-  return (instant.getTime() - top.toMillis()) / 60_000;
+  // Same calendar-vs-elapsed trap: on the day a zone leaves summer time, the
+  // window opens 25 hours after the previous midnight, not 24.
+  const top = wallClockInstant(day, DAY_START_HOUR * 60, zone);
+  if (!top) return null;
+  return (instant.getTime() - top.getTime()) / 60_000;
+}
+
+/** Dragging snaps to this, so a scrim lands on a sensible boundary. */
+export const SNAP_MINUTES = 15;
+
+/** Nothing may be dragged shorter than this. */
+export const MIN_DURATION_MINUTES = 15;
+
+export function snapMinutes(minutes: number, step = SNAP_MINUTES): number {
+  return Math.round(minutes / step) * step;
+}
+
+export function clampMinute(minutes: number): number {
+  return Math.min(WINDOW_MINUTES, Math.max(0, minutes));
+}
+
+/**
+ * The instant a given number of minutes into a day's window, in the team's
+ * zone. Built by adding to the day's start rather than to a fixed offset, so a
+ * DST change lands on the resulting instant and not the nominal one.
+ */
+export function instantAtMinute(
+  day: string,
+  minutes: number,
+  zone: string,
+): Date | null {
+  return wallClockInstant(day, DAY_START_HOUR * 60 + minutes, zone);
+}
+
+export type MinuteRange = { from: number; to: number };
+
+/**
+ * The range a drag-to-create gesture describes. Dragging upward is the same
+ * gesture as dragging down, so the anchor may end up as either edge.
+ */
+export function createRange(anchor: number, pointer: number): MinuteRange {
+  const a = snapMinutes(anchor);
+  const b = snapMinutes(pointer);
+  const from = Math.min(a, b);
+  const to = Math.max(a, b);
+  return clampRange({
+    from,
+    to: to - from < MIN_DURATION_MINUTES ? from + MIN_DURATION_MINUTES : to,
+  });
+}
+
+/** Slide a range without changing how long it is, keeping it inside the day. */
+export function moveRange(range: MinuteRange, from: number): MinuteRange {
+  const duration = range.to - range.from;
+  const start = Math.min(
+    WINDOW_MINUTES - duration,
+    Math.max(0, snapMinutes(from)),
+  );
+  return { from: start, to: start + duration };
+}
+
+/** Drag one edge past the other and the range would invert, so it does not. */
+export function resizeRange(
+  range: MinuteRange,
+  edge: "start" | "end",
+  pointer: number,
+): MinuteRange {
+  const at = clampMinute(snapMinutes(pointer));
+  if (edge === "start") {
+    return {
+      from: Math.min(at, range.to - MIN_DURATION_MINUTES),
+      to: range.to,
+    };
+  }
+  return {
+    from: range.from,
+    to: Math.max(at, range.from + MIN_DURATION_MINUTES),
+  };
+}
+
+function clampRange({ from, to }: MinuteRange): MinuteRange {
+  if (to > WINDOW_MINUTES) {
+    return {
+      from: Math.max(0, WINDOW_MINUTES - (to - from)),
+      to: WINDOW_MINUTES,
+    };
+  }
+  return { from: Math.max(0, from), to };
 }
 
 export type Placed<T> = {

@@ -7,12 +7,12 @@ import {
   EventDialog,
   type EventDialogState,
 } from "@/components/calendar/event-dialog";
-import { ScheduleGrid } from "@/components/calendar/schedule-grid";
 import { ScheduleMonth } from "@/components/calendar/schedule-month";
 import {
   ScheduleToolbar,
   type ScheduleView,
 } from "@/components/calendar/schedule-toolbar";
+import { ScheduleWeek } from "@/components/calendar/schedule-week";
 import { TimezonePicker } from "@/components/calendar/timezone-picker";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAddChillDay, useRemoveChillDay } from "@/hooks/use-chill-days";
@@ -23,7 +23,6 @@ import { useSetOwnZone, useSetTeamZone, useZones } from "@/hooks/use-timezone";
 import { formattingLocale } from "@/i18n/config";
 import { addDays, startOfWeek } from "@/lib/availability";
 import { occurrenceKey, type EventOccurrence } from "@/lib/events";
-import { slotInstant, slotLabelInZone } from "@/lib/timezone";
 
 const CLOSED: EventDialogState = {
   open: false,
@@ -147,14 +146,13 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
       </p>
 
       {view === "week" ? (
-        <ScheduleGrid
+        <ScheduleWeek
           days={scheduleDays}
           occurrences={occurrences}
           teamZone={teamZone}
+          viewZone={viewZone}
           now={now}
-          hourLabelFor={(dayKey, hour) =>
-            slotLabelInZone(dayKey, hour, teamZone, viewZone)
-          }
+          canManage={canManage}
           onOpenOccurrence={(occurrence) =>
             openEvent(
               occurrence.event.id,
@@ -163,32 +161,21 @@ export function TeamCalendar({ canManage }: { canManage: boolean }) {
                 : null,
             )
           }
-          onCreateAt={
-            canManage
-              ? (dayKey, hour) => {
-                  const start = slotInstant(dayKey, hour, teamZone);
-                  const end = slotInstant(dayKey, hour + 1, teamZone);
-                  if (start && end) openCreate({ start, end });
-                }
-              : undefined
+          onToggleChill={(day) =>
+            setChillPrompt({
+              day: day.key,
+              weekday: capitalize(
+                new Date(`${day.key}T12:00:00`).toLocaleDateString(
+                  formattingLocale(locale),
+                  { weekday: "long" },
+                ),
+              ),
+              isChill: day.isChill,
+            })
           }
-          onToggleChill={
-            canManage
-              ? (day) =>
-                  setChillPrompt({
-                    day: day.key,
-                    weekday: capitalize(
-                      new Date(`${day.key}T12:00:00`).toLocaleDateString(
-                        formattingLocale(locale),
-                        { weekday: "long" },
-                      ),
-                    ),
-                    isChill: day.isChill,
-                  })
-              : undefined
-          }
-          tagsFor={benchTagsFor}
+          onDraft={openCreate}
           cornerSlot={picker(true)}
+          tagsFor={benchTagsFor}
         />
       ) : (
         <ScheduleMonth

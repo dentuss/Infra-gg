@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -72,6 +73,25 @@ describe("resolving a slot to a real moment", () => {
 
   it("returns null for an unparseable day", () => {
     expect(slotInstant("not-a-date", 20, BERLIN)).toBeNull();
+  });
+
+  // The day summer time ends is 25 hours long. Adding 20 hours of elapsed time
+  // to its midnight lands at 19:00, an hour before the label promises.
+  it("means the wall clock on the day a zone leaves summer time", () => {
+    const instant = slotInstant("2026-10-25", 20, BERLIN);
+    expect(
+      DateTime.fromJSDate(instant!, { zone: BERLIN }).toFormat("HH:mm"),
+    ).toBe("20:00");
+    expect(instant?.toISOString()).toBe("2026-10-25T19:00:00.000Z");
+  });
+
+  // And the day it begins is 23 hours long, which errs the other way.
+  it("means the wall clock on the day a zone enters summer time", () => {
+    const instant = slotInstant("2026-03-29", 20, BERLIN);
+    expect(
+      DateTime.fromJSDate(instant!, { zone: BERLIN }).toFormat("HH:mm"),
+    ).toBe("20:00");
+    expect(instant?.toISOString()).toBe("2026-03-29T18:00:00.000Z");
   });
 });
 

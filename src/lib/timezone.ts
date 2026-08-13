@@ -90,17 +90,44 @@ export function zoneGmtLabel(zone: string, at: Date = new Date()): string {
  * here is what lets a viewer in another zone see the same slot relabelled
  * rather than shifted onto a different night.
  */
+/**
+ * The instant at a wall-clock offset from a day's midnight, in `zone`.
+ * Minutes past 24h roll into the following days.
+ *
+ * The offset has to be applied as a CALENDAR quantity, not elapsed time. On the
+ * day a zone leaves summer time the day is 25 hours long, so adding 20 hours to
+ * midnight lands at 19:00 rather than the 20:00 the label promises. Days are
+ * added with `plus` (calendar-aware) and the time of day is `set` (wall clock).
+ */
+export function wallClockInstant(
+  day: string,
+  minutesFromMidnight: number,
+  zone: string,
+): Date | null {
+  const base = DateTime.fromISO(day, { zone });
+  if (!base.isValid) return null;
+  const total = Math.round(minutesFromMidnight);
+  const dayOffset = Math.floor(total / 1440);
+  const rest = total - dayOffset * 1440;
+  const moment = base
+    .startOf("day")
+    .plus({ days: dayOffset })
+    .set({
+      hour: Math.floor(rest / 60),
+      minute: rest % 60,
+      second: 0,
+      millisecond: 0,
+    });
+  return moment.isValid ? moment.toJSDate() : null;
+}
+
+/** The instant a grid hour begins. Hours run past 24 for the small hours. */
 export function slotInstant(
   day: string,
   hour: number,
   teamZone: string,
 ): Date | null {
-  const base = DateTime.fromISO(day, { zone: teamZone });
-  if (!base.isValid) return null;
-  // `plus` rather than `set`, so hours past 24 roll into the next day and DST
-  // is applied at the resulting instant rather than the nominal one.
-  const moment = base.startOf("day").plus({ hours: hour });
-  return moment.isValid ? moment.toJSDate() : null;
+  return wallClockInstant(day, hour * 60, teamZone);
 }
 
 /**

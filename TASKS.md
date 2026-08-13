@@ -247,8 +247,16 @@ built on)
       view is still FullCalendar's.
 - [x] Overlapping events share a column's width, reusing a slot once the
       event holding it has finished
-- [ ] Drag to move, resize and drag to create (desktop first; touch once the
-      mobile app exists)
+- [x] Drag to move, resize and drag to create, snapping to the quarter hour;
+      a plain click still drafts the hour it landed on. Series occurrences are
+      still edited through the dialog, since dragging one instance of a
+      recurrence is ambiguous
+- [x] Continuous day columns with hour rules, rather than the availability
+      grid's separated cells — the two halves of the page should not look
+      alike, and a gutter between rows is what let the hour labels drift out
+      of step with the columns
+- [ ] Touch gestures (the grid gives up touch-scrolling for staff while
+      dragging is enabled; revisit with the mobile app)
 
 ---
 
