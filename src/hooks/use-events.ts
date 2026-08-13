@@ -82,7 +82,25 @@ export function useUpdateEvent() {
         .eq("id", input.id);
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),
+    // Dragging a block reads from this cache on the very next frame, so
+    // without patching it the event snaps back to where it was and only jumps
+    // forward once the refetch lands.
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: EVENTS_KEY });
+      const previous = queryClient.getQueryData<EventRow[]>(EVENTS_KEY);
+      queryClient.setQueryData<EventRow[]>(EVENTS_KEY, (current) =>
+        current?.map((event) =>
+          event.id === input.id ? { ...event, ...input.patch } : event,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(EVENTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: EVENTS_KEY }),
   });
 }
 

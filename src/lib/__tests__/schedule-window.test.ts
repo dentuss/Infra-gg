@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createRange,
+  instantAtMinute,
   minutesIntoWindow,
+  moveRange,
   nowOffset,
   placeEvents,
+  resizeRange,
   slotForInstant,
+  snapMinutes,
   WINDOW_MINUTES,
 } from "@/lib/schedule-window";
 
@@ -220,5 +225,94 @@ describe("now indicator", () => {
   it("is absent outside the window", () => {
     expect(nowOffset(at("2026-08-14T06:00:00Z"), FRI, BERLIN)).toBeNull();
     expect(nowOffset(at("2026-08-15T05:00:00Z"), FRI, BERLIN)).toBeNull();
+  });
+});
+
+describe("dragging", () => {
+  it("snaps to the quarter hour", () => {
+    expect(snapMinutes(7)).toBe(0);
+    expect(snapMinutes(8)).toBe(15);
+    expect(snapMinutes(52)).toBe(45);
+  });
+
+  it("builds a range from a downward drag", () => {
+    expect(createRange(600, 720)).toEqual({ from: 600, to: 720 });
+  });
+
+  // Dragging up is the same gesture; the anchor just becomes the bottom edge.
+  it("builds the same range from an upward drag", () => {
+    expect(createRange(720, 600)).toEqual({ from: 600, to: 720 });
+  });
+
+  it("gives a stationary drag a usable minimum", () => {
+    expect(createRange(600, 600)).toEqual({ from: 600, to: 615 });
+  });
+
+  it("keeps a create inside the window", () => {
+    const range = createRange(WINDOW_MINUTES - 10, WINDOW_MINUTES + 200);
+    expect(range.to).toBe(WINDOW_MINUTES);
+    expect(range.from).toBeGreaterThanOrEqual(0);
+  });
+
+  it("moves without changing the duration", () => {
+    expect(moveRange({ from: 600, to: 720 }, 300)).toEqual({
+      from: 300,
+      to: 420,
+    });
+  });
+
+  // Sliding an event off the bottom must shorten nothing — it stops instead.
+  it("stops a move at the edges rather than clipping it", () => {
+    expect(moveRange({ from: 600, to: 720 }, -100)).toEqual({
+      from: 0,
+      to: 120,
+    });
+    expect(moveRange({ from: 600, to: 720 }, WINDOW_MINUTES)).toEqual({
+      from: WINDOW_MINUTES - 120,
+      to: WINDOW_MINUTES,
+    });
+  });
+
+  it("resizes each edge independently", () => {
+    expect(resizeRange({ from: 600, to: 720 }, "end", 780)).toEqual({
+      from: 600,
+      to: 780,
+    });
+    expect(resizeRange({ from: 600, to: 720 }, "start", 540)).toEqual({
+      from: 540,
+      to: 720,
+    });
+  });
+
+  it("refuses to invert a range", () => {
+    expect(resizeRange({ from: 600, to: 720 }, "end", 100)).toEqual({
+      from: 600,
+      to: 615,
+    });
+    expect(resizeRange({ from: 600, to: 720 }, "start", 900)).toEqual({
+      from: 705,
+      to: 720,
+    });
+  });
+});
+
+describe("turning a dragged minute back into an instant", () => {
+  it("counts from the window opening at 10:00", () => {
+    // 600 minutes past 10:00 is 20:00 Berlin, which is 18:00Z in August.
+    expect(instantAtMinute(FRI, 600, BERLIN)?.toISOString()).toBe(
+      "2026-08-14T18:00:00.000Z",
+    );
+  });
+
+  // The one case a fixed offset from midnight would get wrong.
+  it("lands on the right instant across a DST change", () => {
+    const before = instantAtMinute("2026-10-24", 600, BERLIN);
+    const after = instantAtMinute("2026-10-25", 600, BERLIN);
+    expect(before?.toISOString()).toBe("2026-10-24T18:00:00.000Z");
+    expect(after?.toISOString()).toBe("2026-10-25T19:00:00.000Z");
+  });
+
+  it("returns null for an unparseable day", () => {
+    expect(instantAtMinute("not-a-day", 0, BERLIN)).toBeNull();
   });
 });
